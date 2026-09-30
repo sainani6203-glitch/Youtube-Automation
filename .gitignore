@@ -1,0 +1,19 @@
+# Environment & Secrets
+.env
+client_secret.json
+token.pickle
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual Environments
+.venv/
+venv/
+
+# Media Assets & Outputs
+assets/
+output/
+ready_to_review/
