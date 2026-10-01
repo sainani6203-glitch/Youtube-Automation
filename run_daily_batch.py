@@ -1,9 +1,14 @@
 import time
 from main import run_pipeline
+from generate_default_bgm import create_default_bgm
+
 def run_daily_batch():
     print("==================================================")
     print("🌟 Starting OmniDaily Daily Batch Generation")
     print("==================================================")
+
+    # Ensure default BGM exists
+    create_default_bgm()
 
     # 1. Generate Daily Long Video First and capture its URL
     print("\n--- Generating Daily Long Video ---")
