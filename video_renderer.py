@@ -12,7 +12,42 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
     
     width, height = (1080, 1920) if video_type == "short" else (1920, 1080)
     
+    # Check for custom intro in assets/intro.mp4
+    intro_path = os.path.join(ASSETS_DIR, "intro.mp4")
+    intro_clip = None
+    intro_duration = 0
+    if os.path.exists(intro_path):
+        try:
+            intro_clip = VideoFileClip(intro_path)
+            intro_duration = intro_clip.duration
+            try:
+                intro_clip = intro_clip.resized(height=height)
+            except AttributeError:
+                intro_clip = intro_clip.resize(height=height)
+            if intro_clip.w < width:
+                try:
+                    intro_clip = intro_clip.resized(width=width)
+                except AttributeError:
+                    intro_clip = intro_clip.resize(width=width)
+            try:
+                intro_clip = intro_clip.cropped(x_center=intro_clip.w/2, y_center=intro_clip.h/2, width=width, height=height)
+            except AttributeError:
+                intro_clip = intro_clip.crop(x_center=intro_clip.w/2, y_center=intro_clip.h/2, width=width, height=height)
+            
+            # Pad audio with silence for intro duration
+            from moviepy import AudioClip, concatenate_audioclips
+            silent_audio = AudioClip(lambda t: [0, 0], duration=intro_duration)
+            audio = concatenate_audioclips([silent_audio, audio])
+            duration = audio.duration
+        except Exception as e:
+            print(f"[Warning] Could not load intro.mp4: {e}")
+            intro_clip = None
+            intro_duration = 0
+
     clips = []
+    if intro_clip:
+        clips.append(intro_clip)
+
     # If valid video clips exist, use them; otherwise use a professional dark background clip
     valid_clips = [p for p in video_clips_paths if p and os.path.exists(p)]
     
