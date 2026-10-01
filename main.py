@@ -6,7 +6,7 @@ from script_generator import generate_video_script, generate_fresh_topic
 from tts_engine import create_voiceover_sync
 from media_fetcher import fetch_stock_video
 from video_renderer import render_video
-from youtube_uploader import upload_video_to_youtube, upload_caption, upload_thumbnail
+from youtube_uploader import upload_video_to_youtube, upload_caption, upload_thumbnail, add_video_to_playlist
 from thumbnail_generator import generate_thumbnail
 from moviepy import AudioFileClip
 

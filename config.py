@@ -20,11 +20,18 @@ for d in [OUTPUT_DIR, READY_TO_REVIEW_DIR, ASSETS_DIR]:
 
 # Topic Rotation Schedule (Focused on Single Deep Subjects)
 TOPIC_SCHEDULE = {
-    0: "The Dark Psychology of Manipulation and Mind Control",         # Monday
-    1: "Kailasa Temple Ellora: The Impossible Monolithic Architecture", # Tuesday
-    2: "The Secrets of Quantum Physics and Parallel Universes",        # Wednesday
-    3: "Padmanabhaswamy Temple Vault B Secret Mystery",                 # Thursday
-    4: "Human Subconscious Mind and Dark Psychology Triggers",          # Friday
-    5: "The Mystery of Pyramids and Ancient Advanced Technology",       # Saturday
-    6: "The Lost Sarasvati River and Ancient Indian Civilization",      # Sunday
+    0: "Dark Psychology & Human Behavior",       # Monday
+    1: "Ancient Indian Mysteries",               # Tuesday
+    2: "Incredible Science & Space Secrets",    # Wednesday
+    3: "Dark Psychology & Human Behavior",       # Thursday
+    4: "Ancient Indian Mysteries",               # Friday
+    5: "Incredible Science & Space Secrets",    # Saturday
+    6: "Ancient Indian Mysteries",               # Sunday
+}
+
+# YouTube Playlist IDs (Replace with your actual playlist IDs from YouTube)
+CATEGORY_PLAYLISTS = {
+    "Dark Psychology & Human Behavior": "REPLACE_WITH_PLAYLIST_ID_1",
+    "Ancient Indian Mysteries": "REPLACE_WITH_PLAYLIST_ID_2",
+    "Incredible Science & Space Secrets": "REPLACE_WITH_PLAYLIST_ID_3",
 }
