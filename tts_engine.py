@@ -3,12 +3,12 @@ import edge_tts
 import os
 
 VOICE_MAP = {
-    "en": "en-US-AriaNeural",
-    "te": "te-IN-ShrutiNeural",
-    "hi": "hi-IN-SwaraNeural",
-    "english": "en-US-AriaNeural",
-    "telugu": "te-IN-ShrutiNeural",
-    "hindi": "hi-IN-SwaraNeural"
+    "en": "en-US-ChristopherNeural",     # Authoritative male voice for English
+    "te": "te-IN-MohanNeural",           # Authoritative male voice for Telugu
+    "hi": "hi-IN-MadhurNeural",          # Authoritative male voice for Hindi
+    "english": "en-US-ChristopherNeural",
+    "telugu": "te-IN-MohanNeural",
+    "hindi": "hi-IN-MadhurNeural"
 }
 
 async def generate_voiceover(text: str, output_audio_path: str, language: str = "en"):

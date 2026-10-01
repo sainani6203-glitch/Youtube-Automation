@@ -1,7 +1,7 @@
 import os
 import datetime
 import json
-from config import TOPIC_SCHEDULE, READY_TO_REVIEW_DIR, AUTOMATION_MODE
+from config import TOPIC_SCHEDULE, READY_TO_REVIEW_DIR, AUTOMATION_MODE, DEFAULT_LANGUAGE
 from script_generator import generate_video_script
 from tts_engine import create_voiceover_sync
 from media_fetcher import fetch_stock_video
@@ -39,7 +39,7 @@ def generate_srt(scenes, audio_duration, srt_path):
         f.write("\n".join(srt_lines))
     return srt_path
 
-def run_pipeline(video_type: str = "short", custom_topic: str = None, language: str = "English"):
+def run_pipeline(video_type: str = "short", custom_topic: str = None, language: str = DEFAULT_LANGUAGE, linked_long_video_url: str = None):
     """
     Runs the automated video generation pipeline for a given video type ('short' or 'long') and language.
     """
@@ -59,12 +59,12 @@ def run_pipeline(video_type: str = "short", custom_topic: str = None, language: 
     # 2. Generate Script & Metadata via Gemini
     print(f"🤖 Step 1/4: Generating AI Script & Metadata ({language})...")
     try:
-        script_data = generate_video_script(topic, video_type, language)
+        script_data = generate_video_script(topic, video_type, language, linked_long_video_url)
         print(f"   -> Title: {script_data.get('title')}")
         print(f"   -> Scenes count: {len(script_data.get('scenes', []))}")
     except Exception as e:
         print(f"[Error] Failed to generate script: {e}")
-        return
+        return None
 
     # 3. Generate Voiceover Audio via TTS
     print(f"🎙️ Step 2/4: Synthesizing Voiceover Audio ({language})...")
@@ -130,10 +130,14 @@ def run_pipeline(video_type: str = "short", custom_topic: str = None, language: 
         # Check automation mode
         if "fully" in AUTOMATION_MODE.lower():
             print("🚀 Fully-automated mode detected. Uploading directly to YouTube...")
+            desc = script_data.get("description", "")
+            if linked_long_video_url:
+                desc += f"\n\n🔗 Watch the full detailed video here: {linked_long_video_url}"
+                
             video_id = upload_video_to_youtube(
                 video_path=final_video_path,
                 title=script_data.get("title"),
-                description=script_data.get("description"),
+                description=desc,
                 privacy_status="public"
             )
             
@@ -152,18 +156,21 @@ def run_pipeline(video_type: str = "short", custom_topic: str = None, language: 
                             print(f"   -> Deleted local file: {os.path.basename(p)}")
                         except Exception as e:
                             print(f"[Warning] Could not delete {p}: {e}")
+                            
+                return f"https://youtu.be/{video_id}"
         else:
             print(f"🛡️ Mode: SEMI-AUTOMATED. Video saved in: {READY_TO_REVIEW_DIR}")
             print("   (To enable 100% auto-upload, set AUTOMATION_MODE=fully-automated in .env)")
         print("==================================================")
     except Exception as e:
         print(f"[Error] Failed to render or upload video: {e}")
+    return None
 
 if __name__ == "__main__":
     import sys
     v_type = "short"
     custom_t = None
-    lang_arg = "English"
+    lang_arg = DEFAULT_LANGUAGE
     if len(sys.argv) > 1:
         v_type = sys.argv[1] # 'short' or 'long'
     if len(sys.argv) > 2:
