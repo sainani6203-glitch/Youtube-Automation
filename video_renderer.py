@@ -88,11 +88,34 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
         except Exception as e:
             print(f"[Note] TextClip skipped (ImageMagick might not be installed): {e}")
             
-    # Combine visual with voiceover audio
+    # Check for background music in assets/bgm.mp3
+    bgm_path = os.path.join(ASSETS_DIR, "bgm.mp3")
+    final_audio = audio
+    bgm_clip = None
+    if os.path.exists(bgm_path):
+        try:
+            from moviepy import CompositeAudioClip, concatenate_audioclips
+            bgm_clip = AudioFileClip(bgm_path)
+            if bgm_clip.duration < duration:
+                repeats = int(duration // bgm_clip.duration) + 1
+                bgm_clip = concatenate_audioclips([bgm_clip] * repeats)
+            try:
+                bgm_clip = bgm_clip.subclipped(0, duration)
+            except AttributeError:
+                bgm_clip = bgm_clip.subclip(0, duration)
+            try:
+                bgm_clip = bgm_clip.with_volume_scaled(0.12)
+            except AttributeError:
+                bgm_clip = bgm_clip.volumex(0.12)
+            final_audio = CompositeAudioClip([audio, bgm_clip])
+        except Exception as e:
+            print(f"[Warning] BGM mixing skipped: {e}")
+
+    # Combine visual with final audio (voiceover + optional bgm)
     try:
-        final_composite = CompositeVideoClip(clips).with_audio(audio)
+        final_composite = CompositeVideoClip(clips).with_audio(final_audio)
     except AttributeError:
-        final_composite = CompositeVideoClip(clips).set_audio(audio)
+        final_composite = CompositeVideoClip(clips).set_audio(final_audio)
     
     # Write output file
     final_composite.write_videofile(
@@ -106,6 +129,8 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
     
     # Close clips
     audio.close()
+    if bgm_clip:
+        bgm_clip.close()
     final_composite.close()
     print(f"[Success] Video successfully rendered at: {output_path}")
     return output_path
