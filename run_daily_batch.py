@@ -1,6 +1,9 @@
 import time
+import datetime
 from main import run_pipeline
 from generate_default_bgm import create_default_bgm
+from script_generator import generate_fresh_topic
+from config import TOPIC_SCHEDULE, DEFAULT_LANGUAGE
 
 def run_daily_batch():
     print("==================================================")
@@ -10,11 +13,23 @@ def run_daily_batch():
     # Ensure default BGM exists
     create_default_bgm()
 
+    # Determine today's fresh topic based on category
+    weekday = datetime.datetime.now().weekday()
+    category_theme = TOPIC_SCHEDULE.get(weekday, "Incredible Mysteries and Science Facts")
+    print(f"📂 Today's Category: {category_theme}")
+    
+    try:
+        today_topic = generate_fresh_topic(category_theme, DEFAULT_LANGUAGE)
+        print(f"🎯 Generated Fresh Topic: {today_topic}")
+    except Exception as e:
+        print(f"[Warning] Fresh topic generation failed, using category theme: {e}")
+        today_topic = category_theme
+
     # 1. Generate Daily Long Video First and capture its URL
-    print("\n--- Generating Daily Long Video ---")
+    print(f"\n--- Generating Daily Long Video: {today_topic} ---")
     long_url = None
     try:
-        long_url = run_pipeline(video_type="long")
+        long_url = run_pipeline(video_type="long", custom_topic=today_topic)
     except Exception as e:
         print(f"[Error] Long video failed: {e}")
 
@@ -22,9 +37,9 @@ def run_daily_batch():
     time.sleep(60)
 
     # 2. Generate First Short (linked to long video)
-    print("\n--- Generating Morning Short ---")
+    print(f"\n--- Generating Morning Short: {today_topic} ---")
     try:
-        run_pipeline(video_type="short", linked_long_video_url=long_url)
+        run_pipeline(video_type="short", custom_topic=today_topic, linked_long_video_url=long_url)
     except Exception as e:
         print(f"[Error] Morning short failed: {e}")
 
@@ -32,9 +47,9 @@ def run_daily_batch():
     time.sleep(60)
 
     # 3. Generate Second Short (linked to long video)
-    print("\n--- Generating Afternoon Short ---")
+    print(f"\n--- Generating Afternoon Short: {today_topic} ---")
     try:
-        run_pipeline(video_type="short", linked_long_video_url=long_url)
+        run_pipeline(video_type="short", custom_topic=today_topic, linked_long_video_url=long_url)
     except Exception as e:
         print(f"[Error] Afternoon short failed: {e}")
         

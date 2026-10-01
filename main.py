@@ -2,7 +2,7 @@ import os
 import datetime
 import json
 from config import TOPIC_SCHEDULE, READY_TO_REVIEW_DIR, AUTOMATION_MODE, DEFAULT_LANGUAGE
-from script_generator import generate_video_script
+from script_generator import generate_video_script, generate_fresh_topic
 from tts_engine import create_voiceover_sync
 from media_fetcher import fetch_stock_video
 from video_renderer import render_video
@@ -53,7 +53,13 @@ def run_pipeline(video_type: str = "short", custom_topic: str = None, language: 
         topic = custom_topic
     else:
         weekday = datetime.datetime.now().weekday()
-        topic = TOPIC_SCHEDULE.get(weekday, "Interesting General Knowledge Facts")
+        category_theme = TOPIC_SCHEDULE.get(weekday, "Incredible Mysteries and Science Facts")
+        print(f"📂 Today's Category: {category_theme}")
+        try:
+            topic = generate_fresh_topic(category_theme, language)
+        except Exception as e:
+            print(f"[Warning] Fresh topic generation failed: {e}")
+            topic = category_theme
         
     print(f"🎯 Selected Topic for today: '{topic}'")
     

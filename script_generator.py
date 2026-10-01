@@ -94,6 +94,40 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         
     return json.loads(text_result.strip())
 
+def generate_fresh_topic(category_prompt: str, language: str = "English") -> str:
+    """
+    Generates a unique, fresh, and engaging topic under the given category using Gemini.
+    """
+    if not GEMINI_API_KEY:
+        raise ValueError("GEMINI_API_KEY is missing in environment variables.")
+
+    prompt = f"""
+    Generate one unique, highly catchy, and viral YouTube video topic under this broad category: "{category_prompt}".
+    The topic must be fresh, intriguing, and written entirely in {language}.
+    Return ONLY the topic title as a plain string, with no extra formatting, quotes, or markdown.
+    """
+
+    model_names = [
+        "gemini-flash-latest",
+        "gemini-pro-latest",
+        "gemini-3.1-pro-preview",
+        "gemini-3.5-flash-lite"
+    ]
+    response = None
+    for m_name in model_names:
+        try:
+            model = genai.GenerativeModel(m_name)
+            response = model.generate_content(prompt)
+            if response and response.text:
+                break
+        except Exception:
+            continue
+
+    if not response or not response.text:
+        return category_prompt  # fallback to category name
+        
+    return response.text.strip().replace('"', '')
+
 if __name__ == "__main__":
     print("Testing Script Generator...")
     try:
