@@ -6,8 +6,8 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 from config import BASE_DIR
 
-# Scope required for uploading videos to YouTube
-SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
+# Scope required for uploading videos, captions, and managing playlists on YouTube
+SCOPES = ["https://www.googleapis.com/auth/youtube"]
 
 def get_authenticated_service():
     """Authenticates and returns the YouTube API service client using OAuth2."""
@@ -121,6 +121,32 @@ def upload_thumbnail(video_id: str, thumbnail_path: str):
         print(f"[Success] Thumbnail uploaded successfully!")
     except Exception as e:
         print(f"[Warning] Could not upload thumbnail: {e}")
+
+def add_video_to_playlist(video_id: str, playlist_id: str):
+    """
+    Adds a video to a specific YouTube playlist.
+    """
+    if not playlist_id:
+        return
+    print(f"📂 Adding video {video_id} to playlist {playlist_id}...")
+    try:
+        youtube = get_authenticated_service()
+        body = {
+            "snippet": {
+                "playlistId": playlist_id,
+                "resourceId": {
+                    "kind": "youtube#video",
+                    "videoId": video_id
+                }
+            }
+        }
+        youtube.playlistItems().insert(
+            part="snippet",
+            body=body
+        ).execute()
+        print(f"[Success] Video added to playlist!")
+    except Exception as e:
+        print(f"[Warning] Could not add video to playlist: {e}")
 
 if __name__ == "__main__":
     print("Testing YouTube Uploader setup...")
