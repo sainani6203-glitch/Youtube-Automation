@@ -104,6 +104,24 @@ def upload_caption(video_id: str, srt_path: str, language_code: str = "en"):
     except Exception as e:
         print(f"[Warning] Could not upload captions track: {e}")
 
+def upload_thumbnail(video_id: str, thumbnail_path: str):
+    """
+    Uploads a custom thumbnail image to a YouTube video.
+    """
+    if not thumbnail_path or not os.path.exists(thumbnail_path):
+        return
+    print(f"🖼️ Uploading custom thumbnail for video {video_id}...")
+    try:
+        youtube = get_authenticated_service()
+        media = MediaFileUpload(thumbnail_path, mimetype='image/jpeg')
+        youtube.thumbnails().set(
+            videoId=video_id,
+            media_body=media
+        ).execute()
+        print(f"[Success] Thumbnail uploaded successfully!")
+    except Exception as e:
+        print(f"[Warning] Could not upload thumbnail: {e}")
+
 if __name__ == "__main__":
     print("Testing YouTube Uploader setup...")
     print("Place your 'client_secret.json' in C:\\Ai project to enable auto-upload.")

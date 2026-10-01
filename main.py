@@ -6,7 +6,8 @@ from script_generator import generate_video_script
 from tts_engine import create_voiceover_sync
 from media_fetcher import fetch_stock_video
 from video_renderer import render_video
-from youtube_uploader import upload_video_to_youtube, upload_caption
+from youtube_uploader import upload_video_to_youtube, upload_caption, upload_thumbnail
+from thumbnail_generator import generate_thumbnail
 from moviepy import AudioFileClip
 
 def generate_srt(scenes, audio_duration, srt_path):
@@ -146,10 +147,19 @@ def run_pipeline(video_type: str = "short", custom_topic: str = None, language: 
                 lang_code = {"english": "en", "telugu": "te", "hindi": "hi"}.get(language.lower(), "en")
                 upload_caption(video_id, srt_path, lang_code)
 
+            # Generate and upload Custom Thumbnail for Long Videos
+            thumb_path = None
+            if video_id and video_type == "long":
+                thumb_path = generate_thumbnail(script_data.get("title"))
+                upload_thumbnail(video_id, thumb_path)
+
             # Auto-delete local files to save storage
             if video_id:
                 print("🧹 Cleaning up local storage (deleting local video, audio, metadata, and subtitle files)...")
-                for p in [final_video_path, meta_path, audio_path, srt_path]:
+                files_to_clean = [final_video_path, meta_path, audio_path, srt_path]
+                if thumb_path:
+                    files_to_clean.append(thumb_path)
+                for p in files_to_clean:
                     if p and os.path.exists(p):
                         try:
                             os.remove(p)
