@@ -148,8 +148,8 @@ def run_pipeline(video_type: str = "short", custom_topic: str = None, language: 
                 privacy_status="public"
             )
             
-            # Add video to category playlist automatically
-            if video_id:
+            # Add video to category playlist automatically (Long videos only)
+            if video_id and video_type == "long":
                 category_theme = TOPIC_SCHEDULE.get(datetime.datetime.now().weekday(), "")
                 playlist_id = CATEGORY_PLAYLISTS.get(category_theme, "")
                 if playlist_id and "REPLACE_WITH" not in playlist_id:
