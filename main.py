@@ -1,7 +1,7 @@
 import os
 import datetime
 import json
-from config import TOPIC_SCHEDULE, READY_TO_REVIEW_DIR, AUTOMATION_MODE, DEFAULT_LANGUAGE
+from config import TOPIC_SCHEDULE, READY_TO_REVIEW_DIR, AUTOMATION_MODE, DEFAULT_LANGUAGE, CATEGORY_PLAYLISTS
 from script_generator import generate_video_script, generate_fresh_topic
 from tts_engine import create_voiceover_sync
 from media_fetcher import fetch_stock_video
@@ -148,6 +148,15 @@ def run_pipeline(video_type: str = "short", custom_topic: str = None, language: 
                 privacy_status="public"
             )
             
+            # Add video to category playlist automatically
+            if video_id:
+                category_theme = TOPIC_SCHEDULE.get(datetime.datetime.now().weekday(), "")
+                playlist_id = CATEGORY_PLAYLISTS.get(category_theme, "")
+                if playlist_id and "REPLACE_WITH" not in playlist_id:
+                    add_video_to_playlist(video_id, playlist_id)
+                else:
+                    print(f"[Note] Playlist ID for category '{category_theme}' not configured in config.py.")
+
             # Upload Subtitles / Captions (.srt) to YouTube
             if video_id and os.path.exists(srt_path):
                 lang_code = {"english": "en", "telugu": "te", "hindi": "hi"}.get(language.lower(), "en")
