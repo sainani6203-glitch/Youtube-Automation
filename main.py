@@ -156,6 +156,9 @@ def run_pipeline(video_type: str = "short", custom_topic: str = None, language: 
             # Generate and upload Custom Thumbnail for Long Videos
             thumb_path = None
             if video_id and video_type == "long":
+                import time
+                print("⏳ Waiting 5 seconds for video processing before uploading thumbnail...")
+                time.sleep(5)
                 thumb_path = generate_thumbnail(script_data.get("title"))
                 upload_thumbnail(video_id, thumb_path)
 
