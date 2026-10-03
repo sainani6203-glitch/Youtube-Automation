@@ -40,7 +40,7 @@ def generate_srt(scenes, audio_duration, srt_path):
         f.write("\n".join(srt_lines))
     return srt_path
 
-def run_pipeline(video_type: str = "short", custom_topic: str = None, language: str = DEFAULT_LANGUAGE, linked_long_video_url: str = None):
+def run_pipeline(video_type: str = "short", custom_topic: str = None, language: str = DEFAULT_LANGUAGE, linked_long_video_url: str = None, short_angle: str = "shocking_fact"):
     """
     Runs the automated video generation pipeline for a given video type ('short' or 'long') and language.
     """
@@ -66,7 +66,7 @@ def run_pipeline(video_type: str = "short", custom_topic: str = None, language: 
     # 2. Generate Script & Metadata via Gemini
     print(f"🤖 Step 1/4: Generating AI Script & Metadata ({language})...")
     try:
-        script_data = generate_video_script(topic, video_type, language, linked_long_video_url)
+        script_data = generate_video_script(topic, video_type, language, linked_long_video_url, short_angle)
         print(f"   -> Title: {script_data.get('title')}")
         print(f"   -> Scenes count: {len(script_data.get('scenes', []))}")
     except Exception as e:

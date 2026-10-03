@@ -43,7 +43,7 @@ def run_daily_batch():
     # 2. Generate First Short (linked to long video)
     print(f"\n--- Generating Morning Short: {today_topic} ---")
     try:
-        short1_res = run_pipeline(video_type="short", custom_topic=today_topic, linked_long_video_url=long_url)
+        short1_res = run_pipeline(video_type="short", custom_topic=today_topic, linked_long_video_url=long_url, short_angle="shocking_fact")
         if not short1_res:
             raise Exception("Morning short pipeline failed.")
     except Exception as e:
@@ -57,7 +57,7 @@ def run_daily_batch():
     # 3. Generate Second Short (linked to long video)
     print(f"\n--- Generating Afternoon Short: {today_topic} ---")
     try:
-        short2_res = run_pipeline(video_type="short", custom_topic=today_topic, linked_long_video_url=long_url)
+        short2_res = run_pipeline(video_type="short", custom_topic=today_topic, linked_long_video_url=long_url, short_angle="hidden_truth")
         if not short2_res:
             raise Exception("Afternoon short pipeline failed.")
     except Exception as e:

@@ -14,17 +14,26 @@ except ImportError:
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
 
-def generate_video_script(topic: str, video_type: str = "short", language: str = "English", linked_long_video_url: str = None) -> dict:
+def generate_video_script(topic: str, video_type: str = "short", language: str = "English", linked_long_video_url: str = None, short_angle: str = "shocking_fact") -> dict:
     """
     Generates an engaging script, title, description, and keywords for stock search using Groq or Gemini.
     video_type: 'short' or 'long'
     language: target language (e.g. 'English', 'Telugu', 'Hindi')
     linked_long_video_url: optional long video URL to cross-promote in shorts
+    short_angle: angle/focus for shorts ('shocking_fact' or 'hidden_truth') to ensure variety between daily shorts
     """
     if video_type == "short":
         cta_instruction = f"5. CRITICAL: The final scene MUST end with a strong Call-to-Action telling viewers to watch the full detailed video on the channel (e.g., in Telugu: 'ఈ రహస్యం వెనుక ఉన్న పూర్తి నిజం తెలుసుకోవాలంటే, మన ఛానెల్‌లో ఉన్న ఫుల్ వీడియో చూడండి!')." if linked_long_video_url else "5. Conclude with a strong CTA to subscribe."
+        
+        angle_instruction = ""
+        if short_angle == "shocking_fact":
+            angle_instruction = "Focus specifically on the most surprising, shocking, or mind-boggling hook/fact of this topic."
+        else:
+            angle_instruction = "Focus specifically on the mysterious background, hidden truth, or scientific conclusion of this topic (different from a general intro)."
+
         prompt = f"""
         Create a viral, highly engaging YouTube Short script about the topic: "{topic}".
+        {angle_instruction}
         The title, description, and script text MUST be written entirely in {language}.
         Requirements:
         1. Must have a powerful hook in the first 3 seconds.
