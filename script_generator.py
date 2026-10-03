@@ -45,13 +45,13 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         """
     else:
         prompt = f"""
-        Create a comprehensive, highly engaging and deeply detailed 8-10 minute long-form YouTube video script focusing on ONE SINGLE specific topic/mystery: "{topic}" (Do NOT list 5-6 different separate topics; instead, explore this ONE single subject deeply from every angle: its origin, history, deep mysteries, scientific analysis, architectural wonders, and final conclusion).
+        Create a comprehensive, highly engaging and deeply detailed 10-12 minute long-form YouTube video script focusing on ONE SINGLE specific topic/mystery: "{topic}" (Do NOT list 5-6 different separate topics; instead, explore this ONE single subject deeply from every angle: its origin, history, deep mysteries, scientific analysis, architectural wonders, and final conclusion).
         The title, description, and script text MUST be written entirely in {language}.
         Requirements:
         1. Powerful hook and comprehensive introduction to this single subject.
         2. Narrative depth exploring various chapters/aspects of this ONE topic in detail.
         3. Strong conclusion and call-to-action to subscribe.
-        4. CRITICAL: Each scene in the "scenes" array MUST contain a detailed, rich paragraph of at least 60-80 words of narration, so that when combined across 15-20 scenes, the total word count is between 1200-1500 words (approx 8-10 minutes when spoken).
+        4. CRITICAL: Each scene in the "scenes" array MUST contain a detailed, rich paragraph of at least 80-100 words of narration, so that when combined across 18-22 scenes, the total word count is between 1500-1800 words (approx 10-12 minutes when spoken).
         5. For each scene, provide a specific visual keyword search term IN ENGLISH for stock footage.
         
         Return ONLY valid JSON in this exact format:
@@ -59,8 +59,8 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
             "title": "Engaging Long Video Title",
             "description": "Detailed SEO description with timestamps",
             "scenes": [
-                {{"text": "Detailed paragraph 1 with 60-80 words...", "visual_keyword": "keyword1"}},
-                {{"text": "Detailed paragraph 2 with 60-80 words...", "visual_keyword": "keyword2"}}
+                {{"text": "Detailed paragraph 1 with 80-100 words...", "visual_keyword": "keyword1"}},
+                {{"text": "Detailed paragraph 2 with 80-100 words...", "visual_keyword": "keyword2"}}
             ]
         }}
         """
