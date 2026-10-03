@@ -149,5 +149,9 @@ def add_video_to_playlist(video_id: str, playlist_id: str):
         print(f"[Warning] Could not add video to playlist: {e}")
 
 if __name__ == "__main__":
-    print("Testing YouTube Uploader setup...")
-    print("Place your 'client_secret.json' in C:\\Ai project to enable auto-upload.")
+    print("Testing YouTube Uploader authentication flow...")
+    try:
+        service = get_authenticated_service()
+        print("[Success] YouTube authentication successful! 'token.pickle' has been generated/refreshed.")
+    except Exception as e:
+        print(f"[Error] Authentication failed: {e}")

@@ -30,8 +30,12 @@ def run_daily_batch():
     long_url = None
     try:
         long_url = run_pipeline(video_type="long", custom_topic=today_topic)
+        if not long_url:
+            raise Exception("Long video pipeline returned no URL (upload or render failed).")
     except Exception as e:
         print(f"[Error] Long video failed: {e}")
+        import sys
+        sys.exit(1)
 
     print("\nWaiting 60 seconds before next video...\n")
     time.sleep(60)
@@ -39,9 +43,13 @@ def run_daily_batch():
     # 2. Generate First Short (linked to long video)
     print(f"\n--- Generating Morning Short: {today_topic} ---")
     try:
-        run_pipeline(video_type="short", custom_topic=today_topic, linked_long_video_url=long_url)
+        short1_res = run_pipeline(video_type="short", custom_topic=today_topic, linked_long_video_url=long_url)
+        if not short1_res:
+            raise Exception("Morning short pipeline failed.")
     except Exception as e:
         print(f"[Error] Morning short failed: {e}")
+        import sys
+        sys.exit(1)
 
     print("\nWaiting 60 seconds before next video...\n")
     time.sleep(60)
@@ -49,9 +57,13 @@ def run_daily_batch():
     # 3. Generate Second Short (linked to long video)
     print(f"\n--- Generating Afternoon Short: {today_topic} ---")
     try:
-        run_pipeline(video_type="short", custom_topic=today_topic, linked_long_video_url=long_url)
+        short2_res = run_pipeline(video_type="short", custom_topic=today_topic, linked_long_video_url=long_url)
+        if not short2_res:
+            raise Exception("Afternoon short pipeline failed.")
     except Exception as e:
         print(f"[Error] Afternoon short failed: {e}")
+        import sys
+        sys.exit(1)
         
     print("==================================================")
     print("✅ OmniDaily Daily Batch Completed Successfully!")

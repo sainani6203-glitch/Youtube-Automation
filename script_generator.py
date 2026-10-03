@@ -3,19 +3,24 @@ import json
 import os
 from config import GEMINI_API_KEY
 
+try:
+    from groq import Groq
+    GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+    groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
+except ImportError:
+    GROQ_API_KEY = None
+    groq_client = None
+
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
 
 def generate_video_script(topic: str, video_type: str = "short", language: str = "English", linked_long_video_url: str = None) -> dict:
     """
-    Generates an engaging script, title, description, and keywords for stock search using Gemini.
+    Generates an engaging script, title, description, and keywords for stock search using Groq or Gemini.
     video_type: 'short' or 'long'
     language: target language (e.g. 'English', 'Telugu', 'Hindi')
     linked_long_video_url: optional long video URL to cross-promote in shorts
     """
-    if not GEMINI_API_KEY:
-        raise ValueError("GEMINI_API_KEY is missing in environment variables.")
-
     if video_type == "short":
         cta_instruction = f"5. CRITICAL: The final scene MUST end with a strong Call-to-Action telling viewers to watch the full detailed video on the channel (e.g., in Telugu: 'ఈ రహస్యం వెనుక ఉన్న పూర్తి నిజం తెలుసుకోవాలంటే, మన ఛానెల్‌లో ఉన్న ఫుల్ వీడియో చూడండి!')." if linked_long_video_url else "5. Conclude with a strong CTA to subscribe."
         prompt = f"""
@@ -60,32 +65,56 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         }}
         """
 
-    model_names = [
-        "gemini-flash-latest",
-        "gemini-pro-latest",
-        "gemini-3.1-pro-preview",
-        "gemini-3.5-flash-lite"
-    ]
-    response = None
-    
-    for m_name in model_names:
-        try:
-            model = genai.GenerativeModel(m_name)
-            response = model.generate_content(
-                prompt,
-                generation_config=genai.types.GenerationConfig(max_output_tokens=8192)
-            )
-            if response and response.text:
-                print(f"[Success] Used Gemini model: {m_name}")
-                break
-        except Exception as e:
-            print(f"[Note] Model '{m_name}' skipped ({e})")
-            
-    if not response or not response.text:
-        raise RuntimeError("All Gemini models reached daily quota limit or failed. Please try again later or use another API key.")
+    text_result = None
 
-    text_result = response.text.strip()
-    
+    # Try Groq first if available (bypasses Gemini rate/quota limits)
+    if groq_client:
+        try:
+            print("[Info] Generating script using Groq (openai/gpt-oss-120b)...")
+            completion = groq_client.chat.completions.create(
+                model="openai/gpt-oss-120b",
+                messages=[
+                    {"role": "system", "content": "You are a professional YouTube scriptwriter and JSON generator. Return ONLY valid JSON."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.7,
+                max_tokens=4096
+            )
+            text_result = completion.choices[0].message.content.strip()
+            print("[Success] Generated script via Groq.")
+        except Exception as e:
+            print(f"[Note] Groq generation failed ({e}), falling back to Gemini...")
+
+    # Fallback to Gemini if Groq not available or failed
+    if not text_result:
+        if not GEMINI_API_KEY:
+            raise ValueError("Neither GROQ_API_KEY nor GEMINI_API_KEY is available or working.")
+            
+        model_names = [
+            "gemini-flash-latest",
+            "gemini-pro-latest",
+            "gemini-3.1-pro-preview",
+            "gemini-3.5-flash-lite"
+        ]
+        response = None
+        
+        for m_name in model_names:
+            try:
+                model = genai.GenerativeModel(m_name)
+                response = model.generate_content(
+                    prompt,
+                    generation_config=genai.types.GenerationConfig(max_output_tokens=8192)
+                )
+                if response and response.text:
+                    print(f"[Success] Used Gemini model: {m_name}")
+                    break
+            except Exception as e:
+                print(f"[Note] Model '{m_name}' skipped ({e})")
+                
+        if not response or not response.text:
+            raise RuntimeError("All Gemini and Groq models reached quota limits or failed.")
+        text_result = response.text.strip()
+
     # Clean up markdown code blocks if present
     if text_result.startswith("```json"):
         text_result = text_result[7:]
@@ -96,37 +125,49 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
 
 def generate_fresh_topic(category_prompt: str, language: str = "English") -> str:
     """
-    Generates a unique, fresh, and engaging topic under the given category using Gemini.
+    Generates a unique, fresh, and engaging topic under the given category using Groq or Gemini.
     """
-    if not GEMINI_API_KEY:
-        raise ValueError("GEMINI_API_KEY is missing in environment variables.")
-
     prompt = f"""
     Generate one unique, highly catchy, and viral YouTube video topic under this broad category: "{category_prompt}".
     The topic must be fresh, intriguing, and written entirely in {language}.
     Return ONLY the topic title as a plain string, with no extra formatting, quotes, or markdown.
     """
 
-    model_names = [
-        "gemini-flash-latest",
-        "gemini-pro-latest",
-        "gemini-3.1-pro-preview",
-        "gemini-3.5-flash-lite"
-    ]
-    response = None
-    for m_name in model_names:
-        try:
-            model = genai.GenerativeModel(m_name)
-            response = model.generate_content(prompt)
-            if response and response.text:
-                break
-        except Exception:
-            continue
+    topic_text = None
 
-    if not response or not response.text:
+    if groq_client:
+        try:
+            completion = groq_client.chat.completions.create(
+                model="openai/gpt-oss-120b",
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.8,
+                max_tokens=100
+            )
+            topic_text = completion.choices[0].message.content.strip()
+        except Exception:
+            pass
+
+    if not topic_text and GEMINI_API_KEY:
+        model_names = [
+            "gemini-flash-latest",
+            "gemini-pro-latest",
+            "gemini-3.1-pro-preview",
+            "gemini-3.5-flash-lite"
+        ]
+        for m_name in model_names:
+            try:
+                model = genai.GenerativeModel(m_name)
+                response = model.generate_content(prompt)
+                if response and response.text:
+                    topic_text = response.text.strip()
+                    break
+            except Exception:
+                continue
+
+    if not topic_text:
         return category_prompt  # fallback to category name
         
-    return response.text.strip().replace('"', '')
+    return topic_text.replace('"', '')
 
 if __name__ == "__main__":
     print("Testing Script Generator...")
