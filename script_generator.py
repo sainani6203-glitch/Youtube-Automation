@@ -34,7 +34,7 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         prompt = f"""
         Create a viral, highly engaging YouTube Short script about the topic: "{topic}".
         {angle_instruction}
-        CRITICAL REQUIREMENT FOR TITLE: The title MUST be BILINGUAL in this exact format: "Catchy English Title | Telugu Title #shorts" (e.g., "The Secret Ocean Beneath Mars | అంగారక గ్రహం అడుగున మహాసముద్రం #shorts").
+        CRITICAL REQUIREMENT FOR TITLE: The title MUST be BILINGUAL in this exact format: "Telugu Title | English Title #shorts" (e.g., "అంగారక గ్రహం అడుగున మహాసముద్రం | The Secret Ocean Beneath Mars #shorts").
         The description and script narration text MUST be written entirely in {language}.
         Requirements:
         1. Must have a powerful hook in the first 3 seconds.
@@ -45,7 +45,7 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         
         Return ONLY valid JSON in this exact format:
         {{
-            "title": "English Title | Telugu Title #shorts",
+            "title": "Telugu Title | English Title #shorts",
             "description": "Optimized description with tags",
             "scenes": [
                 {{"text": "Sentence 1...", "visual_keyword": "keyword1"}},
@@ -56,7 +56,7 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
     else:
         prompt = f"""
         Create a comprehensive, highly engaging and deeply detailed 10-12 minute long-form YouTube video script focusing on ONE SINGLE specific topic/mystery: "{topic}" (Do NOT list 5-6 different separate topics; instead, explore this ONE single subject deeply from every angle: its origin, history, deep mysteries, scientific analysis, architectural wonders, and final conclusion).
-        CRITICAL REQUIREMENT FOR TITLE: The title MUST be BILINGUAL in this exact format: "Engaging English Title | Telugu Title" (e.g., "The Deepest Mystery of Ancient India | భారతదేశం యొక్క అంతుచిక్కని రహస్యం").
+        CRITICAL REQUIREMENT FOR TITLE: The title MUST be BILINGUAL in this exact format: "Telugu Title | English Title" (e.g., "భారతదేశం యొక్క అంతుచిక్కని రహస్యం | The Deepest Mystery of Ancient India").
         The description and script narration text MUST be written entirely in {language}.
         Requirements:
         1. Powerful hook and comprehensive introduction to this single subject.
@@ -67,7 +67,7 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         
         Return ONLY valid JSON in this exact format:
         {{
-            "title": "English Title | Telugu Title",
+            "title": "Telugu Title | English Title",
             "description": "Detailed SEO description with timestamps",
             "scenes": [
                 {{"text": "Detailed paragraph 1 with 80-100 words...", "visual_keyword": "keyword1"}},
