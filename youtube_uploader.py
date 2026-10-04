@@ -27,8 +27,17 @@ def get_authenticated_service():
             
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
+            try:
+                creds.refresh(Request())
+            except Exception as e:
+                print(f"[Warning] Failed to refresh OAuth token: {e}")
+                
+        if not creds or not creds.valid:
+            if os.getenv("CI") or os.environ.get("GITHUB_ACTIONS"):
+                raise RuntimeError(
+                    "YouTube OAuth credentials expired or invalid in CI environment. "
+                    "Please regenerate token.pickle locally and update the YOUTUBE_TOKEN_B64 GitHub secret."
+                )
             flow = InstalledAppFlow.from_client_secrets_file(credentials_file, SCOPES)
             creds = flow.run_local_server(port=0)
             
@@ -106,21 +115,39 @@ def upload_caption(video_id: str, srt_path: str, language_code: str = "en"):
 
 def upload_thumbnail(video_id: str, thumbnail_path: str):
     """
-    Uploads a custom thumbnail image to a YouTube video.
+    Uploads a custom thumbnail image to a YouTube video with retry logic and detailed error reporting.
     """
     if not thumbnail_path or not os.path.exists(thumbnail_path):
+        print(f"[Warning] Thumbnail path not found: {thumbnail_path}")
         return
     print(f"🖼️ Uploading custom thumbnail for video {video_id}...")
+    
     try:
         youtube = get_authenticated_service()
-        media = MediaFileUpload(thumbnail_path, mimetype='image/jpeg')
-        youtube.thumbnails().set(
-            videoId=video_id,
-            media_body=media
-        ).execute()
-        print(f"[Success] Thumbnail uploaded successfully!")
+        media = MediaFileUpload(thumbnail_path, mimetype='image/jpeg', resumable=True)
+        
+        import time
+        from googleapiclient.errors import HttpError
+        for attempt in range(3):
+            try:
+                youtube.thumbnails().set(
+                    videoId=video_id,
+                    media_body=media
+                ).execute()
+                print(f"[Success] Thumbnail uploaded successfully!")
+                return
+            except HttpError as he:
+                print(f"[Warning] Thumbnail upload HTTP error (attempt {attempt + 1}): {he.resp.status} - {he.content.decode('utf-8', errors='ignore')}")
+                if attempt < 2:
+                    print("⏳ Waiting 10 seconds before retrying thumbnail upload...")
+                    time.sleep(10)
+            except Exception as e:
+                print(f"[Warning] Thumbnail upload error (attempt {attempt + 1}): {e}")
+                if attempt < 2:
+                    print("⏳ Waiting 10 seconds before retrying thumbnail upload...")
+                    time.sleep(10)
     except Exception as e:
-        print(f"[Warning] Could not upload thumbnail: {e}")
+        print(f"[Warning] Could not initialize thumbnail upload: {e}")
 
 def add_video_to_playlist(video_id: str, playlist_id: str):
     """

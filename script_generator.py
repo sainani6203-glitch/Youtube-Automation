@@ -89,13 +89,26 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.7,
-                max_tokens=4096
+                max_tokens=8192
             )
             text_result = completion.choices[0].message.content.strip()
             print("[Success] Generated script via Groq.")
+
+            # Test parsing JSON to ensure it wasn't truncated
+            try:
+                cleaned = text_result
+                if cleaned.startswith("```json"):
+                    cleaned = cleaned[7:]
+                if cleaned.endswith("```"):
+                    cleaned = cleaned[:-3]
+                parsed = json.loads(cleaned.strip())
+                return parsed
+            except json.JSONDecodeError as jde:
+                print(f"[Warning] Groq JSON output was truncated/invalid ({jde}), falling back to Gemini...")
+                text_result = None
         except Exception as e:
             print(f"[Note] Groq generation failed ({e}), falling back to Gemini...")
-
+            text_result = None
     # Fallback to Gemini if Groq not available or failed
     if not text_result:
         if not GEMINI_API_KEY:

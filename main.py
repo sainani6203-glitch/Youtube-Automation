@@ -166,8 +166,8 @@ def run_pipeline(video_type: str = "short", custom_topic: str = None, language: 
             thumb_path = None
             if video_id and video_type == "long":
                 import time
-                print("⏳ Waiting 5 seconds for video processing before uploading thumbnail...")
-                time.sleep(5)
+                print("⏳ Waiting 15 seconds for video processing before uploading thumbnail...")
+                time.sleep(15)
                 thumb_path = generate_thumbnail(script_data.get("title"))
                 upload_thumbnail(video_id, thumb_path)
 
