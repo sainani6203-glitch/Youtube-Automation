@@ -34,7 +34,7 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         prompt = f"""
         Create a viral, highly engaging YouTube Short script about the topic: "{topic}".
         {angle_instruction}
-        CRITICAL REQUIREMENT FOR TITLE: The title MUST be BILINGUAL in this exact format: "Telugu Title | English Title #shorts" (e.g., "అంగారక గ్రహం అడుగున మహాసముద్రం | The Secret Ocean Beneath Mars #shorts").
+        CRITICAL REQUIREMENT FOR TITLE: The title MUST be BILINGUAL in this exact format: "Telugu Title | English Title #shorts". MAXIMUM length 90 characters total.
         The description and script narration text MUST be written entirely in {language}.
         Requirements:
         1. Must have a powerful hook in the first 3 seconds.
@@ -56,7 +56,7 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
     else:
         prompt = f"""
         Create a comprehensive, highly engaging and deeply detailed 10-12 minute long-form YouTube video script focusing on ONE SINGLE specific topic/mystery: "{topic}" (Do NOT list 5-6 different separate topics; instead, explore this ONE single subject deeply from every angle: its origin, history, deep mysteries, scientific analysis, architectural wonders, and final conclusion).
-        CRITICAL REQUIREMENT FOR TITLE: The title MUST be BILINGUAL in this exact format: "Telugu Title | English Title" (e.g., "భారతదేశం యొక్క అంతుచిక్కని రహస్యం | The Deepest Mystery of Ancient India").
+        CRITICAL REQUIREMENT FOR TITLE: The title MUST be BILINGUAL in this exact format: "Telugu Title | English Title". MAXIMUM length 90 characters total.
         The description and script narration text MUST be written entirely in {language}.
         Requirements:
         1. Powerful hook and comprehensive introduction to this single subject.

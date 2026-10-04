@@ -52,6 +52,14 @@ def upload_video_to_youtube(video_path: str, title: str, description: str, tags:
     category_id '27' = Education, '28' = Science & Technology
     privacy_status: 'public', 'private', or 'unlisted'
     """
+    if not title or not title.strip():
+        title = "Incredible Mystery & Science Facts #shorts"
+    
+    # YouTube video title maximum character limit is 100 characters
+    if len(title) > 100:
+        print(f"[Warning] Title length is {len(title)} chars (exceeds YouTube 100-char limit). Truncating...")
+        title = title[:97] + "..."
+
     print(f"📤 Uploading '{title}' to YouTube...")
     youtube = get_authenticated_service()
     
