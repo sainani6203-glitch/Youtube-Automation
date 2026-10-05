@@ -2,7 +2,7 @@ import os
 from moviepy import VideoFileClip, AudioFileClip, TextClip, CompositeVideoClip, ColorClip, concatenate_videoclips, AudioClip, concatenate_audioclips, CompositeAudioClip
 from config import ASSETS_DIR
 
-def render_video(audio_path: str, video_clips_paths: list, output_path: str, video_type: str = "short", title_text: str = ""):
+def render_video(audio_path: str, video_clips_paths: list, output_path: str, video_type: str = "short", title_text: str = "", category: str = ""):
     """
     Renders the final video by combining audio voiceover, stock video clips, captions, intro, and outro.
     video_type: 'short' (9:16 vertical, 1080x1920) or 'long' (16:9 horizontal, 1920x1080)
@@ -153,8 +153,19 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
         except Exception as e:
             print(f"[Note] TextClip skipped: {e}")
 
-    # 7. Check for background music in assets/bgm.mp3 and mix
-    bgm_path = os.path.join(ASSETS_DIR, "bgm.mp3")
+    # 7. Select category-matched background music from assets/
+    bgm_filename = "bgm.mp3"
+    if "Dark Psychology" in category:
+        bgm_filename = "bgm_dark_psychology.mp3"
+    elif "Ancient Indian" in category:
+        bgm_filename = "bgm_ancient_mysteries.mp3"
+    elif "Incredible Science" in category:
+        bgm_filename = "bgm_science_space.mp3"
+        
+    bgm_path = os.path.join(ASSETS_DIR, bgm_filename)
+    if not os.path.exists(bgm_path):
+        bgm_path = os.path.join(ASSETS_DIR, "bgm.mp3")
+
     final_audio = final_audio_voice
     bgm_clip = None
     if os.path.exists(bgm_path):

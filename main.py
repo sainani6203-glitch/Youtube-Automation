@@ -48,12 +48,13 @@ def run_pipeline(video_type: str = "short", custom_topic: str = None, language: 
     print(f"🚀 Starting YouTube Automation Pipeline ({video_type.upper()} | {language})")
     print("==================================================")
     
+    weekday = datetime.datetime.now().weekday()
+    category_theme = TOPIC_SCHEDULE.get(weekday, "Incredible Mysteries and Science Facts")
+
     # 1. Determine Topic based on Day of Week or Custom Topic
     if custom_topic:
         topic = custom_topic
     else:
-        weekday = datetime.datetime.now().weekday()
-        category_theme = TOPIC_SCHEDULE.get(weekday, "Incredible Mysteries and Science Facts")
         print(f"📂 Today's Category: {category_theme}")
         try:
             topic = generate_fresh_topic(category_theme, language)
@@ -128,7 +129,8 @@ def run_pipeline(video_type: str = "short", custom_topic: str = None, language: 
             video_clips_paths=video_clips_paths,
             output_path=final_video_path,
             video_type=video_type,
-            title_text=script_data.get("title")
+            title_text=script_data.get("title"),
+            category=category_theme
         )
         print("==================================================")
         print(f"✅ Video rendered successfully!")
