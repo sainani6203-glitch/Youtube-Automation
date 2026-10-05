@@ -2,7 +2,7 @@ name: Daily YouTube Automation
 
 on:
   schedule:
-    - cron: '37 11 * * *'  # Runs daily at 5:07 PM IST (11:37 UTC)
+    - cron: '0 10 * * *'  # Runs daily at 3:30 PM IST (10:00 UTC)
   workflow_dispatch: # Allows manual trigger from GitHub anytime
 
 jobs:

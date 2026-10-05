@@ -28,19 +28,25 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         angle_instruction = ""
         if short_angle == "shocking_fact":
             angle_instruction = "Focus specifically on the most surprising, shocking, or mind-boggling hook/fact of this topic."
+        elif short_angle == "hidden_truth":
+            angle_instruction = "Focus specifically on the mysterious background, hidden truth, or scientific conclusion of this topic."
+        elif short_angle == "unsolved_mystery":
+            angle_instruction = "Focus specifically on the unresolved mystery, missing evidence, or unanswered question surrounding this topic."
+        elif short_angle == "bizarre_experiment":
+            angle_instruction = "Focus specifically on a bizarre experiment, historical anomaly, or strange event related to this topic."
         else:
-            angle_instruction = "Focus specifically on the mysterious background, hidden truth, or scientific conclusion of this topic (different from a general intro)."
+            angle_instruction = "Focus on a fascinating, lesser-known scientific paradox or mind-bending perspective of this topic."
 
         prompt = f"""
-        Create a viral, highly engaging YouTube Short script about the topic: "{topic}".
+        Create a viral, high-retention YouTube Short script about the topic: "{topic}".
         {angle_instruction}
         CRITICAL REQUIREMENT FOR TITLE: The title MUST be BILINGUAL in this exact format: "Telugu Title | English Title #shorts". MAXIMUM length 90 characters total.
         The description and script narration text MUST be written entirely in {language}.
         Requirements:
-        1. Must have a powerful hook in the first 3 seconds.
-        2. Keep the total length around 100-140 words (approx 40-50 seconds when spoken).
-        3. Break the script into 3-4 visual scenes/sentences.
-        4. For each scene, provide a short visual keyword search term IN ENGLISH (e.g., "person typing fast", " glowing brain") to find stock footage on Pexels.
+        1. FIRST 3 SECONDS HOOK: Must start with a powerful psychological hook using a Pattern Interrupt, Curiosity Gap, or Shocking Revelation (e.g., "Stop scrolling—what you are looking at shouldn't exist.").
+        2. FAST PACING & LENGTH: Keep total length around 120-150 words (approx 40-50 seconds when spoken).
+        3. 8-12 VISUAL SCENES: Break the script into 8 to 12 short, punchy sentences/scenes so that each visual clip stays on screen for only 3-4 seconds before cutting to the next.
+        4. STOCK FOOTAGE KEYWORDS: For each scene, provide a distinct, dynamic visual keyword search term IN ENGLISH (e.g., "glowing ancient artifact closeup", "mysterious dark forest drone shot", "futuristic laboratory digital display") to fetch high-impact stock footage on Pexels.
         {cta_instruction}
         
         Return ONLY valid JSON in this exact format:
@@ -48,8 +54,14 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
             "title": "Telugu Title | English Title #shorts",
             "description": "Optimized description with tags",
             "scenes": [
-                {{"text": "Sentence 1...", "visual_keyword": "keyword1"}},
-                {{"text": "Sentence 2...", "visual_keyword": "keyword2"}}
+                {{"text": "Hook sentence 1...", "visual_keyword": "keyword1"}},
+                {{"text": "Sentence 2...", "visual_keyword": "keyword2"}},
+                {{"text": "Sentence 3...", "visual_keyword": "keyword3"}},
+                {{"text": "Sentence 4...", "visual_keyword": "keyword4"}},
+                {{"text": "Sentence 5...", "visual_keyword": "keyword5"}},
+                {{"text": "Sentence 6...", "visual_keyword": "keyword6"}},
+                {{"text": "Sentence 7...", "visual_keyword": "keyword7"}},
+                {{"text": "Sentence 8...", "visual_keyword": "keyword8"}}
             ]
         }}
         """
