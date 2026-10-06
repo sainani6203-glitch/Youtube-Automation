@@ -7,7 +7,10 @@ from googleapiclient.http import MediaFileUpload
 from config import BASE_DIR
 
 # Scope required for uploading videos, captions, and managing playlists on YouTube
-SCOPES = ["https://www.googleapis.com/auth/youtube"]
+SCOPES = [
+    "https://www.googleapis.com/auth/youtube",
+    "https://www.googleapis.com/auth/youtube.force-ssl"
+]
 
 def get_authenticated_service():
     """Authenticates and returns the YouTube API service client using OAuth2."""
