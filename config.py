@@ -33,6 +33,6 @@ TOPIC_SCHEDULE = {
 # YouTube Playlist IDs (Replace with your actual playlist IDs from YouTube)
 CATEGORY_PLAYLISTS = {
     "Dark Psychology & Human Behavior": "REPLACE_WITH_PLAYLIST_ID_1",
-    "Ancient Indian Mysteries": "REPLACE_WITH_PLAYLIST_ID_2",
+    "Ancient Indian Mysteries": "PLLuMRvtViNgY",
     "Incredible Science & Space Secrets": "REPLACE_WITH_PLAYLIST_ID_3",
 }
