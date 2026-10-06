@@ -43,6 +43,7 @@ jobs:
     - name: Run Daily Batch Pipeline
       env:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
         AUTOMATION_MODE: "fully-automated"
       run: |
