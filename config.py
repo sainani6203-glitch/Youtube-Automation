@@ -34,5 +34,5 @@ TOPIC_SCHEDULE = {
 CATEGORY_PLAYLISTS = {
     "Dark Psychology & Human Behavior": "PLcK6it6l0tfc",
     "Ancient Indian Mysteries": "PLLuMRvtViNgY",
-    "Incredible Science & Space Secrets": "REPLACE_WITH_PLAYLIST_ID_3",
+    "Incredible Science & Space Secrets": "PLY8JQleszkVY",
 }
