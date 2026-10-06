@@ -7,7 +7,7 @@ from config import TOPIC_SCHEDULE, DEFAULT_LANGUAGE
 
 def run_daily_batch():
     print("==================================================")
-    print("🌟 Starting OmniDaily 5-Shorts & Long Daily Batch")
+    print(f"🌟 Starting OmniDaily 5-Shorts & Long Daily Batch ({DEFAULT_LANGUAGE})")
     print("==================================================")
 
     # Ensure default BGM exists
@@ -29,7 +29,7 @@ def run_daily_batch():
     print(f"\n--- Generating Daily Long Video: {today_topic} ---")
     long_url = None
     try:
-        long_url = run_pipeline(video_type="long", custom_topic=today_topic)
+        long_url = run_pipeline(video_type="long", custom_topic=today_topic, language=DEFAULT_LANGUAGE)
         if not long_url:
             raise Exception("Long video pipeline returned no URL (upload or render failed).")
         print(f"[Success] Long video published successfully: {long_url}")
@@ -60,6 +60,7 @@ def run_daily_batch():
             short_res = run_pipeline(
                 video_type="short",
                 custom_topic=today_topic,
+                language=DEFAULT_LANGUAGE,
                 linked_long_video_url=long_url,
                 short_angle=angle
             )
