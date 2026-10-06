@@ -105,8 +105,8 @@ def generate_thumbnail(title: str, category: str = "", output_path: str = None) 
     for fpath in font_paths:
         if os.path.exists(fpath):
             try:
-                font = ImageFont.truetype(fpath, 75)
-                small_font = ImageFont.truetype(fpath, 42)
+                font = ImageFont.truetype(fpath, 100)
+                small_font = ImageFont.truetype(fpath, 50)
                 break
             except Exception:
                 continue
@@ -119,25 +119,25 @@ def generate_thumbnail(title: str, category: str = "", output_path: str = None) 
     lines = []
     curr = ""
     for w in words:
-        if len(curr + " " + w) < 18:
+        if len(curr + " " + w) < 16:
             curr += (" " + w) if curr else w
         else:
             lines.append(curr); curr = w
     if curr: lines.append(curr)
 
-    y_text = 200
+    y_text = 180
     for i, line in enumerate(lines[:3]):
         bbox = draw.textbbox((80, y_text), line, font=font)
-        card_box = [bbox[0]-16, bbox[1]-10, bbox[2]+16, bbox[3]+10]
+        card_box = [bbox[0]-18, bbox[1]-12, bbox[2]+18, bbox[3]+12]
         draw.rectangle(card_box, fill=(15, 23, 42))
         
         # Category Color Accent Line on the first card
         if i == 0:
-            draw.rectangle([card_box[0], card_box[1], card_box[0]+12, card_box[3]], fill=primary_color)
+            draw.rectangle([card_box[0], card_box[1], card_box[0]+14, card_box[3]], fill=primary_color)
 
         color = primary_color if i == 0 else (255, 255, 255)
         draw.text((80, y_text), line, fill=color, font=font)
-        y_text += 105
+        y_text += 130
         
     # Bottom Badge
     badge_text = "🔥 100% UNTOLD TRUTH"
