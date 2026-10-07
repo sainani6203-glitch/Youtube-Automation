@@ -6,16 +6,58 @@ from config import READY_TO_REVIEW_DIR, PEXELS_API_KEY
 
 def generate_thumbnail(title: str, category: str = "", output_path: str = None) -> str:
     """
-    Generates a high-CTR 1280x720 YouTube cinematic thumbnail featuring:
-    1. Topic-relevant stock photo from Pexels.
-    2. Category-matched dynamic colors for primary hook text.
-    3. Solid dark backing cards for 100% crystal-clear readability.
+    Generates or downloads a high-CTR 1280x720 YouTube cinematic thumbnail.
+    If title is a YouTube URL or video ID, fetches the official YouTube thumbnail directly.
+    Otherwise, generates a cinematic Pexels stock photo thumbnail with high-visibility text.
     """
     if not output_path:
         output_path = os.path.join(READY_TO_REVIEW_DIR, "thumbnail.jpg")
         
     width, height = 1280, 720
     base_image = None
+
+    # Check if title is a YouTube URL or Video ID
+    yt_video_id = None
+    if "youtu.be/" in title:
+        yt_video_id = title.split("youtu.be/")[-1].split("?")[0].strip()
+    elif "youtube.com/watch" in title and "v=" in title:
+        import urllib.parse
+        parsed_url = urllib.parse.urlparse(title)
+        query_params = urllib.parse.parse_qs(parsed_url.query)
+        if "v" in query_params:
+            yt_video_id = query_params["v"][0]
+    elif len(title) == 11 and ("http" not in title and " " not in title):
+        # Direct video ID
+        yt_video_id = title
+
+    if yt_video_id:
+        print(f"📥 Detected YouTube video ID/URL: '{yt_video_id}'. Fetching official YouTube thumbnail and video title...")
+        try:
+            watch_url = f"https://www.youtube.com/watch?v={yt_video_id}"
+            headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+            w_resp = requests.get(watch_url, headers=headers, timeout=5)
+            if w_resp.status_code == 200:
+                import re
+                match = re.search(r'<title>(.*?)</title>', w_resp.text)
+                if match:
+                    raw_title = match.group(1)
+                    if raw_title.endswith(" - YouTube"):
+                        raw_title = raw_title[:-10]
+                    title = raw_title.strip()
+                    print(f"   -> Fetched YouTube Video Title: '{title}'")
+        except Exception as e:
+            print(f"[Warning] Could not fetch video title from YouTube: {e}")
+
+        for res_quality in ["maxresdefault.jpg", "sddefault.jpg", "hqdefault.jpg"]:
+            yt_thumb_url = f"https://img.youtube.com/vi/{yt_video_id}/{res_quality}"
+            try:
+                resp = requests.get(yt_thumb_url)
+                if resp.status_code == 200 and len(resp.content) > 5000:
+                    base_image = Image.open(BytesIO(resp.content)).convert("RGB")
+                    print(f"[Success] Official YouTube thumbnail loaded as base image for enhancement.")
+                    break
+            except Exception as e:
+                print(f"[Note] Failed fetching {res_quality}: {e}")
 
     # Determine Category-based Color Palette
     # Default: Gold/Yellow
@@ -28,19 +70,35 @@ def generate_thumbnail(title: str, category: str = "", output_path: str = None) 
     elif "Incredible Science" in category:
         primary_color = (56, 189, 248)  # Electric Blue
 
-    # Extract English keywords from bilingual title
+    # Extract English keywords or generate powerful punchy hook
     search_query = title
-    display_text = "TOP SECRET"
+    display_text = "SECRET REVEALED"
+    
     if "|" in title:
         parts = title.split("|")
         if len(parts) > 1:
             eng_part = parts[1].strip().split("#")[0].strip()
             search_query = eng_part
-            words = eng_part.upper().split()
-            display_text = " ".join(words[:4])
+            words = [w for w in eng_part.upper().split() if all(ord(c) < 128 for c in w)]
+            if words:
+                display_text = " ".join(words[:4])
+    else:
+        english_words = [w for w in title.upper().split() if all(ord(c) < 128 for c in w)]
+        if len(english_words) >= 2:
+            display_text = " ".join(english_words[:4])
+            
+    if not display_text or len(display_text) < 3:
+        if "Dark Psychology" in category:
+            display_text = "DARK SECRET"
+        elif "Ancient Indian" in category:
+            display_text = "ANCIENT MYSTERY"
+        elif "Incredible Science" in category:
+            display_text = "MIND BLOWING"
+        else:
+            display_text = "UNTOLD TRUTH"
 
     print(f"🔍 Thumbnail Search Query: '{search_query}'")
-    print(f"🏷️ Category: '{category}' -> Using Primary Color: {primary_color}")
+    print(f"🏷️ Category: '{category}' -> Using Primary Color: {primary_color} | Display Text: '{display_text}'")
 
     # 1. Fetch Stock Photo from Pexels
     if PEXELS_API_KEY and PEXELS_API_KEY != "your_pexels_api_key_here":
@@ -81,10 +139,10 @@ def generate_thumbnail(title: str, category: str = "", output_path: str = None) 
         top = (new_h - height) // 2
         base_image = base_image.crop((0, top, width, top + height))
 
-    # 3. Cinematic Color Grading
-    base_image = ImageEnhance.Contrast(base_image).enhance(1.25)
+    # 3. Cinematic Color Grading (Darker overlay for maximum text contrast)
+    base_image = ImageEnhance.Contrast(base_image).enhance(1.3)
     base_image = ImageEnhance.Color(base_image).enhance(1.2)
-    overlay = Image.new("RGBA", (width, height), (0, 0, 0, 130))
+    overlay = Image.new("RGBA", (width, height), (0, 0, 0, 160))
     base_image = base_image.convert("RGBA")
     base_image = Image.alpha_composite(base_image, overlay).convert("RGB")
 
@@ -94,10 +152,12 @@ def generate_thumbnail(title: str, category: str = "", output_path: str = None) 
     draw.rectangle([0, 0, width, 18], fill=(220, 38, 38))
     draw.rectangle([0, height-18, width, height], fill=(37, 99, 235))
 
-    # 4. Load Fonts
+    # 4. Load Fonts (Impact, Nirmala UI, or Arial Black for maximum boldness)
     font = None
     small_font = None
     font_paths = [
+        os.path.join(os.environ.get('WINDIR', 'C:\\Windows'), 'Fonts', 'nirmala.ttf'),
+        os.path.join(os.environ.get('WINDIR', 'C:\\Windows'), 'Fonts', 'gautami.ttf'),
         os.path.join(os.environ.get('WINDIR', 'C:\\Windows'), 'Fonts', 'impact.ttf'),
         os.path.join(os.environ.get('WINDIR', 'C:\\Windows'), 'Fonts', 'arialbd.ttf'),
         "arial.ttf"
@@ -105,8 +165,8 @@ def generate_thumbnail(title: str, category: str = "", output_path: str = None) 
     for fpath in font_paths:
         if os.path.exists(fpath):
             try:
-                font = ImageFont.truetype(fpath, 100)
-                small_font = ImageFont.truetype(fpath, 50)
+                font = ImageFont.truetype(fpath, 145)
+                small_font = ImageFont.truetype(fpath, 65)
                 break
             except Exception:
                 continue
@@ -114,36 +174,49 @@ def generate_thumbnail(title: str, category: str = "", output_path: str = None) 
         font = ImageFont.load_default()
         small_font = ImageFont.load_default()
 
-    # 5. Draw Text with Solid Backing Cards
+    # 5. Draw High-Visibility Text with Solid Dark Backing Cards & Outlines
     words = display_text.split()
     lines = []
     curr = ""
     for w in words:
-        if len(curr + " " + w) < 16:
+        if len(curr + " " + w) < 15:
             curr += (" " + w) if curr else w
         else:
             lines.append(curr); curr = w
     if curr: lines.append(curr)
 
-    y_text = 180
+    y_text = 140
     for i, line in enumerate(lines[:3]):
         bbox = draw.textbbox((80, y_text), line, font=font)
-        card_box = [bbox[0]-18, bbox[1]-12, bbox[2]+18, bbox[3]+12]
-        draw.rectangle(card_box, fill=(15, 23, 42))
+        card_box = [bbox[0]-22, bbox[1]-14, bbox[2]+22, bbox[3]+14]
+        
+        # Solid dark backing card for 100% crystal-clear readability
+        draw.rectangle(card_box, fill=(10, 15, 25))
         
         # Category Color Accent Line on the first card
         if i == 0:
-            draw.rectangle([card_box[0], card_box[1], card_box[0]+14, card_box[3]], fill=primary_color)
+            draw.rectangle([card_box[0], card_box[1], card_box[0]+18, card_box[3]], fill=primary_color)
 
         color = primary_color if i == 0 else (255, 255, 255)
+        
+        # Draw thick black outline / drop shadow for maximum punch
+        for ox in [-4, 0, 4]:
+            for oy in [-4, 0, 4]:
+                if ox != 0 or oy != 0:
+                    draw.text((80 + ox, y_text + oy), line, fill=(0, 0, 0), font=font)
+                    
+        # Draw main text
         draw.text((80, y_text), line, fill=color, font=font)
-        y_text += 130
+        y_text += 165
         
     # Bottom Badge
     badge_text = "🔥 100% UNTOLD TRUTH"
-    bbox_b = draw.textbbox((80, 560), badge_text, font=small_font)
-    draw.rectangle([bbox_b[0]-12, bbox_b[1]-8, bbox_b[2]+12, bbox_b[3]+8], fill=(0, 0, 0))
-    draw.text((80, 560), badge_text, fill=primary_color, font=small_font)
+    bbox_b = draw.textbbox((80, 570), badge_text, font=small_font)
+    draw.rectangle([bbox_b[0]-14, bbox_b[1]-10, bbox_b[2]+14, bbox_b[3]+10], fill=(0, 0, 0))
+    for ox in [-2, 2]:
+        for oy in [-2, 2]:
+            draw.text((80 + ox, 570 + oy), badge_text, fill=(0, 0, 0), font=small_font)
+    draw.text((80, 570), badge_text, fill=primary_color, font=small_font)
 
     base_image.save(output_path, "JPEG", quality=95)
     print(f"[Success] Category-Matched thumbnail generated at: {output_path}")

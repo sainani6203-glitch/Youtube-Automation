@@ -14,6 +14,9 @@ except ImportError:
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
 
+def has_telugu_chars(text: str) -> bool:
+    return any('\u0C00' <= c <= '\u0C7F' for c in text)
+
 def generate_video_script(topic: str, video_type: str = "short", language: str = "English", linked_long_video_url: str = None, short_angle: str = "shocking_fact") -> dict:
     """
     Generates an engaging script, title, description, and keywords for stock search using Groq or Gemini.
@@ -40,7 +43,7 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         prompt = f"""
         Create a viral, high-retention YouTube Short script about the topic: "{topic}".
         {angle_instruction}
-        CRITICAL REQUIREMENT FOR TITLE: The title MUST be BILINGUAL in this exact format: "Telugu Title | English Title #shorts". MAXIMUM length 90 characters total.
+        CRITICAL MANDATE FOR TITLE: The title MUST be strictly BILINGUAL in this exact format: "[Authentic Telugu Title in Telugu Script] | [English Title] #shorts". The left side MUST be written in genuine Telugu script (తెలుగు లిపి). Maximum 90 characters total.
         The description and script narration text MUST be written entirely in {language}.
         Requirements:
         1. FIRST 3 SECONDS HOOK: Start directly with a mind-blowing question, shocking fact, or captivating mystery about the topic itself. CRITICAL: DO NOT use annoying command words like "agu", "apu", "stop scrolling", or telling viewers to stop/wait. Jump straight into the fascinating fact or secret in {language}.
@@ -51,7 +54,7 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         
         Return ONLY valid JSON in this exact format:
         {{
-            "title": "Telugu Title | English Title #shorts",
+            "title": "తెలుగు శీర్షిక | English Title #shorts",
             "description": "Optimized description with tags",
             "scenes": [
                 {{"text": "Hook sentence 1...", "visual_keyword": "keyword1"}},
@@ -68,7 +71,7 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
     else:
         prompt = f"""
         Create a comprehensive, highly engaging and deeply detailed 10-12 minute long-form YouTube video script focusing on ONE SINGLE specific topic/mystery: "{topic}" (Do NOT list 5-6 different separate topics; instead, explore this ONE single subject deeply from every angle: its origin, history, deep mysteries, scientific analysis, architectural wonders, and final conclusion).
-        CRITICAL REQUIREMENT FOR TITLE: The title MUST be BILINGUAL in this exact format: "Telugu Title | English Title". MAXIMUM length 90 characters total.
+        CRITICAL MANDATE FOR TITLE: The title MUST be strictly BILINGUAL in this exact format: "[Authentic Telugu Title in Telugu Script] | [English Title]". The left side MUST be written in genuine Telugu script (తెలుగు లిపి). Maximum 90 characters total.
         The description and script narration text MUST be written entirely in {language}.
         Requirements:
         1. Powerful hook and comprehensive introduction to this single subject.
@@ -79,7 +82,7 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         
         Return ONLY valid JSON in this exact format:
         {{
-            "title": "Telugu Title | English Title",
+            "title": "తెలుగు శీర్షిక | English Title",
             "description": "Detailed SEO description with timestamps",
             "scenes": [
                 {{"text": "Detailed paragraph 1 with 80-100 words...", "visual_keyword": "keyword1"}},
