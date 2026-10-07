@@ -81,11 +81,11 @@ def generate_thumbnail(title: str, category: str = "", output_path: str = None) 
             search_query = eng_part
             words = [w for w in eng_part.upper().split() if all(ord(c) < 128 for c in w)]
             if words:
-                display_text = " ".join(words[:4])
+                display_text = " ".join(words[:3])
     else:
         english_words = [w for w in title.upper().split() if all(ord(c) < 128 for c in w)]
         if len(english_words) >= 2:
-            display_text = " ".join(english_words[:4])
+            display_text = " ".join(english_words[:3])
             
     if not display_text or len(display_text) < 3:
         if "Dark Psychology" in category:
@@ -165,7 +165,7 @@ def generate_thumbnail(title: str, category: str = "", output_path: str = None) 
     for fpath in font_paths:
         if os.path.exists(fpath):
             try:
-                font = ImageFont.truetype(fpath, 145)
+                font = ImageFont.truetype(fpath, 175)
                 small_font = ImageFont.truetype(fpath, 65)
                 break
             except Exception:
