@@ -23,19 +23,19 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
     short_angle: angle/focus for shorts ('shocking_fact' or 'hidden_truth') to ensure variety between daily shorts
     """
     if video_type == "short":
-        cta_instruction = f"5. CRITICAL: The final scene MUST end with a strong Call-to-Action telling viewers to watch the full detailed video on the channel (e.g., in Telugu: 'ఈ రహస్యం వెనుక ఉన్న పూర్తి నిజం తెలుసుకోవాలంటే, మన ఛానెల్‌లో ఉన్న ఫుల్ వీడియో చూడండి!')." if linked_long_video_url else "5. Conclude with a strong CTA to subscribe."
+        cta_instruction = f"5. CRITICAL: The final scene MUST end with a strong Call-to-Action telling viewers to SUBSCRIBE to the channel and turn on the notification bell to discover more such facts, and also watch the full detailed video on the channel (e.g., in Telugu: 'ఇలాంటి అంతుచిక్కని రహస్యాలు మరిన్ని తెలుసుకోవడానికి మన ఛానెల్‌ని సబ్‌స్క్రైబ్ చేసుకొని బెల్ ఐకాన్ ఆన్ చేసుకోండి, మరియు పూర్తి వివరాల కోసం ఫుల్ వీడియో చూడండి!')." if linked_long_video_url else "5. Conclude with a strong CTA to subscribe, like, and turn on the notification bell."
         
         angle_instruction = ""
         if short_angle == "shocking_fact":
-            angle_instruction = "Focus specifically on the most surprising, shocking, or mind-boggling hook/fact of this topic."
+            angle_instruction = "Focus specifically on ONE unique, surprising, shocking, or mind-boggling sub-fact of this topic (Do NOT give a general summary; dive into one specific startling detail)."
         elif short_angle == "hidden_truth":
-            angle_instruction = "Focus specifically on the mysterious background, hidden truth, or scientific conclusion of this topic."
+            angle_instruction = "Focus specifically on ONE unique mysterious background, hidden truth, or lesser-known origin story related to this topic."
         elif short_angle == "unsolved_mystery":
-            angle_instruction = "Focus specifically on the unresolved mystery, missing evidence, or unanswered question surrounding this topic."
+            angle_instruction = "Focus specifically on ONE unique unresolved mystery, missing evidence, or baffling unanswered question within this topic."
         elif short_angle == "bizarre_experiment":
-            angle_instruction = "Focus specifically on a bizarre experiment, historical anomaly, or strange event related to this topic."
+            angle_instruction = "Focus specifically on ONE unique bizarre experiment, historical anomaly, or strange event related to this topic."
         else:
-            angle_instruction = "Focus on a fascinating, lesser-known scientific paradox or mind-bending perspective of this topic."
+            angle_instruction = "Focus on ONE unique, fascinating scientific paradox, strange phenomenon, or mind-bending perspective of this topic."
 
         prompt = f"""
         Create a viral, high-retention YouTube Short script about the topic: "{topic}".
@@ -43,7 +43,7 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         CRITICAL REQUIREMENT FOR TITLE: The title MUST be BILINGUAL in this exact format: "Telugu Title | English Title #shorts". MAXIMUM length 90 characters total.
         The description and script narration text MUST be written entirely in {language}.
         Requirements:
-        1. FIRST 3 SECONDS HOOK: Must start with a powerful psychological hook using a Pattern Interrupt, Curiosity Gap, or Shocking Revelation (e.g., "Stop scrolling—what you are looking at shouldn't exist.").
+        1. FIRST 3 SECONDS HOOK: Start directly with a mind-blowing question, shocking fact, or captivating mystery about the topic itself. CRITICAL: DO NOT use annoying command words like "agu", "apu", "stop scrolling", or telling viewers to stop/wait. Jump straight into the fascinating fact or secret in {language}.
         2. FAST PACING & LENGTH: Keep total length around 120-150 words (approx 40-50 seconds when spoken).
         3. 8-12 VISUAL SCENES: Break the script into 8 to 12 short, punchy sentences/scenes so that each visual clip stays on screen for only 3-4 seconds before cutting to the next.
         4. STOCK FOOTAGE KEYWORDS: For each scene, provide a distinct, dynamic visual keyword search term IN ENGLISH (e.g., "glowing ancient artifact closeup", "mysterious dark forest drone shot", "futuristic laboratory digital display") to fetch high-impact stock footage on Pexels.
@@ -73,7 +73,7 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         Requirements:
         1. Powerful hook and comprehensive introduction to this single subject.
         2. Narrative depth exploring various chapters/aspects of this ONE topic in detail.
-        3. Strong conclusion and call-to-action to subscribe.
+        3. Strong conclusion and a powerful Call-to-Action telling viewers to LIKE, SHARE, and SUBSCRIBE to the channel (e.g., in Telugu: 'ఈ వీడియో మీకు నచ్చితే తప్పకుండా లైక్ చేయండి, షేర్ చేయండి, మరియు ఇలాంటి మరిన్ని రహస్యాలు తెలుసుకోవడానికి మన ఛానెల్‌ని సబ్‌స్క్రైబ్ చేసుకోండి!').
         4. CRITICAL: Each scene in the "scenes" array MUST contain a detailed, rich paragraph of at least 80-100 words of narration, so that when combined across 18-22 scenes, the total word count is between 1500-1800 words (approx 10-12 minutes when spoken).
         5. For each scene, provide a specific visual keyword search term IN ENGLISH for stock footage.
         
