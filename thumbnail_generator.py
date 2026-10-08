@@ -152,14 +152,14 @@ def generate_thumbnail(title: str, category: str = "", output_path: str = None) 
     draw.rectangle([0, 0, width, 18], fill=(220, 38, 38))
     draw.rectangle([0, height-18, width, height], fill=(37, 99, 235))
 
-    # 4. Load Fonts (Impact, Nirmala UI, or Arial Black for maximum boldness)
+    # 4. Load Fonts (Prioritize Impact & Arial Bold for massive, punchy Western thumbnail text)
     font = None
     small_font = None
     font_paths = [
-        os.path.join(os.environ.get('WINDIR', 'C:\\Windows'), 'Fonts', 'nirmala.ttf'),
-        os.path.join(os.environ.get('WINDIR', 'C:\\Windows'), 'Fonts', 'gautami.ttf'),
         os.path.join(os.environ.get('WINDIR', 'C:\\Windows'), 'Fonts', 'impact.ttf'),
         os.path.join(os.environ.get('WINDIR', 'C:\\Windows'), 'Fonts', 'arialbd.ttf'),
+        os.path.join(os.environ.get('WINDIR', 'C:\\Windows'), 'Fonts', 'nirmala.ttf'),
+        os.path.join(os.environ.get('WINDIR', 'C:\\Windows'), 'Fonts', 'gautami.ttf'),
         "arial.ttf"
     ]
     for fpath in font_paths:
@@ -209,8 +209,19 @@ def generate_thumbnail(title: str, category: str = "", output_path: str = None) 
         draw.text((80, y_text), line, fill=color, font=font)
         y_text += 165
         
-    # Bottom Badge
-    badge_text = "🔥 100% UNTOLD TRUTH"
+    # Bottom Badge (Dynamic & Category-Specific to avoid repetition)
+    if "Dark Psychology" in category:
+        badge_options = ["🔥 HIDDEN TRUTH", "🔥 MIND MANIPULATION", "🔥 DARK REALITY", "🔥 BEHAVIOR SECRETS"]
+    elif "Ancient Indian" in category:
+        badge_options = ["🔥 LOST SECRETS", "🔥 ANCIENT ENIGMA", "🔥 BEYOND HISTORY", "🔥 FORGOTTEN PAST"]
+    elif "Incredible Science" in category:
+        badge_options = ["🔥 MIND BLOWING", "🔥 UNIVERSE SECRETS", "🔥 FUTURE TECH", "🔥 SCIENCE WONDERS"]
+    else:
+        badge_options = ["🔥 100% UNTOLD TRUTH", "🔥 MIND BLOWING", "🔥 SHOCKING TRUTH", "🔥 SECRET REVEALED"]
+    
+    import random
+    badge_text = random.choice(badge_options)
+
     bbox_b = draw.textbbox((80, 570), badge_text, font=small_font)
     draw.rectangle([bbox_b[0]-14, bbox_b[1]-10, bbox_b[2]+14, bbox_b[3]+10], fill=(0, 0, 0))
     for ox in [-2, 2]:
@@ -223,4 +234,4 @@ def generate_thumbnail(title: str, category: str = "", output_path: str = None) 
     return output_path
 
 if __name__ == "__main__":
-    generate_thumbnail("కైలాస ఆలయం | Kailasa Temple Secret", "Ancient Indian Mysteries")
+    generate_thumbnail("https://youtu.be/pW6OWSX3pVI", "Ancient Indian Mysteries")
