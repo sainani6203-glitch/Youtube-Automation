@@ -30,10 +30,11 @@ jobs:
           echo "$YOUTUBE_TOKEN_B64" | base64 --decode > token.pickle
         fi
 
-    - name: Install System Dependencies (FFmpeg)
+    - name: Install System Dependencies (FFmpeg & Fonts)
       run: |
         sudo apt-get update
-        sudo apt-get install -y ffmpeg
+        sudo apt-get install -y ffmpeg fonts-dejavu-core fontconfig
+        fc-cache -f -v
 
     - name: Install Python Dependencies
       run: |

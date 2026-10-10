@@ -1,14 +1,15 @@
 import os
 import requests
+import html
 from io import BytesIO
 from PIL import Image, ImageDraw, ImageFont, ImageEnhance
+import random
 from config import READY_TO_REVIEW_DIR, PEXELS_API_KEY
 
 def generate_thumbnail(title: str, category: str = "", output_path: str = None) -> str:
     """
-    Generates or downloads a high-CTR 1280x720 YouTube cinematic thumbnail.
-    If title is a YouTube URL or video ID, fetches the official YouTube thumbnail directly.
-    Otherwise, generates a cinematic Pexels stock photo thumbnail with high-visibility text.
+    Generates a high-CTR, cinematic 1280x720 YouTube thumbnail with bold typography,
+    category-matched color grading, dynamic layout variation, and zero repetition.
     """
     if not output_path:
         output_path = os.path.join(READY_TO_REVIEW_DIR, "thumbnail.jpg")
@@ -27,7 +28,6 @@ def generate_thumbnail(title: str, category: str = "", output_path: str = None) 
         if "v" in query_params:
             yt_video_id = query_params["v"][0]
     elif len(title) == 11 and ("http" not in title and " " not in title):
-        # Direct video ID
         yt_video_id = title
 
     if yt_video_id:
@@ -40,7 +40,7 @@ def generate_thumbnail(title: str, category: str = "", output_path: str = None) 
                 import re
                 match = re.search(r'<title>(.*?)</title>', w_resp.text)
                 if match:
-                    raw_title = match.group(1)
+                    raw_title = html.unescape(match.group(1))
                     if raw_title.endswith(" - YouTube"):
                         raw_title = raw_title[:-10]
                     title = raw_title.strip()
@@ -54,64 +54,77 @@ def generate_thumbnail(title: str, category: str = "", output_path: str = None) 
                 resp = requests.get(yt_thumb_url)
                 if resp.status_code == 200 and len(resp.content) > 5000:
                     base_image = Image.open(BytesIO(resp.content)).convert("RGB")
-                    print(f"[Success] Official YouTube thumbnail loaded as base image for enhancement.")
+                    print(f"[Success] Official YouTube thumbnail loaded as base image.")
                     break
             except Exception as e:
                 print(f"[Note] Failed fetching {res_quality}: {e}")
 
-    # Determine Category-based Color Palette
-    # Default: Gold/Yellow
-    primary_color = (255, 235, 59) 
-    
+    # Determine Category-based Color Palette & Theme Accents
+    # Palettes: Primary color, Accent color, Glow color
     if "Dark Psychology" in category:
-        primary_color = (239, 68, 68)   # Intense Red
+        primary_color = (239, 68, 68)    # Vibrant Red
+        accent_color = (255, 255, 255)   # Crisp White
+        badge_list = ["🔥 DARK SECRETS", "⚠️ MIND TRICKS", "👁️ MANIPULATION", "🚨 EXPOSED"]
     elif "Ancient Indian" in category:
-        primary_color = (251, 191, 36)  # Ancient Gold
+        primary_color = (251, 191, 36)   # Ancient Gold
+        accent_color = (255, 255, 255)   # Crisp White
+        badge_list = ["🔮 LOST HISTORY", "🛕 ANCIENT MYSTERY", "⚡ FORGOTTEN PAST", "🔱 UNTOLD TRUTH"]
     elif "Incredible Science" in category:
-        primary_color = (56, 189, 248)  # Electric Blue
+        primary_color = (56, 189, 248)   # Electric Cyan/Blue
+        accent_color = (255, 255, 255)   # Crisp White
+        badge_list = ["🚀 MIND BLOWING", "🌌 UNIVERSE SECRETS", "⚡ SCIENCE WONDERS", "🛰️ FUTURE TECH"]
+    else:
+        primary_color = (244, 63, 94)    # Rose Pink / Red
+        accent_color = (250, 204, 21)    # Golden Yellow
+        badge_list = ["🔥 100% UNTOLD", "⚡ SHOCKING TRUTH", "👁️ SECRET REVEALED", "🚨 MUST WATCH"]
 
-    # Extract English keywords or generate powerful punchy hook
+    # Extract clean English keywords or powerful punchy hook
     search_query = title
-    display_text = "SECRET REVEALED"
+    display_words = []
     
+    stop_words = {"THE", "OF", "IN", "A", "AN", "AND", "TO", "FOR", "ON", "WITH", "IS", "IT", "BY", "AT", "THIS", "THAT", "SHORTS"}
+
     if "|" in title:
         parts = title.split("|")
         if len(parts) > 1:
             eng_part = parts[1].strip().split("#")[0].strip()
             search_query = eng_part
-            words = [w for w in eng_part.upper().split() if all(ord(c) < 128 for c in w)]
-            if words:
-                display_text = " ".join(words[:3])
+            raw_words = [w.strip('.,!?:;""\'()[]-') for w in eng_part.upper().split() if all(ord(c) < 128 for c in w)]
+            display_words = [w for w in raw_words if w not in stop_words and len(w) > 1]
+    
+    if not display_words:
+        raw_words = [w.strip('.,!?:;""\'()[]-') for w in title.upper().split() if all(ord(c) < 128 for c in w)]
+        display_words = [w for w in raw_words if w not in stop_words and len(w) > 1]
+        
+    if not display_words:
+        display_words = ["SHOCKING", "SECRET"]
+
+    # Take up to 4 impactful words for a clean 2-line headline
+    selected_words = display_words[:4]
+    if len(selected_words) >= 3:
+        line1 = " ".join(selected_words[:2])
+        line2 = " ".join(selected_words[2:])
+    elif len(selected_words) == 2:
+        line1 = selected_words[0]
+        line2 = selected_words[1]
     else:
-        english_words = [w for w in title.upper().split() if all(ord(c) < 128 for c in w)]
-        if len(english_words) >= 2:
-            display_text = " ".join(english_words[:3])
-            
-    if not display_text or len(display_text) < 3:
-        if "Dark Psychology" in category:
-            display_text = "DARK SECRET"
-        elif "Ancient Indian" in category:
-            display_text = "ANCIENT MYSTERY"
-        elif "Incredible Science" in category:
-            display_text = "MIND BLOWING"
-        else:
-            display_text = "UNTOLD TRUTH"
+        line1 = selected_words[0]
+        line2 = random.choice(["SECRET", "EXPOSED", "TRUTH", "MYSTERY"])
 
     print(f"🔍 Thumbnail Search Query: '{search_query}'")
-    print(f"🏷️ Category: '{category}' -> Using Primary Color: {primary_color} | Display Text: '{display_text}'")
+    print(f"🏷️ Category: '{category}' -> Line 1: '{line1}' | Line 2: '{line2}'")
 
-    # 1. Fetch Stock Photo from Pexels
-    if PEXELS_API_KEY and PEXELS_API_KEY != "your_pexels_api_key_here":
+    # 1. Fetch Stock Photo from Pexels if base image not already loaded
+    if not base_image and PEXELS_API_KEY and PEXELS_API_KEY != "your_pexels_api_key_here":
         try:
             headers = {"Authorization": PEXELS_API_KEY}
-            url = f"https://api.pexels.com/v1/search?query={search_query} cinematic&per_page=10&orientation=landscape"
+            url = f"https://api.pexels.com/v1/search?query={search_query} cinematic moody dark mysterious&per_page=15&orientation=landscape"
             response = requests.get(url, headers=headers)
             if response.status_code == 200:
                 data = response.json()
                 photos = data.get("photos", [])
                 if photos:
-                    import random
-                    chosen_photo = random.choice(photos[:4])
+                    chosen_photo = random.choice(photos[:min(5, len(photos))])
                     img_url = chosen_photo.get("src", {}).get("large2x") or chosen_photo.get("src", {}).get("large")
                     if img_url:
                         img_resp = requests.get(img_url, stream=True)
@@ -139,99 +152,132 @@ def generate_thumbnail(title: str, category: str = "", output_path: str = None) 
         top = (new_h - height) // 2
         base_image = base_image.crop((0, top, width, top + height))
 
-    # 3. Cinematic Color Grading (Darker overlay for maximum text contrast)
-    base_image = ImageEnhance.Contrast(base_image).enhance(1.3)
-    base_image = ImageEnhance.Color(base_image).enhance(1.2)
-    overlay = Image.new("RGBA", (width, height), (0, 0, 0, 160))
+    # 3. Cinematic Color Grading (Professional contrast & dark gradient overlay for crystal-clear readability)
+    base_image = ImageEnhance.Contrast(base_image).enhance(1.35)
+    base_image = ImageEnhance.Color(base_image).enhance(1.25)
+    
+    # Create radial / vertical gradient overlay
+    overlay = Image.new("RGBA", (width, height), (0, 0, 0, 175))
     base_image = base_image.convert("RGBA")
     base_image = Image.alpha_composite(base_image, overlay).convert("RGB")
 
     draw = ImageDraw.Draw(base_image)
     
-    # Accent Bars
-    draw.rectangle([0, 0, width, 18], fill=(220, 38, 38))
-    draw.rectangle([0, height-18, width, height], fill=(37, 99, 235))
+    # Top & Bottom Accent Cinematic Bars
+    draw.rectangle([0, 0, width, 14], fill=primary_color)
+    draw.rectangle([0, height-14, width, height], fill=(15, 23, 42))
 
-    # 4. Load Fonts (Prioritize Impact & Arial Bold for massive, punchy Western thumbnail text)
-    font = None
-    small_font = None
+    # 4. Load High-Impact Fonts (Impact / Arial Bold / DejaVu Sans Bold)
+    font_large = None
+    font_badge = None
     font_paths = [
         os.path.join(os.environ.get('WINDIR', 'C:\\Windows'), 'Fonts', 'impact.ttf'),
         os.path.join(os.environ.get('WINDIR', 'C:\\Windows'), 'Fonts', 'arialbd.ttf'),
         os.path.join(os.environ.get('WINDIR', 'C:\\Windows'), 'Fonts', 'nirmala.ttf'),
         os.path.join(os.environ.get('WINDIR', 'C:\\Windows'), 'Fonts', 'gautami.ttf'),
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+        "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+        "/usr/share/fonts/truetype/freefont/FreeSansBold.ttf",
+        "/usr/share/fonts/truetype/msttcorefonts/Impact.ttf",
+        "/usr/share/fonts/truetype/msttcorefonts/Arial_Bold.ttf",
         "arial.ttf"
     ]
     for fpath in font_paths:
         if os.path.exists(fpath):
             try:
-                font = ImageFont.truetype(fpath, 175)
-                small_font = ImageFont.truetype(fpath, 65)
+                font_large = ImageFont.truetype(fpath, 150)
+                font_badge = ImageFont.truetype(fpath, 60)
                 break
             except Exception:
                 continue
-    if not font:
-        font = ImageFont.load_default()
-        small_font = ImageFont.load_default()
+    if not font_large:
+        font_large = ImageFont.load_default()
+        font_badge = ImageFont.load_default()
 
-    # 5. Draw High-Visibility Text with Solid Dark Backing Cards & Outlines
-    words = display_text.split()
-    lines = []
-    curr = ""
-    for w in words:
-        if len(curr + " " + w) < 15:
-            curr += (" " + w) if curr else w
-        else:
-            lines.append(curr); curr = w
-    if curr: lines.append(curr)
+    # 5. Dynamic Layout Selection (To ensure zero repetition every day)
+    layout_style = random.choice(["left_banner", "center_stacked", "diagonal_split"])
 
-    y_text = 140
-    for i, line in enumerate(lines[:3]):
-        bbox = draw.textbbox((80, y_text), line, font=font)
-        card_box = [bbox[0]-22, bbox[1]-14, bbox[2]+22, bbox[3]+14]
-        
-        # Solid dark backing card for 100% crystal-clear readability
-        draw.rectangle(card_box, fill=(10, 15, 25))
-        
-        # Category Color Accent Line on the first card
-        if i == 0:
-            draw.rectangle([card_box[0], card_box[1], card_box[0]+18, card_box[3]], fill=primary_color)
+    x_start = 80
+    y_start = 160
 
-        color = primary_color if i == 0 else (255, 255, 255)
+    if layout_style == "left_banner":
+        # Side vertical color accent bar on the left
+        draw.rectangle([x_start - 30, y_start - 20, x_start - 12, y_start + 360], fill=primary_color)
         
-        # Draw thick black outline / drop shadow for maximum punch
+        # Render Line 1
+        bbox1 = draw.textbbox((x_start, y_start), line1, font=font_large)
+        # Drop shadow / thick outline
+        for ox in [-5, -3, 0, 3, 5]:
+            for oy in [-5, -3, 0, 3, 5]:
+                if ox != 0 or oy != 0:
+                    draw.text((x_start + ox, y_start + oy), line1, fill=(0, 0, 0), font=font_large)
+        draw.text((x_start, y_start), line1, fill=primary_color, font=font_large)
+        
+        # Render Line 2
+        y_line2 = y_start + 165
+        for ox in [-5, -3, 0, 3, 5]:
+            for oy in [-5, -3, 0, 3, 5]:
+                if ox != 0 or oy != 0:
+                    draw.text((x_start + ox, y_line2 + oy), line2, fill=(0, 0, 0), font=font_large)
+        draw.text((x_start, y_line2), line2, fill=accent_color, font=font_large)
+
+    elif layout_style == "center_stacked":
+        # Center-left prominent text with semi-transparent solid background panel
+        combined_text_bbox = draw.textbbox((x_start, y_start), f"{line1}\n{line2}", font=font_large)
+        panel_box = [x_start - 25, y_start - 20, combined_text_bbox[2] + 45, y_start + 350]
+        draw.rectangle(panel_box, fill=(10, 15, 25, 220))
+        draw.rectangle([panel_box[0], panel_box[1], panel_box[0] + 16, panel_box[3]], fill=primary_color)
+
+        # Draw Line 1
         for ox in [-4, 0, 4]:
             for oy in [-4, 0, 4]:
                 if ox != 0 or oy != 0:
-                    draw.text((80 + ox, y_text + oy), line, fill=(0, 0, 0), font=font)
-                    
-        # Draw main text
-        draw.text((80, y_text), line, fill=color, font=font)
-        y_text += 165
-        
-    # Bottom Badge (Dynamic & Category-Specific to avoid repetition)
-    if "Dark Psychology" in category:
-        badge_options = ["🔥 HIDDEN TRUTH", "🔥 MIND MANIPULATION", "🔥 DARK REALITY", "🔥 BEHAVIOR SECRETS"]
-    elif "Ancient Indian" in category:
-        badge_options = ["🔥 LOST SECRETS", "🔥 ANCIENT ENIGMA", "🔥 BEYOND HISTORY", "🔥 FORGOTTEN PAST"]
-    elif "Incredible Science" in category:
-        badge_options = ["🔥 MIND BLOWING", "🔥 UNIVERSE SECRETS", "🔥 FUTURE TECH", "🔥 SCIENCE WONDERS"]
-    else:
-        badge_options = ["🔥 100% UNTOLD TRUTH", "🔥 MIND BLOWING", "🔥 SHOCKING TRUTH", "🔥 SECRET REVEALED"]
-    
-    import random
-    badge_text = random.choice(badge_options)
+                    draw.text((x_start + ox, y_start + oy), line1, fill=(0, 0, 0), font=font_large)
+        draw.text((x_start, y_start), line1, fill=primary_color, font=font_large)
 
-    bbox_b = draw.textbbox((80, 570), badge_text, font=small_font)
-    draw.rectangle([bbox_b[0]-14, bbox_b[1]-10, bbox_b[2]+14, bbox_b[3]+10], fill=(0, 0, 0))
+        # Draw Line 2
+        y_line2 = y_start + 165
+        for ox in [-4, 0, 4]:
+            for oy in [-4, 0, 4]:
+                if ox != 0 or oy != 0:
+                    draw.text((x_start + ox, y_line2 + oy), line2, fill=(0, 0, 0), font=font_large)
+        draw.text((x_start, y_line2), line2, fill=accent_color, font=font_large)
+
+    else: # diagonal_split / clean modern
+        # Top line in primary color, bottom line with highlight box
+        for ox in [-5, 0, 5]:
+            for oy in [-5, 0, 5]:
+                if ox != 0 or oy != 0:
+                    draw.text((x_start + ox, y_start + oy), line1, fill=(0, 0, 0), font=font_large)
+        draw.text((x_start, y_start), line1, fill=accent_color, font=font_large)
+
+        y_line2 = y_start + 165
+        bbox2 = draw.textbbox((x_start, y_line2), line2, font=font_large)
+        draw.rectangle([bbox2[0]-16, bbox2[1]-8, bbox2[2]+16, bbox2[3]+8], fill=primary_color)
+        
+        for ox in [-4, 0, 4]:
+            for oy in [-4, 0, 4]:
+                if ox != 0 or oy != 0:
+                    draw.text((x_start + ox, y_line2 + oy), line2, fill=(0, 0, 0), font=font_large)
+        draw.text((x_start, y_line2), line2, fill=(255, 255, 255), font=font_large)
+
+    # 6. High-Impact Bottom Badge (Rotated daily for freshness)
+    badge_text = random.choice(badge_list)
+    badge_x = 80
+    badge_y = 570
+    
+    bbox_b = draw.textbbox((badge_x, badge_y), badge_text, font=font_badge)
+    draw.rectangle([bbox_b[0]-18, bbox_b[1]-12, bbox_b[2]+18, bbox_b[3]+12], fill=(0, 0, 0))
+    draw.rectangle([bbox_b[0]-18, bbox_b[1]-12, bbox_b[0]-10, bbox_b[3]+12], fill=primary_color)
+
     for ox in [-2, 2]:
         for oy in [-2, 2]:
-            draw.text((80 + ox, 570 + oy), badge_text, fill=(0, 0, 0), font=small_font)
-    draw.text((80, 570), badge_text, fill=primary_color, font=small_font)
+            draw.text((badge_x + ox, badge_y + oy), badge_text, fill=(0, 0, 0), font=font_badge)
+    draw.text((badge_x, badge_y), badge_text, fill=accent_color, font=font_badge)
 
     base_image.save(output_path, "JPEG", quality=95)
-    print(f"[Success] Category-Matched thumbnail generated at: {output_path}")
+    print(f"[Success] High-CTR cinematic thumbnail generated at: {output_path}")
     return output_path
 
 if __name__ == "__main__":
-    generate_thumbnail("https://youtu.be/pW6OWSX3pVI", "Ancient Indian Mysteries")
+    generate_thumbnail("https://youtu.be/p7qiO9b2axU", "Ancient Indian Mysteries")
