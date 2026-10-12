@@ -1,7 +1,7 @@
 import asyncio
 import edge_tts
 import os
-from gtts import gTTS
+import time
 
 VOICE_MAP = {
     "en": "en-US-ChristopherNeural",     # Authoritative male voice for English
@@ -12,45 +12,26 @@ VOICE_MAP = {
     "hindi": "hi-IN-MadhurNeural"
 }
 
-GTTS_LANG_MAP = {
-    "en": "en",
-    "te": "te",
-    "hi": "hi",
-    "english": "en",
-    "telugu": "te",
-    "hindi": "hi"
-}
-
 async def generate_voiceover(text: str, output_audio_path: str, language: str = "en"):
     """
-    Generates high-quality speech audio using edge-tts with retries, falling back to gTTS only if all edge-tts retries fail.
+    Generates high-quality speech audio exclusively using edge-tts male neural voices with persistent retries.
+    Never falls back to female voices.
     """
     voice = VOICE_MAP.get(language.lower(), "en-US-ChristopherNeural")
-    lang_code = GTTS_LANG_MAP.get(language.lower(), "en")
     
-    max_retries = 3
+    max_retries = 5
     for attempt in range(1, max_retries + 1):
         try:
             communicate = edge_tts.Communicate(text, voice)
             await communicate.save(output_audio_path)
-            print(f"[Success] Generated voiceover via edge-tts (attempt {attempt}): {output_audio_path}")
+            print(f"[Success] Generated voiceover via edge-tts male voice (attempt {attempt}): {output_audio_path}")
             return output_audio_path
         except Exception as e:
-            print(f"[Warning] edge-tts attempt {attempt} failed ({e}).")
+            print(f"[Warning] edge-tts attempt {attempt} failed ({e}). Retrying...")
             if attempt < max_retries:
-                await asyncio.sleep(2)
+                await asyncio.sleep(3 * attempt) # Progressive backoff: 3s, 6s, 9s, 12s
             else:
-                print("[Warning] All edge-tts attempts failed. Falling back to gTTS...")
-    
-    # Fallback to gTTS if all edge-tts attempts failed
-    try:
-        tts = gTTS(text=text, lang=lang_code, slow=False)
-        tts.save(output_audio_path)
-        print(f"[Success] Generated voiceover via gTTS fallback: {output_audio_path}")
-        return output_audio_path
-    except Exception as gtts_err:
-        print(f"[Error] gTTS fallback also failed: {gtts_err}")
-        raise gtts_err
+                raise RuntimeError(f"All {max_retries} edge-tts attempts failed for voice {voice}. Error: {e}")
 
 def create_voiceover_sync(text: str, output_audio_path: str, language: str = "en"):
     """Synchronous wrapper for generate_voiceover"""
