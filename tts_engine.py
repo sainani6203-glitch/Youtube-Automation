@@ -22,22 +22,13 @@ GTTS_LANG_MAP = {
 
 async def generate_voiceover(text: str, output_audio_path: str, language: str = "en"):
     """
-    Generates high-quality speech audio from text using edge-tts with fallback to gTTS.
+    Generates high-quality speech audio from text using edge-tts exclusively (male voice).
     """
-    voice = VOICE_MAP.get(language.lower(), "en-US-AriaNeural")
-    try:
-        communicate = edge_tts.Communicate(text, voice)
-        await communicate.save(output_audio_path)
-        print(f"[Success] Generated voiceover via edge-tts: {output_audio_path}")
-        return output_audio_path
-    except Exception as e:
-        print(f"[Warning] edge-tts failed ({e}), falling back to gTTS...")
-        from gtts import gTTS
-        gtts_lang = GTTS_LANG_MAP.get(language.lower(), "en")
-        tts = gTTS(text=text, lang=gtts_lang, slow=False)
-        tts.save(output_audio_path)
-        print(f"[Success] Generated voiceover via gTTS fallback: {output_audio_path}")
-        return output_audio_path
+    voice = VOICE_MAP.get(language.lower(), "en-US-ChristopherNeural")
+    communicate = edge_tts.Communicate(text, voice)
+    await communicate.save(output_audio_path)
+    print(f"[Success] Generated voiceover via edge-tts: {output_audio_path}")
+    return output_audio_path
 
 def create_voiceover_sync(text: str, output_audio_path: str, language: str = "en"):
     """Synchronous wrapper for generate_voiceover"""
