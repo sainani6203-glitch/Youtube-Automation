@@ -17,7 +17,7 @@ VOICE_MAP = {
 async def generate_voiceover(text: str, output_audio_path: str, language: str = "en"):
     """
     Generates high-quality speech audio strictly using edge-tts male neural voices.
-    Splits text into chunks with a polite delay between requests to prevent Microsoft WSS rate-limiting (403).
+    Uses rate='+15%' for natural, fluent human-like pacing and splits into chunks with polite delays.
     """
     voice = VOICE_MAP.get(language.lower(), "en-US-ChristopherNeural")
     
@@ -36,7 +36,8 @@ async def generate_voiceover(text: str, output_audio_path: str, language: str = 
             max_retries = 5
             for attempt in range(1, max_retries + 1):
                 try:
-                    communicate = edge_tts.Communicate(chunk, voice)
+                    # rate="+15%" speeds up speech slightly to sound fluent and natural like human narration
+                    communicate = edge_tts.Communicate(chunk, voice, rate="+15%")
                     await communicate.save(chunk_path)
                     success = True
                     break
@@ -48,9 +49,9 @@ async def generate_voiceover(text: str, output_audio_path: str, language: str = 
             if not success:
                 raise RuntimeError(f"All {max_retries} attempts failed for chunk {idx+1}: {chunk[:30]}...")
             
-            # Polite delay between chunks to avoid Microsoft WSS rate limit / 403
+            # Short polite delay between chunks
             if idx < len(chunks) - 1:
-                await asyncio.sleep(1.5)
+                await asyncio.sleep(1.0)
         
         # Concatenate chunks using moviepy
         audio_clips = [AudioFileClip(fp) for fp in temp_files]
@@ -61,7 +62,7 @@ async def generate_voiceover(text: str, output_audio_path: str, language: str = 
             clip.close()
         final_clip.close()
         
-        print(f"[Success] Generated voiceover via edge-tts pure male voice: {output_audio_path}")
+        print(f"[Success] Generated fluent voiceover via edge-tts pure male voice: {output_audio_path}")
         return output_audio_path
         
     finally:
@@ -77,10 +78,8 @@ def create_voiceover_sync(text: str, output_audio_path: str, language: str = "en
     asyncio.run(generate_voiceover(text, output_audio_path, language))
 
 if __name__ == "__main__":
-    print("Testing TTS Engine...")
-    test_text = "Welcome to your daily dose of smart knowledge. ఇది అసలైన తెలుగు మేల్ వాయిస్ టెస్ట్."
-    test_path = "test_audio.mp3"
+    print("Testing TTS Engine with fluent rate...")
+    test_text = "Welcome to your daily dose of smart knowledge. ఇది అసలైన తెలుగు మేల్ వాయిస్ టెస్ట్. మనుషులు మాట్లాడినట్టు చాలా ఫ్లూయెంట్ గా ఉంటుంది."
+    test_path = "sample_voice.mp3"
     create_voiceover_sync(test_text, test_path, "te")
     print(f"Audio saved to {test_path}")
-    if os.path.exists(test_path):
-        os.remove(test_path)
