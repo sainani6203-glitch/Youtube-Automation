@@ -14,12 +14,12 @@ VOICE_MAP = {
 
 async def generate_voiceover(text: str, output_audio_path: str, language: str = "en"):
     """
-    Generates high-quality speech audio exclusively using edge-tts male neural voices with persistent retries.
-    Never falls back to female voices.
+    Generates high-quality speech audio strictly using edge-tts male neural voices.
+    Never falls back to female voices. Retries persistently until successful.
     """
     voice = VOICE_MAP.get(language.lower(), "en-US-ChristopherNeural")
     
-    max_retries = 5
+    max_retries = 8
     for attempt in range(1, max_retries + 1):
         try:
             communicate = edge_tts.Communicate(text, voice)
@@ -29,9 +29,9 @@ async def generate_voiceover(text: str, output_audio_path: str, language: str = 
         except Exception as e:
             print(f"[Warning] edge-tts attempt {attempt} failed ({e}). Retrying...")
             if attempt < max_retries:
-                await asyncio.sleep(3 * attempt) # Progressive backoff: 3s, 6s, 9s, 12s
+                await asyncio.sleep(5 * attempt) # Progressive backoff: 5s, 10s, 15s, etc.
             else:
-                raise RuntimeError(f"All {max_retries} edge-tts attempts failed for voice {voice}. Error: {e}")
+                raise RuntimeError(f"All {max_retries} edge-tts attempts failed for male voice {voice}. Error: {e}")
 
 def create_voiceover_sync(text: str, output_audio_path: str, language: str = "en"):
     """Synchronous wrapper for generate_voiceover"""
