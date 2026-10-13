@@ -61,21 +61,21 @@ def generate_thumbnail(title: str, category: str = "", output_path: str = None) 
 
     # Determine Category-based Color Palette & Theme Accents
     # Palettes: Primary color, Accent color, Glow color
-    if "Dark Psychology" in category:
+    if "Dark" in category or "Psychology" in category:
         primary_color = (239, 68, 68)    # Vibrant Red
         accent_color = (255, 255, 255)   # Crisp White
         badge_list = ["🔥 DARK SECRETS", "⚠️ MIND TRICKS", "👁️ MANIPULATION", "🚨 EXPOSED"]
-    elif "Ancient Indian" in category:
+    elif "Ancient" in category or "Indian" in category:
         primary_color = (251, 191, 36)   # Ancient Gold
         accent_color = (255, 255, 255)   # Crisp White
         badge_list = ["🔮 LOST HISTORY", "🛕 ANCIENT MYSTERY", "⚡ FORGOTTEN PAST", "🔱 UNTOLD TRUTH"]
-    elif "Incredible Science" in category:
+    elif "Science" in category or "Space" in category or "Incredible" in category:
         primary_color = (56, 189, 248)   # Electric Cyan/Blue
         accent_color = (255, 255, 255)   # Crisp White
-        badge_list = ["🚀 MIND BLOWING", "🌌 UNIVERSE SECRETS", "⚡ SCIENCE WONDERS", "🛰️ FUTURE TECH"]
+        badge_list = ["🚀 MIND BLOWING", "🌌 UNIVERSE SECRETS", "⚡ SCIENCEWONDERS", "🛰️ FUTURE TECH"]
     else:
         primary_color = (244, 63, 94)    # Rose Pink / Red
-        accent_color = (250, 204, 21)    # Golden Yellow
+        accent_color = (255, 255, 255)   # Crisp White
         badge_list = ["🔥 100% UNTOLD", "⚡ SHOCKING TRUTH", "👁️ SECRET REVEALED", "🚨 MUST WATCH"]
 
     # Extract clean English keywords or powerful punchy hook
