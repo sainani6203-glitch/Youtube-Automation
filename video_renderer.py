@@ -147,7 +147,7 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
     # 6. Add optional title watermark on main visual
     if title_text:
         try:
-            txt_clip = TextClip(text=title_text, font_size=50, color='white', size=(width - 100, None))
+            txt_clip = TextClip(text=title_text, font_size=50, color='white', bg_color='transparent', size=(width - 100, None))
             try:
                 txt_clip = txt_clip.with_position(('center', 150)).with_duration(total_duration)
             except AttributeError:
