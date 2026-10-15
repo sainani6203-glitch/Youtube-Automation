@@ -147,8 +147,11 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
     # 6. Add optional title watermark on main visual
     if title_text:
         try:
-            txt_clip = TextClip(title_text, fontsize=50, color='white', font='Arial-Bold', bg_color='rgba(0,0,0,0.6)', size=(width - 100, None))
-            txt_clip = txt_clip.set_position(('center', 150)).set_duration(total_duration)
+            txt_clip = TextClip(text=title_text, font_size=50, color='white', size=(width - 100, None))
+            try:
+                txt_clip = txt_clip.with_position(('center', 150)).with_duration(total_duration)
+            except AttributeError:
+                txt_clip = txt_clip.set_position(('center', 150)).set_duration(total_duration)
             final_visual = CompositeVideoClip([final_visual, txt_clip])
         except Exception as e:
             print(f"[Note] TextClip skipped: {e}")
@@ -157,7 +160,7 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
     bgm_filename = "bgm.mp3"
     if "Dark Psychology" in category:
         bgm_filename = "bgm_dark_psychology.mp3"
-    elif "Ancient Indian" in category:
+    elif "Ancient" in category:
         bgm_filename = "bgm_ancient_mysteries.mp3"
     elif "Incredible Science" in category:
         bgm_filename = "bgm_science_space.mp3"

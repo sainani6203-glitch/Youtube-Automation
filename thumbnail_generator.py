@@ -6,10 +6,61 @@ from PIL import Image, ImageDraw, ImageFont, ImageEnhance
 import random
 from config import READY_TO_REVIEW_DIR, PEXELS_API_KEY
 
+def render_telugu_text(text: str, font_size: int = 72, color: tuple = (255, 255, 255)) -> Image.Image:
+    """Legacy wrapper for single text rendering."""
+    return render_bilingual_text(text, "", font_size, color)
+
+def render_bilingual_text(telugu_text: str, english_text: str, font_size: int = 60, color: tuple = (255, 255, 255)) -> Image.Image:
+    """Renders high-CTR 2-line bilingual (Telugu + English) text with heavy outline and zero background box."""
+    font_path = os.path.join(os.environ.get('WINDIR', 'C:\\Windows'), 'Fonts', 'Nirmala.ttc')
+    if not os.path.exists(font_path):
+        font_path = os.path.join(os.environ.get('WINDIR', 'C:\\Windows'), 'Fonts', 'nirmala.ttc')
+        
+    try:
+        font_te = ImageFont.truetype(font_path, font_size)
+        font_en = ImageFont.truetype(font_path, int(font_size * 0.80))
+    except Exception:
+        font_te = ImageFont.load_default()
+        font_en = ImageFont.load_default()
+
+    dummy_img = Image.new("RGBA", (1, 1), (0, 0, 0, 0))
+    dummy_draw = ImageDraw.Draw(dummy_img)
+    
+    bbox_te = dummy_draw.textbbox((0, 0), telugu_text, font=font_te)
+    w_te = bbox_te[2] - bbox_te[0]
+    h_te = bbox_te[3] - bbox_te[1]
+    
+    if english_text:
+        bbox_en = dummy_draw.textbbox((0, 0), english_text, font=font_en)
+        w_en = bbox_en[2] - bbox_en[0]
+        h_en = bbox_en[3] - bbox_en[1]
+    else:
+        w_en, h_en = 0, 0
+
+    max_w = max(w_te, w_en) + 60
+    total_h = h_te + (h_en + 15 if english_text else 0) + 40
+
+    txt_img = Image.new("RGBA", (max_w, total_h), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(txt_img)
+
+    def draw_outlined_text(xy, text, font, fill_color):
+        outline_width = 5
+        x, y = xy
+        for dx in range(-outline_width, outline_width + 1):
+            for dy in range(-outline_width, outline_width + 1):
+                if dx != 0 or dy != 0:
+                    draw.text((x + dx, y + dy), text, font=font, fill=(0, 0, 0, 255))
+        draw.text((x, y), text, font=font, fill=(fill_color[0], fill_color[1], fill_color[2], 255))
+
+    draw_outlined_text((20, 20), telugu_text, font_te, color)
+    if english_text:
+        draw_outlined_text((20, 20 + h_te + 15), english_text, font_en, (255, 255, 255))
+
+    return txt_img
+
 def generate_thumbnail(title: str, category: str = "", output_path: str = None) -> str:
     """
-    Generates a high-CTR, cinematic 1280x720 YouTube thumbnail with bold typography,
-    category-matched color grading, dynamic layout variation, and zero repetition.
+    Generates a high-CTR cinematic YouTube thumbnail with floating bold Telugu text and zero background boxes.
     """
     if not output_path:
         output_path = os.path.join(READY_TO_REVIEW_DIR, "thumbnail.jpg")
@@ -59,66 +110,51 @@ def generate_thumbnail(title: str, category: str = "", output_path: str = None) 
             except Exception as e:
                 print(f"[Note] Failed fetching {res_quality}: {e}")
 
-    # Determine Category-based Color Palette & Theme Accents
-    # Palettes: Primary color, Accent color, Glow color
-    if "Dark" in category or "Psychology" in category:
-        primary_color = (239, 68, 68)    # Vibrant Red
-        accent_color = (255, 255, 255)   # Crisp White
-        badge_list = ["🔥 DARK SECRETS", "⚠️ MIND TRICKS", "👁️ MANIPULATION", "🚨 EXPOSED"]
-    elif "Ancient" in category or "Indian" in category:
-        primary_color = (251, 191, 36)   # Ancient Gold
-        accent_color = (255, 255, 255)   # Crisp White
-        badge_list = ["🔮 LOST HISTORY", "🛕 ANCIENT MYSTERY", "⚡ FORGOTTEN PAST", "🔱 UNTOLD TRUTH"]
-    elif "Science" in category or "Space" in category or "Incredible" in category:
-        primary_color = (56, 189, 248)   # Electric Cyan/Blue
-        accent_color = (255, 255, 255)   # Crisp White
-        badge_list = ["🚀 MIND BLOWING", "🌌 UNIVERSE SECRETS", "⚡ SCIENCEWONDERS", "🛰️ FUTURE TECH"]
-    else:
-        primary_color = (244, 63, 94)    # Rose Pink / Red
-        accent_color = (255, 255, 255)   # Crisp White
-        badge_list = ["🔥 100% UNTOLD", "⚡ SHOCKING TRUTH", "👁️ SECRET REVEALED", "🚨 MUST WATCH"]
+    # Determine High-CTR Category Color & Topic-Specific Bilingual Hook
+    telugu_text = ""
+    english_text = "SECRET REVEALED! 🚨"
+    if "|" in title:
+        parts = title.split("|")
+        left_part = parts[0].strip()
+        if any('\u0C00' <= c <= '\u0C7F' for c in left_part):
+            telugu_text = left_part
+        if len(parts) > 1:
+            right_part = parts[1].strip().split("#")[0].strip()
+            if len(right_part) <= 30:
+                english_text = right_part.upper()
 
-    # Extract clean English keywords or powerful punchy hook
-    search_query = title
-    display_words = []
+    # Determine Dynamic Vibrant Text Color (Rotates daily / per video for fresh variety)
+    vibrant_colors = [
+        (255, 59, 48),    # Electric Red
+        (0, 229, 255),    # Neon Cyan
+        (255, 215, 0),    # Electric Gold
+        (255, 0, 127),    # Hot Magenta
+        (57, 255, 20),    # Lime Green
+        (255, 102, 0),    # Neon Orange
+        (191, 0, 255),    # Electric Purple
+        (255, 204, 0)     # Bright Yellow
+    ]
     
-    stop_words = {"THE", "OF", "IN", "A", "AN", "AND", "TO", "FOR", "ON", "WITH", "IS", "IT", "BY", "AT", "THIS", "THAT", "SHORTS"}
+    # Pick dynamic color based on title hash or day of month
+    import datetime
+    color_seed = abs(hash(title)) if title else datetime.datetime.now().day
+    text_color = vibrant_colors[color_seed % len(vibrant_colors)]
 
+    # Extract clean English keywords for stock photo search query
+    search_query = title
     if "|" in title:
         parts = title.split("|")
         if len(parts) > 1:
-            eng_part = parts[1].strip().split("#")[0].strip()
-            search_query = eng_part
-            raw_words = [w.strip('.,!?:;""\'()[]-') for w in eng_part.upper().split() if all(ord(c) < 128 for c in w)]
-            display_words = [w for w in raw_words if w not in stop_words and len(w) > 1]
-    
-    if not display_words:
-        raw_words = [w.strip('.,!?:;""\'()[]-') for w in title.upper().split() if all(ord(c) < 128 for c in w)]
-        display_words = [w for w in raw_words if w not in stop_words and len(w) > 1]
-        
-    if not display_words:
-        display_words = ["SHOCKING", "SECRET"]
-
-    # Take up to 4 impactful words for a clean 2-line headline
-    selected_words = display_words[:4]
-    if len(selected_words) >= 3:
-        line1 = " ".join(selected_words[:2])
-        line2 = " ".join(selected_words[2:])
-    elif len(selected_words) == 2:
-        line1 = selected_words[0]
-        line2 = selected_words[1]
-    else:
-        line1 = selected_words[0]
-        line2 = random.choice(["SECRET", "EXPOSED", "TRUTH", "MYSTERY"])
+            search_query = parts[1].strip().split("#")[0].strip()
 
     print(f"🔍 Thumbnail Search Query: '{search_query}'")
-    print(f"🏷️ Category: '{category}' -> Line 1: '{line1}' | Line 2: '{line2}'")
+    print(f"🏷️ Category: '{category}' -> Bilingual Hook: '{telugu_text}' | '{english_text}'")
 
     # 1. Fetch Stock Photo from Pexels if base image not already loaded
     if not base_image and PEXELS_API_KEY and PEXELS_API_KEY != "your_pexels_api_key_here":
         try:
             headers = {"Authorization": PEXELS_API_KEY}
-            url = f"https://api.pexels.com/v1/search?query={search_query} cinematic moody dark mysterious&per_page=15&orientation=landscape"
+            url = f"https://api.pexels.com/v1/search?query={search_query} cinematic moody dark mysterious shock 4k&per_page=15&orientation=landscape"
             response = requests.get(url, headers=headers)
             if response.status_code == 200:
                 data = response.json()
@@ -152,132 +188,26 @@ def generate_thumbnail(title: str, category: str = "", output_path: str = None) 
         top = (new_h - height) // 2
         base_image = base_image.crop((0, top, width, top + height))
 
-    # 3. Cinematic Color Grading (Professional contrast & dark gradient overlay for crystal-clear readability)
-    base_image = ImageEnhance.Contrast(base_image).enhance(1.35)
+    # 3. Cinematic Color Grading (Rich contrast without dark overlay)
+    base_image = ImageEnhance.Contrast(base_image).enhance(1.40)
     base_image = ImageEnhance.Color(base_image).enhance(1.25)
-    
-    # Create radial / vertical gradient overlay
-    overlay = Image.new("RGBA", (width, height), (0, 0, 0, 175))
     base_image = base_image.convert("RGBA")
-    base_image = Image.alpha_composite(base_image, overlay).convert("RGB")
 
-    draw = ImageDraw.Draw(base_image)
-    
-    # Top & Bottom Accent Cinematic Bars
-    draw.rectangle([0, 0, width, 14], fill=primary_color)
-    draw.rectangle([0, height-14, width, height], fill=(15, 23, 42))
-
-    # 4. Load High-Impact Fonts (Impact / Arial Bold / DejaVu Sans Bold)
-    font_large = None
-    font_badge = None
-    font_paths = [
-        os.path.join(os.environ.get('WINDIR', 'C:\\Windows'), 'Fonts', 'impact.ttf'),
-        os.path.join(os.environ.get('WINDIR', 'C:\\Windows'), 'Fonts', 'arialbd.ttf'),
-        os.path.join(os.environ.get('WINDIR', 'C:\\Windows'), 'Fonts', 'nirmala.ttf'),
-        os.path.join(os.environ.get('WINDIR', 'C:\\Windows'), 'Fonts', 'gautami.ttf'),
-        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
-        "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
-        "/usr/share/fonts/truetype/freefont/FreeSansBold.ttf",
-        "/usr/share/fonts/truetype/msttcorefonts/Impact.ttf",
-        "/usr/share/fonts/truetype/msttcorefonts/Arial_Bold.ttf",
-        "arial.ttf"
-    ]
-    for fpath in font_paths:
-        if os.path.exists(fpath):
-            try:
-                font_large = ImageFont.truetype(fpath, 150)
-                font_badge = ImageFont.truetype(fpath, 60)
-                break
-            except Exception:
-                continue
-    if not font_large:
-        font_large = ImageFont.load_default()
-        font_badge = ImageFont.load_default()
-
-    # 5. Dynamic Layout Selection (To ensure zero repetition every day)
-    layout_style = random.choice(["left_banner", "center_stacked", "diagonal_split"])
-
+    # 4. Render Floating Bilingual Hook directly onto the image (Zero background box)
     x_start = 80
-    y_start = 160
-
-    if layout_style == "left_banner":
-        # Side vertical color accent bar on the left
-        draw.rectangle([x_start - 30, y_start - 20, x_start - 12, y_start + 360], fill=primary_color)
-        
-        # Render Line 1
-        bbox1 = draw.textbbox((x_start, y_start), line1, font=font_large)
-        # Drop shadow / thick outline
-        for ox in [-5, -3, 0, 3, 5]:
-            for oy in [-5, -3, 0, 3, 5]:
-                if ox != 0 or oy != 0:
-                    draw.text((x_start + ox, y_start + oy), line1, fill=(0, 0, 0), font=font_large)
-        draw.text((x_start, y_start), line1, fill=primary_color, font=font_large)
-        
-        # Render Line 2
-        y_line2 = y_start + 165
-        for ox in [-5, -3, 0, 3, 5]:
-            for oy in [-5, -3, 0, 3, 5]:
-                if ox != 0 or oy != 0:
-                    draw.text((x_start + ox, y_line2 + oy), line2, fill=(0, 0, 0), font=font_large)
-        draw.text((x_start, y_line2), line2, fill=accent_color, font=font_large)
-
-    elif layout_style == "center_stacked":
-        # Center-left prominent text with semi-transparent solid background panel
-        combined_text_bbox = draw.textbbox((x_start, y_start), f"{line1}\n{line2}", font=font_large)
-        panel_box = [x_start - 25, y_start - 20, combined_text_bbox[2] + 45, y_start + 350]
-        draw.rectangle(panel_box, fill=(10, 15, 25, 220))
-        draw.rectangle([panel_box[0], panel_box[1], panel_box[0] + 16, panel_box[3]], fill=primary_color)
-
-        # Draw Line 1
-        for ox in [-4, 0, 4]:
-            for oy in [-4, 0, 4]:
-                if ox != 0 or oy != 0:
-                    draw.text((x_start + ox, y_start + oy), line1, fill=(0, 0, 0), font=font_large)
-        draw.text((x_start, y_start), line1, fill=primary_color, font=font_large)
-
-        # Draw Line 2
-        y_line2 = y_start + 165
-        for ox in [-4, 0, 4]:
-            for oy in [-4, 0, 4]:
-                if ox != 0 or oy != 0:
-                    draw.text((x_start + ox, y_line2 + oy), line2, fill=(0, 0, 0), font=font_large)
-        draw.text((x_start, y_line2), line2, fill=accent_color, font=font_large)
-
-    else: # diagonal_split / clean modern
-        # Top line in primary color, bottom line with highlight box
-        for ox in [-5, 0, 5]:
-            for oy in [-5, 0, 5]:
-                if ox != 0 or oy != 0:
-                    draw.text((x_start + ox, y_start + oy), line1, fill=(0, 0, 0), font=font_large)
-        draw.text((x_start, y_start), line1, fill=accent_color, font=font_large)
-
-        y_line2 = y_start + 165
-        bbox2 = draw.textbbox((x_start, y_line2), line2, font=font_large)
-        draw.rectangle([bbox2[0]-16, bbox2[1]-8, bbox2[2]+16, bbox2[3]+8], fill=primary_color)
-        
-        for ox in [-4, 0, 4]:
-            for oy in [-4, 0, 4]:
-                if ox != 0 or oy != 0:
-                    draw.text((x_start + ox, y_line2 + oy), line2, fill=(0, 0, 0), font=font_large)
-        draw.text((x_start, y_line2), line2, fill=(255, 255, 255), font=font_large)
-
-    # 6. High-Impact Bottom Badge (Rotated daily for freshness)
-    badge_text = random.choice(badge_list)
-    badge_x = 80
-    badge_y = 570
+    y_start = 220
     
-    bbox_b = draw.textbbox((badge_x, badge_y), badge_text, font=font_badge)
-    draw.rectangle([bbox_b[0]-18, bbox_b[1]-12, bbox_b[2]+18, bbox_b[3]+12], fill=(0, 0, 0))
-    draw.rectangle([bbox_b[0]-18, bbox_b[1]-12, bbox_b[0]-10, bbox_b[3]+12], fill=primary_color)
+    txt_img = render_bilingual_text(telugu_text, english_text, font_size=64, color=text_color)
+    max_w = 1120
+    if txt_img.width > max_w:
+        ratio = max_w / txt_img.width
+        txt_img = txt_img.resize((max_w, int(txt_img.height * ratio)), Image.Resampling.LANCZOS)
 
-    for ox in [-2, 2]:
-        for oy in [-2, 2]:
-            draw.text((badge_x + ox, badge_y + oy), badge_text, fill=(0, 0, 0), font=font_badge)
-    draw.text((badge_x, badge_y), badge_text, fill=accent_color, font=font_badge)
+    base_image.paste(txt_img, (x_start, y_start), txt_img)
 
-    base_image.save(output_path, "JPEG", quality=95)
-    print(f"[Success] High-CTR cinematic thumbnail generated at: {output_path}")
+    base_image.convert("RGB").save(output_path, "JPEG", quality=95)
+    print(f"[Success] Clean floating-text cinematic thumbnail generated at: {output_path}")
     return output_path
 
 if __name__ == "__main__":
-    generate_thumbnail("https://youtu.be/p7qiO9b2axU", "Ancient Indian Mysteries")
+    generate_thumbnail("Mysterious Ancient Secrets of India", "Ancient Indian Mysteries")

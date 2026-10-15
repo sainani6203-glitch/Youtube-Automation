@@ -16,8 +16,11 @@ def create_default_outro():
     bg = ColorClip(size=(width, height), color=(15, 23, 42)).with_duration(duration)
     
     try:
-        txt = TextClip("SUBSCRIBE & LIKE\nFor More Mysteries!", fontsize=60, color='white', font='Arial-Bold', bg_color='rgba(220,38,38,0.8)', size=(width-100, None))
-        txt = txt.set_position(('center', 'center')).set_duration(duration)
+        txt = TextClip(text="SUBSCRIBE & LIKE\nFor More Mysteries!", font_size=60, color='white', bg_color='rgba(220,38,38,0.8)', size=(width-100, None))
+        try:
+            txt = txt.with_position(('center', 'center')).with_duration(duration)
+        except AttributeError:
+            txt = txt.set_position(('center', 'center')).set_duration(duration)
         clip = CompositeVideoClip([bg, txt])
     except Exception:
         clip = bg

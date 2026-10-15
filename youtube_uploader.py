@@ -12,44 +12,53 @@ SCOPES = [
     "https://www.googleapis.com/auth/youtube.force-ssl"
 ]
 
-def get_authenticated_service():
+def get_authenticated_service(language: str = "Telugu"):
     """Authenticates and returns the YouTube API service client using OAuth2."""
     credentials_file = os.path.join(BASE_DIR, "client_secret.json")
-    token_file = os.path.join(BASE_DIR, "token.pickle")
-    
+
+    lang_suffix = f"_{language.lower()}" if language and language.lower() != "telugu" else ""
+    token_file = os.path.join(BASE_DIR, f"token{lang_suffix}.pickle")
+
     if not os.path.exists(credentials_file):
         raise FileNotFoundError(
             f"YouTube API credentials file '{credentials_file}' not found. "
             "Please download your OAuth client_secret.json from Google Cloud Console and place it in the project root."
         )
-        
+
     creds = None
     if os.path.exists(token_file):
         with open(token_file, "rb") as token:
             creds = pickle.load(token)
-            
+
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             try:
                 creds.refresh(Request())
             except Exception as e:
                 print(f"[Warning] Failed to refresh OAuth token: {e}")
-                
+
         if not creds or not creds.valid:
             if os.getenv("CI") or os.environ.get("GITHUB_ACTIONS"):
                 raise RuntimeError(
                     "YouTube OAuth credentials expired or invalid in CI environment. "
                     "Please regenerate token.pickle locally and update the YOUTUBE_TOKEN_B64 GitHub secret."
                 )
-            flow = InstalledAppFlow.from_client_secrets_file(credentials_file, SCOPES)
-            creds = flow.run_local_server(port=0)
-            
+            flow = InstalledAppFlow.from_client_secrets_file(
+                credentials_file, SCOPES,
+                redirect_uri='urn:ietf:wg:oauth:2.0:oob'
+            )
+            auth_url, _ = flow.authorization_url(prompt='consent')
+            print(f"\n🔗 Please open this link in your browser:\n{auth_url}\n")
+            code = input('👉 Enter the authorization code from browser: ').strip()
+            flow.fetch_token(code=code)
+            creds = flow.credentials
+
         with open(token_file, "wb") as token:
             pickle.dump(creds, token)
-            
+
     return build("youtube", "v3", credentials=creds)
 
-def upload_video_to_youtube(video_path: str, title: str, description: str, tags: list = None, category_id: str = "27", privacy_status: str = "public"):
+def upload_video_to_youtube(video_path: str, title: str, description: str, tags: list = None, category_id: str = "27", privacy_status: str = "public", language: str = "Telugu"):
     """
     Uploads a video file to YouTube automatically using YouTube Data API v3.
     category_id '27' = Education, '28' = Science & Technology
@@ -57,14 +66,14 @@ def upload_video_to_youtube(video_path: str, title: str, description: str, tags:
     """
     if not title or not title.strip():
         title = "Incredible Mystery & Science Facts #shorts"
-    
+
     # YouTube video title maximum character limit is 100 characters
     if len(title) > 100:
         print(f"[Warning] Title length is {len(title)} chars (exceeds YouTube 100-char limit). Truncating...")
         title = title[:97] + "..."
 
-    print(f"📤 Uploading '{title}' to YouTube...")
-    youtube = get_authenticated_service()
+    print(f"📤 Uploading '{title}' to YouTube ({language} channel)...")
+    youtube = get_authenticated_service(language)
     
     body = {
         "snippet": {

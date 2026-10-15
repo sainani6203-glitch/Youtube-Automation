@@ -22,17 +22,17 @@ for d in [OUTPUT_DIR, READY_TO_REVIEW_DIR, ASSETS_DIR]:
 # Topic Rotation Schedule (Focused on Single Deep Subjects)
 TOPIC_SCHEDULE = {
     0: "Dark Psychology & Human Behavior",       # Monday
-    1: "Ancient Indian Mysteries",               # Tuesday
+    1: "Ancient World & Global Mysteries",       # Tuesday
     2: "Incredible Science & Space Secrets",    # Wednesday
     3: "Dark Psychology & Human Behavior",       # Thursday
-    4: "Ancient Indian Mysteries",               # Friday
+    4: "Ancient World & Global Mysteries",       # Friday
     5: "Incredible Science & Space Secrets",    # Saturday
-    6: "Ancient Indian Mysteries",               # Sunday
+    6: "Ancient World & Global Mysteries",       # Sunday
 }
 
 # YouTube Playlist IDs (Replace with your actual playlist IDs from YouTube)
 CATEGORY_PLAYLISTS = {
     "Dark Psychology & Human Behavior": "PLcK6it6l0tfc",
-    "Ancient Indian Mysteries": "PLLuMRvtViNgY",
+    "Ancient World & Global Mysteries": "PLLuMRvtViNgY",
     "Incredible Science & Space Secrets": "PLY8JQleszkVY",
 }
