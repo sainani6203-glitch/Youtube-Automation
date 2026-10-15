@@ -116,7 +116,8 @@ def generate_thumbnail(title: str, category: str = "", output_path: str = None) 
     if "|" in title:
         parts = title.split("|")
         left_part = parts[0].strip()
-        if any('\u0C00' <= c <= '\u0C7F' for c in left_part):
+        # Check for Telugu (\u0C00-\u0C7F) or Devanagari/Hindi (\u0900-\u097F)
+        if any(('\u0C00' <= c <= '\u0C7F') or ('\u0900' <= c <= '\u097F') for c in left_part):
             telugu_text = left_part
         if len(parts) > 1:
             right_part = parts[1].strip().split("#")[0].strip()
@@ -135,10 +136,11 @@ def generate_thumbnail(title: str, category: str = "", output_path: str = None) 
         (255, 204, 0)     # Bright Yellow
     ]
     
-    # Pick dynamic color based on title hash or day of month
-    import datetime
-    color_seed = abs(hash(title)) if title else datetime.datetime.now().day
-    text_color = vibrant_colors[color_seed % len(vibrant_colors)]
+    # Pick dynamic color randomly with high entropy to prevent repetition across videos
+    import random
+    import time
+    random.seed(int(time.time() * 1000) ^ abs(hash(title)))
+    text_color = random.choice(vibrant_colors)
 
     # Extract clean English keywords for stock photo search query
     search_query = title

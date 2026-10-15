@@ -147,22 +147,28 @@ def run_pipeline(video_type: str = "short", custom_topic: str = None, language: 
                 video_path=final_video_path,
                 title=script_data.get("title"),
                 description=desc,
-                privacy_status="public"
+                privacy_status="public",
+                language=language
             )
             
             # Add video to category playlist automatically (Long videos only)
             if video_id and video_type == "long":
                 category_theme = TOPIC_SCHEDULE.get(datetime.datetime.now().weekday(), "")
-                playlist_id = CATEGORY_PLAYLISTS.get(category_theme, "")
-                if playlist_id and "REPLACE_WITH" not in playlist_id:
-                    add_video_to_playlist(video_id, playlist_id)
+                playlists_map = CATEGORY_PLAYLISTS
+                if isinstance(playlists_map.get(language), dict):
+                    playlist_id = playlists_map.get(language, {}).get(category_theme, "")
                 else:
-                    print(f"[Note] Playlist ID for category '{category_theme}' not configured in config.py.")
+                    playlist_id = playlists_map.get(category_theme, "")
+
+                if playlist_id and "REPLACE_WITH" not in playlist_id:
+                    add_video_to_playlist(video_id, playlist_id, language=language)
+                else:
+                    print(f"[Note] Playlist ID for category '{category_theme}' ({language}) not configured in config.py.")
 
             # Upload Subtitles / Captions (.srt) to YouTube
             if video_id and os.path.exists(srt_path):
                 lang_code = {"english": "en", "telugu": "te", "hindi": "hi"}.get(language.lower(), "en")
-                upload_caption(video_id, srt_path, lang_code)
+                upload_caption(video_id, srt_path, lang_code, language=language)
 
             # Generate and upload Custom Thumbnail for Long Videos
             thumb_path = None
@@ -173,7 +179,7 @@ def run_pipeline(video_type: str = "short", custom_topic: str = None, language: 
                 weekday = datetime.datetime.now().weekday()
                 category_theme = TOPIC_SCHEDULE.get(weekday, "Incredible Mysteries and Science Facts")
                 thumb_path = generate_thumbnail(script_data.get("title"), category=category_theme)
-                upload_thumbnail(video_id, thumb_path)
+                upload_thumbnail(video_id, thumb_path, language=language)
 
             # Auto-delete local files to save storage
             if video_id:

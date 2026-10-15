@@ -1,10 +1,11 @@
 import os
 import requests
+import random
 from config import PEXELS_API_KEY, ASSETS_DIR
 
 def fetch_stock_video(query: str, orientation: str = "portrait", output_filename: str = "stock.mp4") -> str:
     """
-    Fetches a stock video clip from Pexels API based on keyword query.
+    Fetches a stock video clip from Pexels API based on keyword query with random variety to prevent repetition.
     orientation: 'portrait' (for Shorts 9:16) or 'landscape' (for Long 16:9)
     """
     output_path = os.path.join(ASSETS_DIR, output_filename)
@@ -14,7 +15,7 @@ def fetch_stock_video(query: str, orientation: str = "portrait", output_filename
         return None
 
     headers = {"Authorization": PEXELS_API_KEY}
-    url = f"https://api.pexels.com/videos/search?query={query}&per_page=1&orientation={orientation}"
+    url = f"https://api.pexels.com/videos/search?query={query}&per_page=20&orientation={orientation}"
     
     try:
         response = requests.get(url, headers=headers)
@@ -22,8 +23,9 @@ def fetch_stock_video(query: str, orientation: str = "portrait", output_filename
             data = response.json()
             videos = data.get("videos", [])
             if videos:
-                # Get video file with best HD resolution
-                video_files = videos[0].get("video_files", [])
+                # Pick a random video from top results to ensure rich variety and avoid repetition
+                chosen_video = random.choice(videos[:min(12, len(videos))])
+                video_files = chosen_video.get("video_files", [])
                 # Filter for MP4 and sort by width
                 mp4_files = [f for f in video_files if f.get("file_type") == "video/mp4"]
                 if mp4_files:

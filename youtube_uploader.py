@@ -106,15 +106,15 @@ def upload_video_to_youtube(video_path: str, title: str, description: str, tags:
     print(f"   -> Link: https://youtu.be/{video_id}")
     return video_id
 
-def upload_caption(video_id: str, srt_path: str, language_code: str = "en"):
+def upload_caption(video_id: str, srt_path: str, language_code: str = "en", language: str = "Telugu"):
     """
     Uploads an SRT subtitle file to a YouTube video so captions are enabled automatically.
     """
     if not srt_path or not os.path.exists(srt_path):
         return
-    print(f"📤 Uploading captions ({language_code}) for video {video_id}...")
+    print(f"📤 Uploading captions ({language_code}) for video {video_id} ({language} channel)...")
     try:
-        youtube = get_authenticated_service()
+        youtube = get_authenticated_service(language=language)
         media = MediaFileUpload(srt_path, mimetype='application/octet-stream')
         body = {
             "snippet": {
@@ -133,17 +133,17 @@ def upload_caption(video_id: str, srt_path: str, language_code: str = "en"):
     except Exception as e:
         print(f"[Warning] Could not upload captions track: {e}")
 
-def upload_thumbnail(video_id: str, thumbnail_path: str):
+def upload_thumbnail(video_id: str, thumbnail_path: str, language: str = "Telugu"):
     """
     Uploads a custom thumbnail image to a YouTube video with retry logic and detailed error reporting.
     """
     if not thumbnail_path or not os.path.exists(thumbnail_path):
         print(f"[Warning] Thumbnail path not found: {thumbnail_path}")
         return
-    print(f"🖼️ Uploading custom thumbnail for video {video_id}...")
+    print(f"🖼️ Uploading custom thumbnail for video {video_id} ({language} channel)...")
     
     try:
-        youtube = get_authenticated_service()
+        youtube = get_authenticated_service(language=language)
         media = MediaFileUpload(thumbnail_path, mimetype='image/jpeg', resumable=True)
         
         import time
@@ -169,15 +169,15 @@ def upload_thumbnail(video_id: str, thumbnail_path: str):
     except Exception as e:
         print(f"[Warning] Could not initialize thumbnail upload: {e}")
 
-def add_video_to_playlist(video_id: str, playlist_id: str):
+def add_video_to_playlist(video_id: str, playlist_id: str, language: str = "Telugu"):
     """
     Adds a video to a specific YouTube playlist.
     """
     if not playlist_id:
         return
-    print(f"📂 Adding video {video_id} to playlist {playlist_id}...")
+    print(f"📂 Adding video {video_id} to playlist {playlist_id} ({language} channel)...")
     try:
-        youtube = get_authenticated_service()
+        youtube = get_authenticated_service(language=language)
         body = {
             "snippet": {
                 "playlistId": playlist_id,

@@ -30,9 +30,16 @@ TOPIC_SCHEDULE = {
     6: "Ancient World & Global Mysteries",       # Sunday
 }
 
-# YouTube Playlist IDs (Replace with your actual playlist IDs from YouTube)
+# YouTube Playlist IDs (Language-specific)
 CATEGORY_PLAYLISTS = {
-    "Dark Psychology & Human Behavior": "PLcK6it6l0tfc",
-    "Ancient World & Global Mysteries": "PLLuMRvtViNgY",
-    "Incredible Science & Space Secrets": "PLY8JQleszkVY",
+    "Telugu": {
+        "Dark Psychology & Human Behavior": "PLcK6it6l0tfc",
+        "Ancient World & Global Mysteries": "PLLuMRvtViNgY",
+        "Incredible Science & Space Secrets": "PLY8JQleszkVY",
+    },
+    "Hindi": {
+        "Dark Psychology & Human Behavior": "PLfY0YU89XSQo",
+        "Ancient World & Global Mysteries": "PLFekJAi51I5k",
+        "Incredible Science & Space Secrets": "PLBrjl2htcYYA",
+    }
 }
