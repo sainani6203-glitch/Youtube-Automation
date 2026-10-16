@@ -17,8 +17,15 @@ def render_single_text(text: str, font_size: int = 56, color: tuple = (255, 255,
     if not os.path.exists(font_path):
         font_path = os.path.join(os.environ.get('WINDIR', 'C:\\Windows'), 'Fonts', 'nirmala.ttc')
 
+    # Auto-scale font size based on text length for perfect readability in automated runs
+    current_font_size = font_size
+    if len(text) > 40:
+        current_font_size = 48
+    if len(text) > 65:
+        current_font_size = 42
+
     try:
-        font = ImageFont.truetype(font_path, font_size)
+        font = ImageFont.truetype(font_path, current_font_size)
     except Exception:
         font = ImageFont.load_default()
 
