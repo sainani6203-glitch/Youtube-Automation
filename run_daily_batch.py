@@ -18,7 +18,11 @@ def run_daily_batch():
     category_theme = TOPIC_SCHEDULE.get(weekday, "Incredible Mysteries and Science Facts")
     print(f"📂 Today's Category: {category_theme}")
 
-    for language in LANGUAGES:
+    for idx, language in enumerate(LANGUAGES):
+        if idx > 0:
+            print("\n⏳ Pausing 30 seconds before switching to next language batch to prevent TTS rate limits...")
+            time.sleep(30)
+
         print(f"\n==================================================")
         print(f"🌍 Processing Language Batch: {language}")
         print(f"==================================================")
