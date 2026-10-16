@@ -36,7 +36,7 @@ async def generate_voiceover_edge(text: str, output_audio_path: str, language: s
             max_retries = 5
             for attempt in range(1, max_retries + 1):
                 try:
-                    communicate = edge_tts.Communicate(chunk, voice, rate="+15%")
+                    communicate = edge_tts.Communicate(chunk, voice, rate="+3%")
                     await communicate.save(chunk_path)
                     success = True
                     break

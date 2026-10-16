@@ -28,13 +28,13 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
     script_lang_name = language.capitalize()
     if script_lang_name.lower() == "hindi":
         script_script_name = "Devanagari script (हिंदी लिपि)"
-        example_title = "ब्रह्मांड का रहस्य | Cosmic Mystery"
+        example_title = "ब्रह्मांड का hidden mystery रहस्य"
     elif script_lang_name.lower() == "telugu":
         script_script_name = "Telugu script (తెలుగు లిపి)"
-        example_title = "తెలుగు శీర్షిక | English Title"
+        example_title = "Egypt Pyramids lo unna hidden secret రహస్యం"
     else:
         script_script_name = "English script"
-        example_title = "English Title | Subtitle"
+        example_title = "Amazing Cosmic Mystery Revealed"
 
     if video_type == "short":
         cta_instruction = f"5. CRITICAL: The final scene MUST end with a strong Call-to-Action telling viewers to SUBSCRIBE to the channel and turn on the notification bell to discover more such facts, and also watch the full detailed video on the channel." if linked_long_video_url else "5. Conclude with a strong CTA to subscribe, like, and turn on the notification bell."
@@ -54,7 +54,7 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         prompt = f"""
         Create a viral, high-retention YouTube Short script about the topic: "{topic}".
         {angle_instruction}
-        CRITICAL MANDATE FOR TITLE: The title MUST be strictly BILINGUAL in this exact format: "[Authentic {script_lang_name} Title in {script_script_name}] | [English Title] #shorts". The left side MUST be written in genuine {script_script_name}. Maximum 90 characters total.
+        CRITICAL MANDATE FOR TITLE: The title MUST be a natural MIXED-WORDS sentence combining authentic {script_script_name} and English words together smoothly into one meaningful sentence (code-switching style, e.g. for Telugu: "Egypt Pyramids lo unna hidden secret రహస్యం", for Hindi: "Brahmand ka hidden mystery रहस्य"). Include "#shorts" at the end. Maximum 90 characters total.
         The description and script narration text MUST be written entirely in {language}.
         Requirements:
         1. FIRST 3 SECONDS HOOK: Start directly with a mind-blowing question, shocking fact, or captivating mystery about the topic itself. CRITICAL: DO NOT use annoying command words like "agu", "apu", "stop scrolling", or telling viewers to stop/wait. Jump straight into the fascinating fact or secret in {language}.

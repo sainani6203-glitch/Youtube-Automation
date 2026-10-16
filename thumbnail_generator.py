@@ -6,55 +6,70 @@ from PIL import Image, ImageDraw, ImageFont, ImageEnhance
 import random
 from config import READY_TO_REVIEW_DIR, PEXELS_API_KEY
 
-def render_telugu_text(text: str, font_size: int = 72, color: tuple = (255, 255, 255)) -> Image.Image:
-    """Legacy wrapper for single text rendering."""
-    return render_bilingual_text(text, "", font_size, color)
+def render_single_text(text: str, font_size: int = 56, color: tuple = (255, 255, 255)) -> Image.Image:
+    """Renders a single unified mixed Telugu + English text with heavy outline and zero background box."""
+    # Replace common emojis with text/symbols and filter out unsupported non-rendering unicode symbols
+    text = text.replace("🔥", "!!").replace("🚨", "!!").replace("😱", "!!").replace("🚀", "!!")
+    text = ''.join(c for c in text if ord(c) < 128 or ('\u0C00' <= c <= '\u0C7F') or ('\u0900' <= c <= '\u097F') or c in ' !?,.-_!#')
+    text = text.strip()
 
-def render_bilingual_text(telugu_text: str, english_text: str, font_size: int = 60, color: tuple = (255, 255, 255)) -> Image.Image:
-    """Renders high-CTR 2-line bilingual (Telugu + English) text with heavy outline and zero background box."""
     font_path = os.path.join(os.environ.get('WINDIR', 'C:\\Windows'), 'Fonts', 'Nirmala.ttc')
     if not os.path.exists(font_path):
         font_path = os.path.join(os.environ.get('WINDIR', 'C:\\Windows'), 'Fonts', 'nirmala.ttc')
-        
+
     try:
-        font_te = ImageFont.truetype(font_path, font_size)
-        font_en = ImageFont.truetype(font_path, int(font_size * 0.80))
+        font = ImageFont.truetype(font_path, font_size)
     except Exception:
-        font_te = ImageFont.load_default()
-        font_en = ImageFont.load_default()
+        font = ImageFont.load_default()
 
     dummy_img = Image.new("RGBA", (1, 1), (0, 0, 0, 0))
     dummy_draw = ImageDraw.Draw(dummy_img)
-    
-    bbox_te = dummy_draw.textbbox((0, 0), telugu_text, font=font_te)
-    w_te = bbox_te[2] - bbox_te[0]
-    h_te = bbox_te[3] - bbox_te[1]
-    
-    if english_text:
-        bbox_en = dummy_draw.textbbox((0, 0), english_text, font=font_en)
-        w_en = bbox_en[2] - bbox_en[0]
-        h_en = bbox_en[3] - bbox_en[1]
-    else:
-        w_en, h_en = 0, 0
 
-    max_w = max(w_te, w_en) + 60
-    total_h = h_te + (h_en + 15 if english_text else 0) + 40
+    # Word wrap text nicely
+    words = text.split()
+    lines = []
+    current_line = []
+    for word in words:
+        current_line.append(word)
+        test_line = " ".join(current_line)
+        bbox = dummy_draw.textbbox((0, 0), test_line, font=font)
+        if bbox[2] - bbox[0] > 1050:
+            current_line.pop()
+            if current_line:
+                lines.append(" ".join(current_line))
+            current_line = [word]
+    if current_line:
+        lines.append(" ".join(current_line))
 
-    txt_img = Image.new("RGBA", (max_w, total_h), (0, 0, 0, 0))
+    line_heights = []
+    max_w = 0
+    for line in lines:
+        bbox = dummy_draw.textbbox((0, 0), line, font=font)
+        w = bbox[2] - bbox[0]
+        h = bbox[3] - bbox[1]
+        max_w = max(max_w, w)
+        line_heights.append(h)
+
+    total_h = sum(line_heights) + (len(lines) - 1) * 15 + 40
+    txt_img = Image.new("RGBA", (max_w + 60, total_h), (0, 0, 0, 0))
     draw = ImageDraw.Draw(txt_img)
 
-    def draw_outlined_text(xy, text, font, fill_color):
-        outline_width = 5
+    def draw_outlined_text(xy, text_str, font, fill_color):
         x, y = xy
-        for dx in range(-outline_width, outline_width + 1):
-            for dy in range(-outline_width, outline_width + 1):
-                if dx != 0 or dy != 0:
-                    draw.text((x + dx, y + dy), text, font=font, fill=(0, 0, 0, 255))
-        draw.text((x, y), text, font=font, fill=(fill_color[0], fill_color[1], fill_color[2], 255))
+        # Clean 8-point offset for crisp outline without heavy black box
+        offsets = [
+            (-3, -3), (-3, 0), (-3, 3),
+            (0, -3),           (0, 3),
+            (3, -3),  (3, 0),  (3, 3)
+        ]
+        for dx, dy in offsets:
+            draw.text((x + dx, y + dy), text_str, font=font, fill=(0, 0, 0, 255))
+        draw.text((x, y), text_str, font=font, fill=(fill_color[0], fill_color[1], fill_color[2], 255))
 
-    draw_outlined_text((20, 20), telugu_text, font_te, color)
-    if english_text:
-        draw_outlined_text((20, 20 + h_te + 15), english_text, font_en, (255, 255, 255))
+    current_y = 20
+    for idx, line in enumerate(lines):
+        draw_outlined_text((20, current_y), line, font, color)
+        current_y += line_heights[idx] + 15
 
     return txt_img
 
@@ -110,19 +125,13 @@ def generate_thumbnail(title: str, category: str = "", output_path: str = None) 
             except Exception as e:
                 print(f"[Note] Failed fetching {res_quality}: {e}")
 
-    # Determine High-CTR Category Color & Topic-Specific Bilingual Hook
-    telugu_text = ""
-    english_text = "SECRET REVEALED! 🚨"
-    if "|" in title:
-        parts = title.split("|")
-        left_part = parts[0].strip()
-        # Check for Telugu (\u0C00-\u0C7F) or Devanagari/Hindi (\u0900-\u097F)
-        if any(('\u0C00' <= c <= '\u0C7F') or ('\u0900' <= c <= '\u097F') for c in left_part):
-            telugu_text = left_part
-        if len(parts) > 1:
-            right_part = parts[1].strip().split("#")[0].strip()
-            if len(right_part) <= 30:
-                english_text = right_part.upper()
+    # Determine mixed-words sentence for thumbnail
+    clean_title = title.replace("#shorts", "").replace("#Shorts", "").strip()
+    if "|" in clean_title:
+        parts = clean_title.split("|")
+        thumbnail_text = f"{parts[0].strip()} {parts[1].strip()} 🔥"
+    else:
+        thumbnail_text = clean_title
 
     # Determine Dynamic Vibrant Text Color (Rotates daily / per video for fresh variety)
     vibrant_colors = [
@@ -136,21 +145,20 @@ def generate_thumbnail(title: str, category: str = "", output_path: str = None) 
         (255, 204, 0)     # Bright Yellow
     ]
     
-    # Pick dynamic color randomly with high entropy to prevent repetition across videos
     import random
     import time
     random.seed(int(time.time() * 1000) ^ abs(hash(title)))
     text_color = random.choice(vibrant_colors)
 
     # Extract clean English keywords for stock photo search query
-    search_query = title
+    search_query = clean_title
     if "|" in title:
         parts = title.split("|")
         if len(parts) > 1:
             search_query = parts[1].strip().split("#")[0].strip()
 
     print(f"🔍 Thumbnail Search Query: '{search_query}'")
-    print(f"🏷️ Category: '{category}' -> Bilingual Hook: '{telugu_text}' | '{english_text}'")
+    print(f"🏷️ Category: '{category}' -> Mixed Thumbnail Text: '{thumbnail_text}'")
 
     # 1. Fetch Stock Photo from Pexels if base image not already loaded
     if not base_image and PEXELS_API_KEY and PEXELS_API_KEY != "your_pexels_api_key_here":
@@ -195,11 +203,11 @@ def generate_thumbnail(title: str, category: str = "", output_path: str = None) 
     base_image = ImageEnhance.Color(base_image).enhance(1.25)
     base_image = base_image.convert("RGBA")
 
-    # 4. Render Floating Bilingual Hook directly onto the image (Zero background box)
+    # 4. Render Floating Mixed-Text directly onto the image (Zero background box)
     x_start = 80
     y_start = 220
-    
-    txt_img = render_bilingual_text(telugu_text, english_text, font_size=64, color=text_color)
+
+    txt_img = render_single_text(thumbnail_text, font_size=56, color=text_color)
     max_w = 1120
     if txt_img.width > max_w:
         ratio = max_w / txt_img.width
@@ -208,8 +216,11 @@ def generate_thumbnail(title: str, category: str = "", output_path: str = None) 
     base_image.paste(txt_img, (x_start, y_start), txt_img)
 
     base_image.convert("RGB").save(output_path, "JPEG", quality=95)
-    print(f"[Success] Clean floating-text cinematic thumbnail generated at: {output_path}")
+    print(f"[Success] Bilingual floating-text cinematic thumbnail generated at: {output_path}")
     return output_path
 
 if __name__ == "__main__":
-    generate_thumbnail("Mysterious Ancient Secrets of India", "Ancient Indian Mysteries")
+    url = "https://youtu.be/NtJC6Np1_aY"
+    out_path = os.path.join(READY_TO_REVIEW_DIR, "thumbnail.jpg")
+    generate_thumbnail("भारत के Pyramids के अंदर छुपा hidden underground city रहस्य", "Ancient Mysteries", out_path)
+    print(f"Authentic Devanagari Hindi thumbnail generated at: {out_path}")
