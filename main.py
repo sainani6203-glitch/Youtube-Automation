@@ -181,12 +181,14 @@ def run_pipeline(video_type: str = "short", custom_topic: str = None, language: 
                 thumb_path = generate_thumbnail(script_data.get("title"), category=category_theme)
                 upload_thumbnail(video_id, thumb_path, language=language)
 
-            # Auto-delete local files to save storage
+            # Auto-delete local files and stock clips to save storage
             if video_id:
-                print("🧹 Cleaning up local storage (deleting local video, audio, metadata, and subtitle files)...")
+                print("🧹 Cleaning up local storage (deleting local video, audio, stock clips, metadata, and subtitle files)...")
                 files_to_clean = [final_video_path, meta_path, audio_path, srt_path]
                 if thumb_path:
                     files_to_clean.append(thumb_path)
+                if video_clips_paths:
+                    files_to_clean.extend(video_clips_paths)
                 for p in files_to_clean:
                     if p and os.path.exists(p):
                         try:
