@@ -106,9 +106,10 @@ def run_pipeline(video_type: str = "short", custom_topic: str = None, language: 
     
     for i, scene in enumerate(script_data.get("scenes", [])):
         keyword = scene.get("visual_keyword", topic)
+        combined_query = f"{topic} {keyword}"
         clip_filename = f"clip_{i}_{timestamp}.mp4"
-        print(f"   -> Fetching clip for keyword: '{keyword}'")
-        clip_path = fetch_stock_video(keyword, orientation, clip_filename)
+        print(f"   -> Fetching clip for query: '{combined_query}'")
+        clip_path = fetch_stock_video(combined_query, orientation, clip_filename)
         if clip_path:
             video_clips_paths.append(clip_path)
 
