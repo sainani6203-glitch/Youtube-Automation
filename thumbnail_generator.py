@@ -21,11 +21,25 @@ def format_title_into_lines(text: str, max_words_per_line: int = 3) -> list:
         lines.append(" ".join(current_line))
     return lines[:3] # Max 3 lines
 
+def get_context_aware_emoji(category: str, title: str) -> str:
+    """Selects a context-aware high-CTR emoji based on category or title content."""
+    cat_lower = category.lower()
+    title_lower = title.lower()
+
+    if "space" in cat_lower or "science" in cat_lower or any(w in title_lower for w in ["space", "mars", "black hole", "planet", "universe", "nasa", "earth"]):
+        return random.choice(["🌌", "🚀", "🪐", "🔭", "✨"])
+    elif "ancient" in cat_lower or "mystery" in cat_lower or "mysteries" in cat_lower or any(w in title_lower for w in ["temple", "alayam", "secret", "rahasyam", "ancient", "pyramid", "history"]):
+        return random.choice(["🏛️", "🗿", "🗝️", "🔍", "⚡"])
+    elif "psychology" in cat_lower or "mind" in cat_lower or any(w in title_lower for w in ["mind", "brain", "psychology", "behavior", "people", "secret"]):
+        return random.choice(["🧠", "👁️", "🎭", "⚠️", "🤫"])
+    else:
+        return random.choice(["😱", "🤯", "🚨", "🔥", "💥"])
+
 def generate_thumbnail(title: str, category: str = "", output_path: str = None) -> str:
     """
     Generates an ultra-attractive, high-CTR cinematic YouTube thumbnail with 100% topic-matched
     AI background (Pollinations.ai), Google Fonts 'Baloo 2' bold typography, Split-Color Keyword Pop,
-    Randomized Multi-Position / Multi-Angle Layouts, and an expanded Watermark Blocker.
+    Randomized Multi-Position / Multi-Angle Layouts, Context-Aware Emojis, and Watermark Blocker.
     """
     if not output_path:
         output_path = os.path.join(READY_TO_REVIEW_DIR, "thumbnail.jpg")
@@ -76,9 +90,11 @@ def generate_thumbnail(title: str, category: str = "", output_path: str = None) 
     if thumbnail_text.endswith("..."):
         thumbnail_text = thumbnail_text[:-3].strip()
     
-    # Add high-CTR curiosity emoji if not present
-    if not any(e in thumbnail_text for e in ["😱", "🚨", "⚠️", "🔥", "🤯", "💥"]):
-        thumbnail_text = f"{thumbnail_text} 😱"
+    # Add context-aware high-CTR curiosity emoji if not already present
+    all_emojis = ["😱", "🤯", "🚨", "🔥", "💥", "🌌", "🚀", "🪐", "🔭", "✨", "🏛️", "🗿", "🗝️", "🔍", "⚡", "🧠", "👁️", "🎭", "⚠️", "🤫"]
+    if not any(e in thumbnail_text for e in all_emojis):
+        context_emoji = get_context_aware_emoji(category, clean_title)
+        thumbnail_text = f"{thumbnail_text} {context_emoji}"
 
     # Format into punchy multi-lines
     title_lines = format_title_into_lines(thumbnail_text, max_words_per_line=3)
@@ -148,7 +164,7 @@ def generate_thumbnail(title: str, category: str = "", output_path: str = None) 
         text_align = "text-align: left;"
         overlay_bg = "linear-gradient(90deg, rgba(5, 5, 12, 0.88) 0%, rgba(5, 5, 12, 0.50) 52%, rgba(0, 0, 0, 0.05) 100%);"
 
-    # 3. Render High-Resolution Thumbnail using Playwright with Expanded Watermark Blocker
+    # 3. Render High-Resolution Thumbnail using Playwright with Watermark Blocker
     html_content = f"""
     <!DOCTYPE html>
     <html>
@@ -222,12 +238,12 @@ def generate_thumbnail(title: str, category: str = "", output_path: str = None) 
         page.screenshot(path=output_path, type='jpeg', quality=95)
         browser.close()
 
-    print(f"[Success] Watermark-Free Thumbnail generated at: {output_path}")
+    print(f"[Success] Context-Aware Emoji Thumbnail generated at: {output_path}")
     return output_path
 
 if __name__ == "__main__":
     import sys
-    title_arg = sys.argv[1] if len(sys.argv) > 1 else "Ancient lost Indian temple hidden in deep jungle secret treasure"
+    title_arg = sys.argv[1] if len(sys.argv) > 1 else "పద్మనాభస్వామి ఆలయం రహస్యం"
     out_path = os.path.join(READY_TO_REVIEW_DIR, "thumbnail.jpg")
     generate_thumbnail(title_arg, "Ancient Mysteries", out_path)
     print(f"Thumbnail generated at: {out_path}")
