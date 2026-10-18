@@ -157,7 +157,8 @@ def generate_thumbnail(title: str, category: str = "", output_path: str = None) 
     return output_path
 
 if __name__ == "__main__":
-    url = "https://youtu.be/NtJC6Np1_aY"
+    import sys
+    title_arg = sys.argv[1] if len(sys.argv) > 1 else "भारत के Pyramids के अंदर छुपा hidden underground city रहस्य"
     out_path = os.path.join(READY_TO_REVIEW_DIR, "thumbnail.jpg")
-    generate_thumbnail("भारत के Pyramids के अंदर छुपा hidden underground city रहस्य", "Ancient Mysteries", out_path)
-    print(f"Authentic Devanagari Hindi thumbnail generated at: {out_path}")
+    generate_thumbnail(title_arg, "Mysteries", out_path)
+    print(f"Authentic thumbnail generated at: {out_path}")
