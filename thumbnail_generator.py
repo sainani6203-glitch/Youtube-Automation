@@ -3,15 +3,35 @@ import requests
 import html
 import random
 import time
+import urllib.parse
 from playwright.sync_api import sync_playwright
 from config import READY_TO_REVIEW_DIR, PEXELS_API_KEY
 
+def format_title_into_lines(text: str, max_words_per_line: int = 3) -> list:
+    """Splits a long thumbnail title into punchy multi-line chunks for high CTR."""
+    words = text.split()
+    lines = []
+    current_line = []
+    for word in words:
+        current_line.append(word)
+        if len(current_line) >= max_words_per_line:
+            lines.append(" ".join(current_line))
+            current_line = []
+    if current_line:
+        lines.append(" ".join(current_line))
+    return lines[:3] # Max 3 lines
+
 def generate_thumbnail(title: str, category: str = "", output_path: str = None) -> str:
     """
-    Generates a high-CTR cinematic YouTube thumbnail with perfect native Telugu/Hindi text shaping using Playwright and HTML/CSS.
+    Generates an ultra-attractive, high-CTR cinematic YouTube thumbnail with 100% topic-matched
+    AI background (Pollinations.ai), Google Fonts 'Baloo 2' bold typography, Split-Color Keyword Pop,
+    Randomized Multi-Position / Multi-Angle Layouts, and an expanded Watermark Blocker.
     """
     if not output_path:
         output_path = os.path.join(READY_TO_REVIEW_DIR, "thumbnail.jpg")
+    
+    output_path = os.path.abspath(output_path)
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
         
     width, height = 1280, 720
 
@@ -20,7 +40,6 @@ def generate_thumbnail(title: str, category: str = "", output_path: str = None) 
     if "youtu.be/" in title:
         yt_video_id = title.split("youtu.be/")[-1].split("?")[0].strip()
     elif "youtube.com/watch" in title and "v=" in title:
-        import urllib.parse
         parsed_url = urllib.parse.urlparse(title)
         query_params = urllib.parse.parse_qs(parsed_url.query)
         if "v" in query_params:
@@ -46,7 +65,7 @@ def generate_thumbnail(title: str, category: str = "", output_path: str = None) 
         except Exception as e:
             print(f"[Warning] Could not fetch video title from YouTube: {e}")
 
-    # Determine full meaningful Telugu/Hindi title for the thumbnail
+    # Determine full meaningful title for the thumbnail
     clean_title = title.replace("#shorts", "").replace("#Shorts", "").strip()
     if "|" in clean_title:
         parts = clean_title.split("|")
@@ -56,92 +75,140 @@ def generate_thumbnail(title: str, category: str = "", output_path: str = None) 
 
     if thumbnail_text.endswith("..."):
         thumbnail_text = thumbnail_text[:-3].strip()
-    thumbnail_text = f"{thumbnail_text} 😱"
+    
+    # Add high-CTR curiosity emoji if not present
+    if not any(e in thumbnail_text for e in ["😱", "🚨", "⚠️", "🔥", "🤯", "💥"]):
+        thumbnail_text = f"{thumbnail_text} 😱"
 
-    # Extract English search query for Pexels background image
+    # Format into punchy multi-lines
+    title_lines = format_title_into_lines(thumbnail_text, max_words_per_line=3)
+
+    # Extract English search query for background generation
     search_query = clean_title
     if "|" in title:
         parts = title.split("|")
         if len(parts) > 1:
             search_query = parts[1].strip().split("#")[0].strip()
 
-    print(f"🔍 Thumbnail Search Query: '{search_query}'")
-    print(f"🏷️ Category: '{category}' -> Thumbnail Text: '{thumbnail_text}'")
+    print(f"🔍 Thumbnail Topic/Query: '{search_query}'")
+    print(f"🏷️ Category: '{category}' -> Title Lines: {title_lines}")
 
-    # 1. Fetch Cinematic Stock Photo from Pexels
-    bg_image_url = None
-    if PEXELS_API_KEY and PEXELS_API_KEY != "your_pexels_api_key_here":
-        try:
-            headers = {"Authorization": PEXELS_API_KEY}
-            url = f"https://api.pexels.com/v1/search?query={search_query} cinematic moody dark mysterious shock 4k&per_page=15&orientation=landscape"
-            response = requests.get(url, headers=headers)
-            if response.status_code == 200:
-                data = response.json()
-                photos = data.get("photos", [])
-                if photos:
-                    chosen_photo = random.choice(photos[:min(5, len(photos))])
-                    bg_image_url = chosen_photo.get("src", {}).get("large2x") or chosen_photo.get("src", {}).get("large")
-        except Exception as e:
-            print(f"[Warning] Pexels fetch failed: {e}")
+    # 1. Generate Ultra-Attractive 100% Topic-Matched Cinematic AI Background (Pollinations.ai)
+    ai_prompt = f"{search_query}, masterpiece, ultra detailed, hyperrealistic 8k resolution, Unreal Engine 5 render, dramatic cinematic moody lighting, vibrant neon and gold accents, award-winning photography, cinematic depth of field, movie poster style"
+    encoded_prompt = urllib.parse.quote(ai_prompt)
+    bg_image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=1280&height=720&nologo=true&seed={random.randint(1000, 99999)}"
 
-    # 2. Determine Dynamic Vibrant Text Color
+    # 2. Seed deterministic pseudo-randomness based on title hash so each video gets a unique layout style
+    title_seed = abs(hash(title))
+    rng = random.Random(title_seed)
+
     vibrant_colors = [
-        "#ff3b30", # Electric Red
+        "#ffd700", # Electric Gold / Yellow
         "#00e5ff", # Neon Cyan
-        "#ffd700", # Electric Gold
-        "#ff007f", # Hot Magenta
+        "#ff3b30", # Electric Red
         "#39ff14", # Lime Green
-        "#ff6600", # Neon Orange
-        "#bf00ff", # Electric Purple
-        "#ffcc00"  # Bright Yellow
+        "#ff007f", # Hot Magenta
+        "#ff6600"  # Neon Orange
     ]
-    
-    random.seed(int(time.time() * 1000) ^ abs(hash(title)))
-    text_color = random.choice(vibrant_colors)
+    accent_color = rng.choice(vibrant_colors)
 
-    background_css = f"url('{bg_image_url}') center/cover no-repeat" if bg_image_url else "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)"
+    # Randomly pick layout position: 'left', 'right', or 'center'
+    layout_position = rng.choice(['left', 'right', 'center'])
+    print(f"🎲 Randomized Layout Position: '{layout_position}' | Accent Color: {accent_color}")
 
-    # 3. Render High-Resolution Thumbnail using Playwright (Chromium OpenType Harfbuzz shaping for Telugu/Hindi)
+    background_css = f"url('{bg_image_url}') center/cover no-repeat"
+
+    # Build HTML lines markup with randomized angles and offsets
+    lines_html = ""
+    for i, line in enumerate(title_lines):
+        words = line.split()
+        if len(words) > 1:
+            base_words = " ".join(words[:-1])
+            highlight_word = words[-1]
+            formatted_line = f'{html.escape(base_words)} <span style="color: {accent_color}; text-shadow: 0 0 25px {accent_color}, 4px 4px 0px #000;">{html.escape(highlight_word)}</span>'
+        else:
+            formatted_line = f'<span style="color: {accent_color}; text-shadow: 0 0 25px {accent_color}, 4px 4px 0px #000;">{html.escape(line)}</span>'
+
+        angle = rng.randint(-5, 5)
+        offset = rng.randint(-20, 25)
+
+        lines_html += f'<div class="line" style="transform: rotate({angle}deg); margin-left: {offset}px;">{formatted_line}</div>\n'
+
+    # Configure CSS alignment based on layout position
+    if layout_position == 'right':
+        flex_align = "justify-content: flex-end; padding-right: 80px;"
+        text_align = "text-align: right;"
+        overlay_bg = "linear-gradient(270deg, rgba(5, 5, 12, 0.88) 0%, rgba(5, 5, 12, 0.50) 52%, rgba(0, 0, 0, 0.05) 100%);"
+    elif layout_position == 'center':
+        flex_align = "justify-content: center; padding-left: 0px;"
+        text_align = "text-align: center;"
+        overlay_bg = "radial-gradient(circle, rgba(5, 5, 12, 0.75) 0%, rgba(5, 5, 12, 0.90) 100%);"
+    else: # 'left'
+        flex_align = "justify-content: flex-start; padding-left: 80px;"
+        text_align = "text-align: left;"
+        overlay_bg = "linear-gradient(90deg, rgba(5, 5, 12, 0.88) 0%, rgba(5, 5, 12, 0.50) 52%, rgba(0, 0, 0, 0.05) 100%);"
+
+    # 3. Render High-Resolution Thumbnail using Playwright with Expanded Watermark Blocker
     html_content = f"""
     <!DOCTYPE html>
     <html>
     <head>
     <meta charset="UTF-8">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Telugu:wght@700;900&family=Noto+Sans+Devanagari:wght@700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Noto+Sans+Telugu:wght@700;900&family=Noto+Sans+Devanagari:wght@700;900&display=swap" rel="stylesheet">
     <style>
       body {{
         margin: 0;
         width: 1280px;
         height: 720px;
-        background: {background_css};
+        background: #0f172a {background_css};
         position: relative;
         display: flex;
-        justify-content: center;
+        {flex_align}
         align-items: center;
-        font-family: 'Noto Sans Telugu', 'Noto Sans Devanagari', sans-serif;
+        font-family: 'Baloo 2', 'Noto Sans Telugu', 'Noto Sans Devanagari', sans-serif;
       }}
       .overlay {{
         position: absolute;
         top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0, 0, 0, 0.45);
+        background: {overlay_bg}
       }}
-      .title {{
+      .title-container {{
         position: relative;
         z-index: 10;
-        font-size: 56px;
-        font-weight: 900;
-        color: {text_color};
-        text-align: center;
-        padding: 50px 80px;
-        text-shadow: 3px 3px 0px #000, -3px -3px 0px #000, 3px -3px 0px #000, -3px 3px 0px #000, 0px 8px 24px rgba(0,0,0,0.9);
-        line-height: 1.35;
-        max-width: 1100px;
+        max-width: 750px;
+        {text_align}
+        filter: drop-shadow(0 15px 35px rgba(0,0,0,0.9));
+      }}
+      .line {{
+        font-size: 58px;
+        font-weight: 800;
+        line-height: 1.15;
+        margin: 14px 0;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        color: #ffffff;
+        text-shadow: 4px 4px 0px #000, -4px -4px 0px #000, 4px -4px 0px #000, -4px 4px 0px #000, 0px 8px 25px rgba(0,0,0,0.95);
+        display: inline-block;
+      }}
+      /* Expanded Bulletproof Watermark Blocker at bottom-right corner */
+      .watermark-blocker {{
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 380px;
+        height: 90px;
+        background: #05050c;
+        z-index: 9999;
+        border-top-left-radius: 20px;
       }}
     </style>
     </head>
     <body>
       <div class="overlay"></div>
-      <div class="title">{thumbnail_text}</div>
+      <div class="watermark-blocker"></div>
+      <div class="title-container">
+        {lines_html}
+      </div>
     </body>
     </html>
     """
@@ -150,15 +217,17 @@ def generate_thumbnail(title: str, category: str = "", output_path: str = None) 
         browser = p.chromium.launch()
         page = browser.new_page(viewport={'width': 1280, 'height': 720})
         page.set_content(html_content)
+        print("⏳ Waiting for AI image generation and rendering...")
+        time.sleep(6)
         page.screenshot(path=output_path, type='jpeg', quality=95)
         browser.close()
 
-    print(f"[Success] Perfect native Unicode shaped thumbnail generated at: {output_path}")
+    print(f"[Success] Watermark-Free Thumbnail generated at: {output_path}")
     return output_path
 
 if __name__ == "__main__":
     import sys
-    title_arg = sys.argv[1] if len(sys.argv) > 1 else "भारत के Pyramids के अंदर छुपा hidden underground city रहस्य"
+    title_arg = sys.argv[1] if len(sys.argv) > 1 else "Ancient lost Indian temple hidden in deep jungle secret treasure"
     out_path = os.path.join(READY_TO_REVIEW_DIR, "thumbnail.jpg")
-    generate_thumbnail(title_arg, "Mysteries", out_path)
-    print(f"Authentic thumbnail generated at: {out_path}")
+    generate_thumbnail(title_arg, "Ancient Mysteries", out_path)
+    print(f"Thumbnail generated at: {out_path}")
