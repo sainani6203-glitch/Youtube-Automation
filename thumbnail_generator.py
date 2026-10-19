@@ -35,19 +35,21 @@ def get_context_aware_emoji(category: str, title: str) -> str:
     else:
         return random.choice(["😱", "🤯", "🚨", "🔥", "💥"])
 
-def generate_thumbnail(title: str, category: str = "", output_path: str = None) -> str:
+def generate_thumbnail(title: str, category: str = "", output_path: str = None, vertical: bool = False) -> str:
     """
     Generates an ultra-attractive, high-CTR cinematic YouTube thumbnail with 100% topic-matched
     AI background (Pollinations.ai), Google Fonts 'Baloo 2' bold typography, Split-Color Keyword Pop,
     Randomized Multi-Position / Multi-Angle Layouts, Context-Aware Emojis, and Watermark Blocker.
+    Supports both 16:9 landscape (long videos) and 9:16 vertical (shorts).
     """
     if not output_path:
-        output_path = os.path.join(READY_TO_REVIEW_DIR, "thumbnail.jpg")
+        filename = "thumbnail_short.jpg" if vertical else "thumbnail.jpg"
+        output_path = os.path.join(READY_TO_REVIEW_DIR, filename)
     
     output_path = os.path.abspath(output_path)
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
         
-    width, height = 1280, 720
+    width, height = (1080, 1920) if vertical else (1280, 720)
 
     # Check if title is a YouTube URL or Video ID
     yt_video_id = None
@@ -100,17 +102,17 @@ def generate_thumbnail(title: str, category: str = "", output_path: str = None) 
     title_lines = format_title_into_lines(thumbnail_text, max_words_per_line=3)
 
     # Extract English search query for background generation
-    search_query = clean_title
-    if "|" in title:
-        parts = title.split("|")
-        if len(parts) > 1:
-            search_query = parts[1].strip().split("#")[0].strip()
+    # Extract only English words for crystal-clear AI image generation
+    english_words = [word for word in clean_title.split() if all(ord(c) < 128 for c in word)]
+    ai_subject = " ".join(english_words)
+    if not ai_subject.strip():
+        ai_subject = category if category else "mysterious cinematic subject"
 
-    print(f"🔍 Thumbnail Topic/Query: '{search_query}'")
+    print(f"🔍 Thumbnail Subject Query (English): '{ai_subject}'")
     print(f"🏷️ Category: '{category}' -> Title Lines: {title_lines}")
 
-    # 1. Generate Ultra-Attractive 100% Topic-Matched Cinematic AI Background (Pollinations.ai)
-    ai_prompt = f"{search_query}, masterpiece, ultra detailed, hyperrealistic 8k resolution, Unreal Engine 5 render, dramatic cinematic moody lighting, vibrant neon and gold accents, award-winning photography, cinematic depth of field, movie poster style"
+    # 1. Generate Ultra-Clear Photorealistic Topic-Matched AI Background (Pollinations.ai)
+    ai_prompt = f"crystal clear photorealistic photography of {ai_subject}, sharp focus, highly detailed, dramatic cinematic lighting, professional 8k resolution, movie poster style"
     encoded_prompt = urllib.parse.quote(ai_prompt)
     bg_image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=1280&height=720&nologo=true&seed={random.randint(1000, 99999)}"
 
@@ -174,8 +176,8 @@ def generate_thumbnail(title: str, category: str = "", output_path: str = None) 
     <style>
       body {{
         margin: 0;
-        width: 1280px;
-        height: 720px;
+        width: {width}px;
+        height: {height}px;
         background: #0f172a {background_css};
         position: relative;
         display: flex;
@@ -191,12 +193,12 @@ def generate_thumbnail(title: str, category: str = "", output_path: str = None) 
       .title-container {{
         position: relative;
         z-index: 10;
-        max-width: 750px;
+        max-width: {width - 250}px;
         {text_align}
         filter: drop-shadow(0 15px 35px rgba(0,0,0,0.9));
       }}
       .line {{
-        font-size: 58px;
+        font-size: {"82px" if vertical else "68px"};
         font-weight: 800;
         line-height: 1.15;
         margin: 14px 0;
@@ -231,7 +233,7 @@ def generate_thumbnail(title: str, category: str = "", output_path: str = None) 
 
     with sync_playwright() as p:
         browser = p.chromium.launch()
-        page = browser.new_page(viewport={'width': 1280, 'height': 720})
+        page = browser.new_page(viewport={'width': width, 'height': height})
         page.set_content(html_content)
         print("⏳ Waiting for AI image generation and rendering...")
         time.sleep(6)

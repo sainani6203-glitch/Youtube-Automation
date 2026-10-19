@@ -1,6 +1,7 @@
 import os
-from moviepy import VideoFileClip, AudioFileClip, TextClip, CompositeVideoClip, ColorClip, concatenate_videoclips, AudioClip, concatenate_audioclips, CompositeAudioClip
+from moviepy import VideoFileClip, AudioFileClip, TextClip, CompositeVideoClip, ColorClip, ImageClip, concatenate_videoclips, AudioClip, concatenate_audioclips, CompositeAudioClip
 from config import ASSETS_DIR
+from thumbnail_generator import generate_thumbnail
 
 def render_video(audio_path: str, video_clips_paths: list, output_path: str, video_type: str = "short", title_text: str = "", category: str = ""):
     """
@@ -11,6 +12,21 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
     voiceover_duration = audio.duration
     
     width, height = (1080, 1920) if video_type == "short" else (1920, 1080)
+    
+    # 0. Generate Thumbnail Intro Card for Shorts (1.2 seconds) so YouTube auto-picks it as Short thumbnail
+    thumb_intro_clip = None
+    thumb_intro_duration = 1.2
+    if video_type == "short" and title_text:
+        try:
+            print(f"🖼️ Generating dynamic vertical thumbnail intro card for short: '{title_text}'...")
+            thumb_path = generate_thumbnail(title=title_text, category=category, vertical=True)
+            if thumb_path and os.path.exists(thumb_path):
+                try:
+                    thumb_intro_clip = ImageClip(thumb_path).with_duration(thumb_intro_duration)
+                except AttributeError:
+                    thumb_intro_clip = ImageClip(thumb_path).set_duration(thumb_intro_duration)
+        except Exception as e:
+            print(f"[Warning] Could not generate short thumbnail intro card: {e}")
     
     # 1. Check for custom intro in assets/intro.mp4
     intro_path = os.path.join(ASSETS_DIR, "intro.mp4")
@@ -123,8 +139,10 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
         except AttributeError:
             main_visual = main_visual.set_duration(voiceover_duration)
 
-    # 4. Assemble full visual sequence (Intro -> Main -> Outro)
+    # 4. Assemble full visual sequence (Thumbnail Intro -> Intro -> Main -> Outro)
     sequence_visuals = []
+    if thumb_intro_clip:
+        sequence_visuals.append(thumb_intro_clip)
     if intro_clip:
         sequence_visuals.append(intro_clip)
     sequence_visuals.append(main_visual)
@@ -133,8 +151,10 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
         
     final_visual = concatenate_videoclips(sequence_visuals)
 
-    # 5. Assemble full audio sequence (Silence for intro -> Voiceover -> Silence for outro)
+    # 5. Assemble full audio sequence (Silence for thumb intro -> Silence for intro -> Voiceover -> Silence for outro)
     audio_parts = []
+    if thumb_intro_clip and thumb_intro_duration > 0:
+        audio_parts.append(AudioClip(lambda t: [0, 0], duration=thumb_intro_duration))
     if intro_clip and intro_duration > 0:
         audio_parts.append(AudioClip(lambda t: [0, 0], duration=intro_duration))
     audio_parts.append(audio)

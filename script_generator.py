@@ -27,11 +27,11 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
     """
     script_lang_name = language.capitalize()
     if script_lang_name.lower() == "hindi":
-        script_script_name = "Devanagari script (हिंदी लिपि)"
-        example_title = "ब्रह्मांड का hidden mystery रहस्य"
+        script_script_name = "Devanagari script (हिंदी लिपि) mixed with English words"
+        example_title = "Egypt Pyramids में छुपा हुआ hidden mystery रहस्य"
     elif script_lang_name.lower() == "telugu":
-        script_script_name = "Telugu script (తెలుగు లిపి)"
-        example_title = "Egypt Pyramids lo unna hidden secret రహస్యం"
+        script_script_name = "Telugu script (తెలుగు లిపి) mixed with English words"
+        example_title = "Egypt Pyramids లో ఉన్న hidden secret రహస్యం"
     else:
         script_script_name = "English script"
         example_title = "Amazing Cosmic Mystery Revealed"
@@ -54,7 +54,7 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         prompt = f"""
         Create a viral, high-retention YouTube Short script about the topic: "{topic}".
         {angle_instruction}
-        CRITICAL MANDATE FOR TITLE: The title MUST be a natural MIXED-WORDS sentence combining authentic {script_script_name} and English words together smoothly into one meaningful sentence (code-switching style, e.g. for Telugu: "Egypt Pyramids lo unna hidden secret రహస్యం", for Hindi: "Brahmand ka hidden mystery रहस्य"). Include "#shorts" at the end. Maximum 90 characters total.
+        CRITICAL MANDATE FOR TITLE: The title MUST combine English words (in English alphabet) AND authentic regional script words (Telugu script like 'రహస్యం', 'నిజం', 'అద్భుతం' for Telugu, or Devanagari for Hindi) smoothly into one exciting mixed-script sentence (e.g. "Egypt Pyramids లో ఉన్న hidden secret రహస్యం"). Include "#shorts" at the end. Maximum 90 characters total.
         The description and script narration text MUST be written entirely in {language}.
         Requirements:
         1. FIRST 3 SECONDS HOOK: Start directly with a mind-blowing question, shocking fact, or captivating mystery about the topic itself. CRITICAL: DO NOT use annoying command words like "agu", "apu", "stop scrolling", or telling viewers to stop/wait. Jump straight into the fascinating fact or secret in {language}.
@@ -82,7 +82,7 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
     else:
         prompt = f"""
         Create a comprehensive, highly engaging and deeply detailed 10-12 minute long-form YouTube video script focusing on ONE SINGLE specific topic/mystery: "{topic}" (Do NOT list 5-6 different separate topics; instead, explore this ONE single subject deeply from every angle: its origin, history, deep mysteries, scientific analysis, architectural wonders, and final conclusion).
-        CRITICAL MANDATE FOR TITLE: The title MUST be strictly BILINGUAL in this exact format: "[Authentic {script_lang_name} Title in {script_script_name}] | [English Title]". The left side MUST be written in genuine {script_script_name}. Maximum 90 characters total.
+        CRITICAL MANDATE FOR TITLE: The title MUST combine English words (in English alphabet) AND authentic regional script words (Telugu script like 'రహస్యం', 'నిజం', 'అద్భుతం' for Telugu, or Devanagari for Hindi) smoothly into one exciting mixed-script sentence (e.g. "Egypt Pyramids లో ఉన్న hidden secret రహస్యం"). Maximum 90 characters total.
         The description and script narration text MUST be written entirely in {language}.
         Requirements:
         1. Powerful hook and comprehensive introduction to this single subject.
