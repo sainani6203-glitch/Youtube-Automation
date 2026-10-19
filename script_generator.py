@@ -51,13 +51,15 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         else:
             angle_instruction = "Focus on ONE unique, fascinating scientific paradox, strange phenomenon, or mind-bending perspective of this topic."
 
+        language_instruction = f"The script narration text MUST be written in natural conversational mixed-language style ({script_script_name}), combining regional script and English words smoothly just like modern viral YouTube shorts." if script_lang_name.lower() in ["telugu", "hindi"] else f"The script narration text MUST be written entirely in {language}."
+
         prompt = f"""
         Create a viral, high-retention YouTube Short script about the topic: "{topic}".
         {angle_instruction}
         CRITICAL MANDATE FOR TITLE: The title MUST combine English words (in English alphabet) AND authentic regional script words (Telugu script like 'రహస్యం', 'నిజం', 'అద్భుతం' for Telugu, or Devanagari for Hindi) smoothly into one exciting mixed-script sentence (e.g. "Egypt Pyramids లో ఉన్న hidden secret రహస్యం"). Include "#shorts" at the end. Maximum 90 characters total.
-        The description and script narration text MUST be written entirely in {language}.
+        {language_instruction}
         Requirements:
-        1. FIRST 3 SECONDS HOOK: Start directly with a mind-blowing question, shocking fact, or captivating mystery about the topic itself. CRITICAL: DO NOT use annoying command words like "agu", "apu", "stop scrolling", or telling viewers to stop/wait. Jump straight into the fascinating fact or secret in {language}.
+        1. FIRST 3 SECONDS HOOK: Start directly with a mind-blowing question, shocking fact, or captivating mystery about the topic itself. CRITICAL: DO NOT use annoying command words like "agu", "apu", "stop scrolling", or telling viewers to stop/wait. Jump straight into the fascinating fact or secret.
         2. FAST PACING & LENGTH: Keep total length around 120-150 words (approx 40-50 seconds when spoken).
         3. 8-12 VISUAL SCENES: Break the script into 8 to 12 short, punchy sentences/scenes so that each visual clip stays on screen for only 3-4 seconds before cutting to the next.
         4. STOCK FOOTAGE KEYWORDS: For each scene, provide a distinct, dynamic visual keyword search term IN ENGLISH (e.g., "glowing ancient artifact closeup", "mysterious dark forest drone shot", "futuristic laboratory digital display") to fetch high-impact stock footage on Pexels.

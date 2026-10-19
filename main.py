@@ -171,15 +171,16 @@ def run_pipeline(video_type: str = "short", custom_topic: str = None, language: 
                 lang_code = {"english": "en", "telugu": "te", "hindi": "hi"}.get(language.lower(), "en")
                 upload_caption(video_id, srt_path, lang_code, language=language)
 
-            # Generate and upload Custom Thumbnail for Long Videos
+            # Generate and upload Custom Thumbnail for Long & Short Videos
             thumb_path = None
-            if video_id and video_type == "long":
+            if video_id:
                 import time
                 print("⏳ Waiting 15 seconds for video processing before uploading thumbnail...")
                 time.sleep(15)
                 weekday = datetime.datetime.now().weekday()
                 category_theme = TOPIC_SCHEDULE.get(weekday, "Incredible Mysteries and Science Facts")
-                thumb_path = generate_thumbnail(script_data.get("title"), category=category_theme)
+                is_vertical = (video_type == "short")
+                thumb_path = generate_thumbnail(script_data.get("title"), category=category_theme, vertical=is_vertical)
                 upload_thumbnail(video_id, thumb_path, language=language)
 
             # Auto-delete local files and stock clips to save storage
