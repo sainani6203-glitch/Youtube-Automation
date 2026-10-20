@@ -13,21 +13,40 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
     
     width, height = (1080, 1920) if video_type == "short" else (1920, 1080)
     
-    # 0. Generate Thumbnail Intro Card for Shorts (1.2 seconds) so YouTube auto-picks it as Short thumbnail
-    thumb_intro_clip = None
-    thumb_intro_duration = 1.2
-    if video_type == "short" and title_text:
+    # 0. Generate and add Thumbnail as the first 2 seconds intro frame (crucial for YouTube Shorts feed thumbnail)
+    thumb_path = None
+    thumb_clip = None
+    thumb_duration = 0.0
+    if title_text:
         try:
-            print(f"🖼️ Generating dynamic vertical thumbnail intro card for short: '{title_text}'...")
-            thumb_path = generate_thumbnail(title=title_text, category=category, vertical=True)
+            is_vertical = (video_type == "short")
+            thumb_path = generate_thumbnail(title_text, category=category, vertical=is_vertical)
             if thumb_path and os.path.exists(thumb_path):
+                thumb_clip = ImageClip(thumb_path)
                 try:
-                    thumb_intro_clip = ImageClip(thumb_path).with_duration(thumb_intro_duration)
+                    thumb_clip = thumb_clip.resized(height=height)
                 except AttributeError:
-                    thumb_intro_clip = ImageClip(thumb_path).set_duration(thumb_intro_duration)
+                    thumb_clip = thumb_clip.resize(height=height)
+                if thumb_clip.w < width:
+                    try:
+                        thumb_clip = thumb_clip.resized(width=width)
+                    except AttributeError:
+                        thumb_clip = thumb_clip.resize(width=width)
+                try:
+                    thumb_clip = thumb_clip.cropped(x_center=thumb_clip.w/2, y_center=thumb_clip.h/2, width=width, height=height)
+                except AttributeError:
+                    thumb_clip = thumb_clip.crop(x_center=thumb_clip.w/2, y_center=thumb_clip.h/2, width=width, height=height)
+                
+                thumb_duration = 2.0
+                try:
+                    thumb_clip = thumb_clip.with_duration(thumb_duration)
+                except AttributeError:
+                    thumb_clip = thumb_clip.set_duration(thumb_duration)
         except Exception as e:
-            print(f"[Warning] Could not generate short thumbnail intro card: {e}")
-    
+            print(f"[Warning] Could not generate/load thumbnail intro clip: {e}")
+            thumb_clip = None
+            thumb_duration = 0.0
+
     # 1. Check for custom intro in assets/intro.mp4
     intro_path = os.path.join(ASSETS_DIR, "intro.mp4")
     intro_clip = None
@@ -139,10 +158,10 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
         except AttributeError:
             main_visual = main_visual.set_duration(voiceover_duration)
 
-    # 4. Assemble full visual sequence (Thumbnail Intro -> Intro -> Main -> Outro)
+    # 4. Assemble full visual sequence (Thumbnail -> Intro -> Main -> Outro)
     sequence_visuals = []
-    if thumb_intro_clip:
-        sequence_visuals.append(thumb_intro_clip)
+    if thumb_clip:
+        sequence_visuals.append(thumb_clip)
     if intro_clip:
         sequence_visuals.append(intro_clip)
     sequence_visuals.append(main_visual)
@@ -151,10 +170,10 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
         
     final_visual = concatenate_videoclips(sequence_visuals)
 
-    # 5. Assemble full audio sequence (Silence for thumb intro -> Silence for intro -> Voiceover -> Silence for outro)
+    # 5. Assemble full audio sequence (Silence for thumbnail -> Silence for intro -> Voiceover -> Silence for outro)
     audio_parts = []
-    if thumb_intro_clip and thumb_intro_duration > 0:
-        audio_parts.append(AudioClip(lambda t: [0, 0], duration=thumb_intro_duration))
+    if thumb_clip and thumb_duration > 0:
+        audio_parts.append(AudioClip(lambda t: [0, 0], duration=thumb_duration))
     if intro_clip and intro_duration > 0:
         audio_parts.append(AudioClip(lambda t: [0, 0], duration=intro_duration))
     audio_parts.append(audio)
@@ -227,10 +246,18 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
     
     # Close clips
     audio.close()
+    if thumb_clip: thumb_clip.close()
     if intro_clip: intro_clip.close()
     if outro_clip: outro_clip.close()
     if bgm_clip: bgm_clip.close()
     final_composite.close()
+    
+    if thumb_path and os.path.exists(thumb_path):
+        try:
+            os.remove(thumb_path)
+        except:
+            pass
+            
     print(f"[Success] Video successfully rendered at: {output_path}")
     return output_path
 
