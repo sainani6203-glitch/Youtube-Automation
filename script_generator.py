@@ -56,7 +56,7 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         prompt = f"""
         Create a viral, high-retention YouTube Short script about the topic: "{topic}".
         {angle_instruction}
-        CRITICAL MANDATE FOR TITLE: The title MUST combine English words (in English alphabet) AND authentic regional script words (Telugu script like 'రహస్యం', 'నిజం', 'అద్భుతం' for Telugu, or Devanagari for Hindi) smoothly into one exciting mixed-script sentence (e.g. "Egypt Pyramids లో ఉన్న hidden secret రహస్యం"). Include "#shorts" at the end. Maximum 90 characters total.
+        CRITICAL MANDATE FOR TITLE: DO NOT copy any example title. Every short title MUST be 100% UNIQUE, creative, and tailored specifically to this short's angle and sub-fact. The title MUST combine English words (in English alphabet) AND authentic regional script words (Telugu script like 'రహస్యం', 'నిజం', 'అద్భుతం' for Telugu, or Devanagari for Hindi) smoothly into one exciting mixed-script sentence. Include "#shorts" at the end. Maximum 90 characters total.
         {language_instruction}
         Requirements:
         1. FIRST 3 SECONDS HOOK: Start directly with a mind-blowing question, shocking fact, or captivating mystery about the topic itself. CRITICAL: DO NOT use annoying command words like "agu", "apu", "stop scrolling", or telling viewers to stop/wait. Jump straight into the fascinating fact or secret.
@@ -67,7 +67,7 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         
         Return ONLY valid JSON in this exact format:
         {{
-            "title": "{example_title} #shorts",
+            "title": "Unique angle-specific mixed-script title #shorts",
             "description": "Optimized description with tags",
             "scenes": [
                 {{"text": "Hook sentence 1...", "visual_keyword": "keyword1"}},
@@ -84,7 +84,7 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
     else:
         prompt = f"""
         Create a comprehensive, highly engaging and deeply detailed 10-12 minute long-form YouTube video script focusing on ONE SINGLE specific topic/mystery: "{topic}" (Do NOT list 5-6 different separate topics; instead, explore this ONE single subject deeply from every angle: its origin, history, deep mysteries, scientific analysis, architectural wonders, and final conclusion).
-        CRITICAL MANDATE FOR TITLE: The title MUST combine English words (in English alphabet) AND authentic regional script words (Telugu script like 'రహస్యం', 'నిజం', 'అద్భుతం' for Telugu, or Devanagari for Hindi) smoothly into one exciting mixed-script sentence (e.g. "Egypt Pyramids లో ఉన్న hidden secret రహస్యం"). Maximum 90 characters total.
+        CRITICAL MANDATE FOR TITLE: DO NOT copy any example title. The title MUST be 100% UNIQUE and combine English words (in English alphabet) AND authentic regional script words (Telugu script like 'రహస్యం', 'నిజం', 'అద్భుతం' for Telugu, or Devanagari for Hindi) smoothly into one exciting mixed-script sentence. Maximum 90 characters total.
         The description and script narration text MUST be written entirely in {language}.
         Requirements:
         1. Powerful hook and comprehensive introduction to this single subject.
@@ -95,7 +95,7 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         
         Return ONLY valid JSON in this exact format:
         {{
-            "title": "{example_title}",
+            "title": "Unique comprehensive mixed-script title",
             "description": "Detailed SEO description with timestamps",
             "scenes": [
                 {{"text": "Detailed paragraph 1 with 80-100 words...", "visual_keyword": "keyword1"}},
