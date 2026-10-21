@@ -13,7 +13,7 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
     
     width, height = (1080, 1920) if video_type == "short" else (1920, 1080)
     
-    # 0. Generate and add Thumbnail as the first 2 seconds intro frame (crucial for YouTube Shorts feed thumbnail)
+    # 0. Generate Thumbnail file. For YouTube Shorts, also add it as the first 2 seconds intro frame.
     thumb_path = None
     thumb_clip = None
     thumb_duration = 0.0
@@ -21,7 +21,7 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
         try:
             is_vertical = (video_type == "short")
             thumb_path = generate_thumbnail(title_text, category=category, vertical=is_vertical)
-            if thumb_path and os.path.exists(thumb_path):
+            if video_type == "short" and thumb_path and os.path.exists(thumb_path):
                 thumb_clip = ImageClip(thumb_path)
                 try:
                     thumb_clip = thumb_clip.resized(height=height)
