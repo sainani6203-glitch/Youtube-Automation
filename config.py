@@ -23,24 +23,24 @@ for d in [OUTPUT_DIR, READY_TO_REVIEW_DIR, ASSETS_DIR]:
 # Topic Rotation Schedule (Focused on Single Deep Subjects)
 TOPIC_SCHEDULE = {
     0: "Dark Psychology & Human Behavior",       # Monday
-    1: "Ancient World & Global Mysteries",       # Tuesday
+    1: "World Geography & Secret Earth Wonders", # Tuesday
     2: "Incredible Science & Space Secrets",    # Wednesday
     3: "Dark Psychology & Human Behavior",       # Thursday
-    4: "Ancient World & Global Mysteries",       # Friday
+    4: "World Geography & Secret Earth Wonders", # Friday
     5: "Incredible Science & Space Secrets",    # Saturday
-    6: "Ancient World & Global Mysteries",       # Sunday
+    6: "World Geography & Secret Earth Wonders", # Sunday
 }
 
 # YouTube Playlist IDs (Language-specific)
 CATEGORY_PLAYLISTS = {
     "Telugu": {
         "Dark Psychology & Human Behavior": "PLcK6it6l0tfc",
-        "Ancient World & Global Mysteries": "PLLuMRvtViNgY",
+        "World Geography & Secret Earth Wonders": "PLLuMRvtViNgY",
         "Incredible Science & Space Secrets": "PLY8JQleszkVY",
     },
     "Hindi": {
         "Dark Psychology & Human Behavior": "PLfY0YU89XSQo",
-        "Ancient World & Global Mysteries": "PLFekJAi51I5k",
+        "World Geography & Secret Earth Wonders": "PLFekJAi51I5k",
         "Incredible Science & Space Secrets": "PLBrjl2htcYYA",
     }
 }
