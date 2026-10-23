@@ -105,11 +105,14 @@ def run_pipeline(video_type: str = "short", custom_topic: str = None, language: 
     orientation = "portrait" if video_type == "short" else "landscape"
     
     for i, scene in enumerate(script_data.get("scenes", [])):
-        keyword = scene.get("visual_keyword", topic)
-        combined_query = f"{topic} {keyword}"
+        keyword = scene.get("visual_keyword", "")
+        # Ensure query is pure English for Pexels search
+        if not keyword or any('\u0C00' <= c <= '\u0C7F' for c in keyword):
+            keyword = "cinematic mysterious background moody lighting"
+        
         clip_filename = f"clip_{i}_{timestamp}.mp4"
-        print(f"   -> Fetching clip for query: '{combined_query}'")
-        clip_path = fetch_stock_video(combined_query, orientation, clip_filename)
+        print(f"   -> Fetching clip for query: '{keyword}'")
+        clip_path = fetch_stock_video(keyword, orientation, clip_filename)
         if clip_path:
             video_clips_paths.append(clip_path)
 
@@ -131,7 +134,8 @@ def run_pipeline(video_type: str = "short", custom_topic: str = None, language: 
             output_path=final_video_path,
             video_type=video_type,
             title_text=script_data.get("title"),
-            category=category_theme
+            category=category_theme,
+            scenes=script_data.get("scenes", [])
         )
         print("==================================================")
         print(f"✅ Video rendered successfully!")

@@ -46,8 +46,12 @@ def run_daily_batch():
         except Exception as e:
             print(f"[Error] Long video failed for {language}: {e}")
 
-        # Spacing interval between shorts (10 minutes = 600 seconds)
-        SHORT_SPACING_SECONDS = 600
+        import os
+        # Spacing interval between shorts (10 minutes = 600 seconds locally, 30 seconds in CI to prevent timeout exit code 143)
+        if os.environ.get("CI") or os.environ.get("GITHUB_ACTIONS"):
+            SHORT_SPACING_SECONDS = 30
+        else:
+            SHORT_SPACING_SECONDS = 600
 
         # 5 Short Angles for maximum variety and retention
         short_angles = [

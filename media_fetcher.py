@@ -52,7 +52,7 @@ def fetch_stock_video(query: str, orientation: str = "portrait", output_filename
             with open(temp_img_path, "wb") as f:
                 f.write(img_resp.content)
             
-            # Convert image to 4-second MP4 video clip using MoviePy
+            # Convert image to 4-second MP4 video clip with cinematic zoom-in (Ken Burns effect) using MoviePy
             try:
                 from moviepy import ImageClip
                 clip_duration = 4.0
@@ -60,6 +60,15 @@ def fetch_stock_video(query: str, orientation: str = "portrait", output_filename
                     img_clip = ImageClip(temp_img_path).with_duration(clip_duration)
                 except AttributeError:
                     img_clip = ImageClip(temp_img_path).set_duration(clip_duration)
+                
+                # Apply smooth zoom-in motion over time t
+                try:
+                    img_clip = img_clip.resized(lambda t: 1.0 + 0.05 * t)
+                except Exception:
+                    try:
+                        img_clip = img_clip.resize(lambda t: 1.0 + 0.05 * t)
+                    except Exception:
+                        pass
                 
                 img_clip.write_videofile(output_path, fps=24, codec="libx264", audio=False, logger=None)
                 img_clip.close()

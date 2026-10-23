@@ -3,7 +3,7 @@ from moviepy import VideoFileClip, AudioFileClip, TextClip, CompositeVideoClip, 
 from config import ASSETS_DIR
 from thumbnail_generator import generate_thumbnail
 
-def render_video(audio_path: str, video_clips_paths: list, output_path: str, video_type: str = "short", title_text: str = "", category: str = ""):
+def render_video(audio_path: str, video_clips_paths: list, output_path: str, video_type: str = "short", title_text: str = "", category: str = "", scenes: list = None):
     """
     Renders the final video by combining audio voiceover, stock video clips, captions, intro, and outro.
     video_type: 'short' (9:16 vertical, 1080x1920) or 'long' (16:9 horizontal, 1920x1080)
@@ -169,6 +169,44 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
         sequence_visuals.append(outro_clip)
         
     final_visual = concatenate_videoclips(sequence_visuals)
+
+    # 4.5. Add dynamic burned-in subtitle/caption overlays for each scene so viewers never get bored
+    if scenes and voiceover_duration > 0:
+        subtitle_clips = []
+        total_chars = sum(len(s.get("text", "")) for s in scenes)
+        if total_chars > 0:
+            curr_t = thumb_duration + intro_duration
+            for scene in scenes:
+                txt = scene.get("text", "")
+                if not txt:
+                    continue
+                fraction = len(txt) / total_chars
+                dur = max(2.0, voiceover_duration * fraction)
+                start_t = curr_t
+                end_t = min(curr_t + dur, curr_t + voiceover_duration + thumb_duration + intro_duration)
+                curr_t = end_t
+                
+                try:
+                    sub_clip = TextClip(
+                        text=txt,
+                        font_size=36 if video_type == "short" else 42,
+                        color='yellow',
+                        bg_color='black',
+                        size=(width - 150, None)
+                    )
+                    try:
+                        sub_clip = sub_clip.with_position(('center', height - 400 if video_type == "short" else height - 220)).with_start(start_t).with_duration(end_t - start_t)
+                    except AttributeError:
+                        sub_clip = sub_clip.set_position(('center', height - 400 if video_type == "short" else height - 220)).set_start(start_t).set_duration(end_t - start_t)
+                    subtitle_clips.append(sub_clip)
+                except Exception as sub_err:
+                    print(f"[Note] Subtitle clip skipped for scene: {sub_err}")
+        
+        if subtitle_clips:
+            try:
+                final_visual = CompositeVideoClip([final_visual] + subtitle_clips)
+            except Exception as comp_err:
+                print(f"[Note] Subtitle composition skipped: {comp_err}")
 
     # 5. Assemble full audio sequence (Silence for thumbnail -> Silence for intro -> Voiceover -> Silence for outro)
     audio_parts = []

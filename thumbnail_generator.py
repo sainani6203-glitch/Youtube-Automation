@@ -81,13 +81,17 @@ def generate_thumbnail(title: str, category: str = "", output_path: str = None, 
         except Exception as e:
             print(f"[Warning] Could not fetch video title from YouTube: {e}")
 
-    # Determine full meaningful title for the thumbnail
+    # Determine full meaningful title for the thumbnail & exact English topic subject
     clean_title = title.replace("#shorts", "").replace("#Shorts", "").strip()
+    thumbnail_text = clean_title
+    english_subject = ""
     if "|" in clean_title:
         parts = clean_title.split("|")
         thumbnail_text = parts[0].strip()
+        english_subject = parts[1].strip()
     else:
-        thumbnail_text = clean_title
+        english_words = [word for word in clean_title.split() if all(ord(c) < 128 for c in word)]
+        english_subject = " ".join(english_words)
 
     if thumbnail_text.endswith("..."):
         thumbnail_text = thumbnail_text[:-3].strip()
@@ -101,20 +105,63 @@ def generate_thumbnail(title: str, category: str = "", output_path: str = None, 
     # Format into punchy multi-lines
     title_lines = format_title_into_lines(thumbnail_text, max_words_per_line=3)
 
-    # Extract English search query for background generation
-    # Extract only English words for crystal-clear AI image generation
-    english_words = [word for word in clean_title.split() if all(ord(c) < 128 for c in word)]
-    ai_subject = " ".join(english_words)
-    if not ai_subject.strip():
-        ai_subject = category if category else "mysterious cinematic subject"
+    ai_subject = english_subject if english_subject.strip() else (category if category else "mysterious cinematic subject")
 
     print(f"🔍 Thumbnail Subject Query (English): '{ai_subject}'")
     print(f"🏷️ Category: '{category}' -> Title Lines: {title_lines}")
 
-    # 1. Generate Ultra-Clear Photorealistic Topic-Matched AI Background (Pollinations.ai)
-    ai_prompt = f"crystal clear photorealistic photography of {ai_subject}, sharp focus, highly detailed, dramatic cinematic lighting, professional 8k resolution, movie poster style"
-    encoded_prompt = urllib.parse.quote(ai_prompt)
-    bg_image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=1280&height=720&nologo=true&seed={random.randint(1000, 99999)}"
+    # 1. Generate & Download Ultra-Clear Photorealistic Topic-Matched Background
+    bg_local_path = os.path.abspath(os.path.join(READY_TO_REVIEW_DIR, "temp_bg.jpg"))
+    downloaded_bg = False
+
+    # Try Pexels Photos API first for lightning-fast, high-quality real photography
+    if PEXELS_API_KEY and PEXELS_API_KEY != "your_pexels_api_key_here":
+        try:
+            print(f"📥 Fetching background photo from Pexels for thumbnail: '{ai_subject}'...")
+            headers = {"Authorization": PEXELS_API_KEY}
+            pexels_url = f"https://api.pexels.com/v1/search?query={urllib.parse.quote(ai_subject)}&per_page=5"
+            p_resp = requests.get(pexels_url, headers=headers, timeout=10)
+            if p_resp.status_code == 200:
+                p_data = p_resp.json()
+                photos = p_data.get("photos", [])
+                if photos:
+                    chosen_photo = random.choice(photos)
+                    img_url = chosen_photo.get("src", {}).get("large2x") or chosen_photo.get("src", {}).get("large")
+                    if img_url:
+                        img_dl = requests.get(img_url, timeout=15)
+                        if img_dl.status_code == 200:
+                            with open(bg_local_path, "wb") as f:
+                                f.write(img_dl.content)
+                            downloaded_bg = True
+                            print(f"   -> [Pexels Photo Success]")
+        except Exception as p_err:
+            print(f"[Warning] Pexels photo fetch failed: {p_err}")
+
+    # Fallback to Pollinations.ai if Pexels didn't provide a photo
+    if not downloaded_bg:
+        try:
+            ai_prompt = f"extremely colorful vibrant glowing neon photography of {ai_subject}, bright vivid saturated colors, electric cyan and gold accents, crisp sharp focus, stunning viral YouTube thumbnail style, masterpiece"
+            encoded_prompt = urllib.parse.quote(ai_prompt)
+            bg_image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=1280&height=720&nologo=true&seed={random.randint(1000, 99999)}"
+            print(f"📥 Downloading AI background image for thumbnail from Pollinations...")
+            img_resp = requests.get(bg_image_url, timeout=15)
+            if img_resp.status_code == 200:
+                with open(bg_local_path, "wb") as f:
+                    f.write(img_resp.content)
+                downloaded_bg = True
+        except Exception as e:
+            print(f"[Warning] Pollinations fallback failed: {e}")
+
+    background_css = "#0f172a"
+    if downloaded_bg and os.path.exists(bg_local_path):
+        try:
+            import base64
+            with open(bg_local_path, "rb") as f:
+                b64_data = base64.b64encode(f.read()).decode("utf-8")
+            background_css = f"url('data:image/jpeg;base64,{b64_data}') center/cover no-repeat"
+            os.remove(bg_local_path)
+        except Exception as b64_err:
+            print(f"[Warning] Base64 encoding failed: {b64_err}")
 
     # 2. Seed deterministic pseudo-randomness based on title hash so each video gets a unique layout style
     title_seed = abs(hash(title))
@@ -133,8 +180,6 @@ def generate_thumbnail(title: str, category: str = "", output_path: str = None, 
     # Randomly pick layout position: 'left', 'right', or 'center'
     layout_position = rng.choice(['left', 'right', 'center'])
     print(f"🎲 Randomized Layout Position: '{layout_position}' | Accent Color: {accent_color}")
-
-    background_css = f"url('{bg_image_url}') center/cover no-repeat"
 
     # Build HTML lines markup with randomized angles and offsets
     lines_html = ""
@@ -234,7 +279,7 @@ def generate_thumbnail(title: str, category: str = "", output_path: str = None, 
     with sync_playwright() as p:
         browser = p.chromium.launch()
         page = browser.new_page(viewport={'width': width, 'height': height})
-        page.set_content(html_content)
+        page.set_content(html_content, wait_until="domcontentloaded")
         print("⏳ Waiting for AI image generation and rendering...")
         time.sleep(6)
         page.screenshot(path=output_path, type='jpeg', quality=95)
