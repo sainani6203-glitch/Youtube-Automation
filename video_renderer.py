@@ -189,9 +189,8 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
                 try:
                     sub_clip = TextClip(
                         text=txt,
-                        font_size=36 if video_type == "short" else 42,
+                        font_size=38 if video_type == "short" else 44,
                         color='yellow',
-                        bg_color='black',
                         size=(width - 150, None)
                     )
                     try:
