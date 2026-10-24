@@ -232,6 +232,33 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
         except Exception as e:
             print(f"[Note] TextClip skipped: {e}")
 
+    # 6b. Add visual "SUBSCRIBE" reminder overlay & notification sound effect during the final seconds of the video
+    try:
+        sub_reminder_clip = TextClip(text="🔔 SUBSCRIBE FOR MORE", font_size=40, color='yellow', stroke_color='black', stroke_width=2)
+        sub_start = max(0, total_duration - 5.0)
+        try:
+            sub_reminder_clip = sub_reminder_clip.with_position(('center', height - 280)).with_start(sub_start).with_duration(5.0)
+        except AttributeError:
+            sub_reminder_clip = sub_reminder_clip.set_position(('center', height - 280)).set_start(sub_start).set_duration(5.0)
+        final_visual = CompositeVideoClip([final_visual, sub_reminder_clip])
+
+        import numpy as np
+        def make_chime(t):
+            f1, f2 = 587.33, 880.00
+            val1 = 0.25 * np.sin(2 * np.pi * f1 * t) * np.exp(-3 * t)
+            val2 = 0.35 * np.sin(2 * np.pi * f2 * (t - 0.15)) * np.exp(-3 * (t - 0.15)) if t >= 0.15 else 0
+            return [val1 + val2, val1 + val2]
+        
+        chime_clip = AudioClip(make_chime, duration=0.5)
+        try:
+            chime_clip = chime_clip.with_start(sub_start)
+        except AttributeError:
+            chime_clip = chime_clip.set_start(sub_start)
+            
+        final_audio_voice = CompositeAudioClip([final_audio_voice, chime_clip])
+    except Exception as e:
+        print(f"[Note] Subscribe reminder clip/audio skipped: {e}")
+
     # 7. Select category-matched background music from assets/
     bgm_filename = "bgm.mp3"
     if "Dark Psychology" in category:

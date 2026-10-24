@@ -38,6 +38,7 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
 
     if video_type == "short":
         cta_instruction = f"5. CRITICAL: The final scene MUST end with a strong Call-to-Action telling viewers to SUBSCRIBE to the channel and turn on the notification bell to discover more such facts, and also watch the full detailed video on the channel." if linked_long_video_url else "5. Conclude with a strong CTA to subscribe, like, and turn on the notification bell."
+        mid_cta_instruction = "6. MID-VIDEO VALUE & CTA: In the middle of the video (around scene 5), smoothly include a brief curiosity hook and call to subscribe (e.g. telling viewers that the next incredible hidden truth is even more shocking and to make sure they subscribe so they don't miss future mysteries)."
         
         angle_instruction = ""
         if short_angle == "shocking_fact":
@@ -63,6 +64,7 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         2. FAST PACING & LENGTH: Keep total length around 120-150 words (approx 40-50 seconds when spoken).
         3. 8-12 VISUAL SCENES: Break the script into 8 to 12 short, punchy sentences/scenes so that each visual clip stays on screen for only 3-4 seconds before cutting to the next.
         4. STOCK FOOTAGE KEYWORDS: For each scene, provide a distinct, dynamic visual keyword search term IN ENGLISH (e.g., "glowing ancient artifact closeup", "mysterious dark forest drone shot", "futuristic laboratory digital display") to fetch high-impact stock footage on Pexels.
+        {mid_cta_instruction}
         {cta_instruction}
         
         Return ONLY valid JSON in this exact format:
@@ -89,9 +91,10 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         Requirements:
         1. Powerful hook and comprehensive introduction to this single subject.
         2. Narrative depth exploring various chapters/aspects of this ONE topic in detail.
-        3. Strong conclusion and a powerful Call-to-Action telling viewers to LIKE, SHARE, and SUBSCRIBE to the channel.
-        4. CRITICAL: Each scene in the "scenes" array MUST contain a detailed, rich paragraph of at least 80-100 words of narration, so that when combined across 18-22 scenes, the total word count is between 1500-1800 words (approx 10-12 minutes when spoken).
-        5. For each scene, provide a specific visual keyword search term IN ENGLISH for stock footage.
+        3. CURIOSITY & VALUE LOOP (LONG-FORM): Establish a deep investigative narrative arc. Remind viewers throughout that subscribing gives them permanent access to our complete historical archives and masterclass deep-dives.
+        4. Strong conclusion and a powerful Call-to-Action telling viewers to LIKE, SHARE, and SUBSCRIBE to the channel.
+        5. CRITICAL: Each scene in the "scenes" array MUST contain a detailed, rich paragraph of at least 80-100 words of narration, so that when combined across 18-22 scenes, the total word count is between 1500-1800 words (approx 10-12 minutes when spoken).
+        6. For each scene, provide a specific visual keyword search term IN ENGLISH for stock footage.
         
         Return ONLY valid JSON in this exact format:
         {{
