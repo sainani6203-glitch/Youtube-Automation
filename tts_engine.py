@@ -209,6 +209,131 @@ def create_voiceover_sync(text: str, output_audio_path: str, language: str = "en
     """Synchronous wrapper for generate_voiceover"""
     asyncio.run(generate_voiceover(text, output_audio_path, language))
 
+async def generate_voiceover_scenes_edge(scenes: list, output_audio_path: str, language: str = "en"):
+    voice = VOICE_MAP.get(language.lower(), "en-US-ChristopherNeural")
+    temp_files = []
+    current_time = 0.0
+    try:
+        for idx, scene in enumerate(scenes):
+            text = scene.get("text", "")
+            if not text:
+                continue
+            chunk_path = f"{output_audio_path}_scene_{idx}.mp3"
+            temp_files.append(chunk_path)
+            
+            success = False
+            max_retries = 3
+            for attempt in range(1, max_retries + 1):
+                try:
+                    communicate = edge_tts.Communicate(text, voice, rate="+3%")
+                    await communicate.save(chunk_path)
+                    success = True
+                    break
+                except Exception as e:
+                    print(f"[Warning] edge-tts scene {idx+1} attempt {attempt} failed ({e}). Retrying...")
+                    if attempt < max_retries:
+                        await asyncio.sleep(2 * attempt)
+            
+            if not success:
+                raise RuntimeError(f"All edge-tts attempts failed for scene {idx+1}")
+            
+            clip = AudioFileClip(chunk_path)
+            dur = clip.duration
+            clip.close()
+            
+            scene["start_time"] = current_time
+            scene["end_time"] = current_time + dur
+            scene["duration"] = dur
+            current_time = scene["end_time"]
+            
+            if idx < len(scenes) - 1:
+                await asyncio.sleep(0.5)
+                
+        audio_clips = [AudioFileClip(fp) for fp in temp_files]
+        final_clip = concatenate_audioclips(audio_clips)
+        final_clip.write_audiofile(output_audio_path, logger=None)
+        
+        for clip in audio_clips:
+            clip.close()
+        final_clip.close()
+        return output_audio_path
+    finally:
+        for fp in temp_files:
+            if os.path.exists(fp):
+                try:
+                    os.remove(fp)
+                except:
+                    pass
+
+def generate_voiceover_scenes_gtts(scenes: list, output_audio_path: str, language: str = "en"):
+    lang_code = language[:2].lower()
+    if lang_code not in ["en", "te", "hi"]:
+        lang_code = "en"
+    print(f"[Info] Falling back to gTTS for scenes in language '{lang_code}'...")
+    temp_files = []
+    current_time = 0.0
+    try:
+        for idx, scene in enumerate(scenes):
+            text = scene.get("text", "")
+            if not text:
+                continue
+            chunk_path = f"{output_audio_path}_gtts_scene_{idx}.mp3"
+            temp_files.append(chunk_path)
+            
+            success = False
+            for attempt in range(1, 3):
+                try:
+                    tts = gTTS(text=text, lang=lang_code, slow=False)
+                    tts.save(chunk_path)
+                    success = True
+                    break
+                except Exception as e:
+                    print(f"[Warning] gTTS scene {idx+1} attempt {attempt} failed ({e}). Retrying...")
+                    time.sleep(1)
+            
+            if not success:
+                raise RuntimeError(f"All gTTS attempts failed for scene {idx+1}")
+                
+            clip = AudioFileClip(chunk_path)
+            dur = clip.duration
+            clip.close()
+            
+            scene["start_time"] = current_time
+            scene["end_time"] = current_time + dur
+            scene["duration"] = dur
+            current_time = scene["end_time"]
+            
+        audio_clips = [AudioFileClip(fp) for fp in temp_files]
+        final_clip = concatenate_audioclips(audio_clips)
+        final_clip.write_audiofile(output_audio_path, logger=None)
+        
+        for clip in audio_clips:
+            clip.close()
+        final_clip.close()
+        return output_audio_path
+    finally:
+        for fp in temp_files:
+            if os.path.exists(fp):
+                try:
+                    os.remove(fp)
+                except:
+                    pass
+
+async def generate_voiceover_scenes(scenes: list, output_audio_path: str, language: str = "en"):
+    try:
+        await generate_voiceover_scenes_edge(scenes, output_audio_path, language)
+        print(f"[Success] Generated synchronized voiceover scenes via edge-tts: {output_audio_path}")
+        return output_audio_path
+    except Exception as e:
+        print(f"[Warning] edge-tts scenes generation failed ({e}). Falling back to gTTS...")
+        generate_voiceover_scenes_gtts(scenes, output_audio_path, language)
+        print(f"[Success] Generated synchronized voiceover scenes via gTTS fallback: {output_audio_path}")
+        return output_audio_path
+
+def create_voiceover_scenes_sync(scenes: list, output_audio_path: str, language: str = "en"):
+    """Synchronous wrapper for generate_voiceover_scenes with exact timing calculation"""
+    asyncio.run(generate_voiceover_scenes(scenes, output_audio_path, language))
+
 if __name__ == "__main__":
     print("Testing TTS Engine with fallback...")
     test_text = "Welcome to your daily dose of smart knowledge. ఇది అసలైన తెలుగు వాయిస్ టెస్ట్."

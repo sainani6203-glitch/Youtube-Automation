@@ -3,29 +3,18 @@ import datetime
 import json
 from config import TOPIC_SCHEDULE, READY_TO_REVIEW_DIR, AUTOMATION_MODE, DEFAULT_LANGUAGE, CATEGORY_PLAYLISTS
 from script_generator import generate_video_script, generate_fresh_topic
-from tts_engine import create_voiceover_sync
+from tts_engine import create_voiceover_scenes_sync
 from media_fetcher import fetch_stock_video
 from video_renderer import render_video
 from youtube_uploader import upload_video_to_youtube, upload_caption, upload_thumbnail, add_video_to_playlist
 from thumbnail_generator import generate_thumbnail
-from moviepy import AudioFileClip
 
-def generate_srt(scenes, audio_duration, srt_path):
-    total_chars = sum(len(scene.get("text", "")) for scene in scenes)
-    if total_chars == 0:
-        total_chars = len(scenes) * 10
-        
-    current_time = 0.0
+def generate_srt(scenes, srt_path):
     srt_lines = []
-    
     for i, scene in enumerate(scenes, 1):
         text = scene.get("text", "")
-        fraction = len(text) / total_chars if total_chars > 0 else 1.0 / len(scenes)
-        scene_duration = max(2.0, audio_duration * fraction)
-        
-        start_time = current_time
-        end_time = min(audio_duration, current_time + scene_duration)
-        current_time = end_time
+        start_time = scene.get("start_time", 0.0)
+        end_time = scene.get("end_time", start_time + 2.0)
         
         def format_time(seconds):
             hours = int(seconds // 3600)
@@ -74,27 +63,24 @@ def run_pipeline(video_type: str = "short", custom_topic: str = None, language: 
         print(f"[Error] Failed to generate script: {e}")
         return None
 
-    # 3. Generate Voiceover Audio via TTS
-    print(f"🎙️ Step 2/4: Synthesizing Voiceover Audio ({language})...")
-    full_text = " ".join([scene["text"] for scene in script_data.get("scenes", [])])
+    # 3. Generate Voiceover Audio via TTS with exact scene synchronization
+    print(f"🎙️ Step 2/4: Synthesizing Synchronized Voiceover Audio ({language})...")
+    scenes = script_data.get("scenes", [])
     audio_filename = f"audio_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.mp3"
     audio_path = os.path.join(READY_TO_REVIEW_DIR, audio_filename)
     try:
-        create_voiceover_sync(full_text, audio_path, language)
+        create_voiceover_scenes_sync(scenes, audio_path, language)
         print(f"   -> Audio saved: {audio_path}")
     except Exception as e:
         print(f"[Error] Failed to generate voiceover: {e}")
         return
 
-    # Generate SRT Subtitles file
+    # Generate SRT Subtitles file using exact scene timestamps
     timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
     srt_filename = f"captions_{timestamp}.srt"
     srt_path = os.path.join(READY_TO_REVIEW_DIR, srt_filename)
     try:
-        audio_clip_obj = AudioFileClip(audio_path)
-        audio_duration = audio_clip_obj.duration
-        audio_clip_obj.close()
-        generate_srt(script_data.get("scenes", []), audio_duration, srt_path)
+        generate_srt(scenes, srt_path)
         print(f"   -> Subtitles SRT saved: {srt_path}")
     except Exception as e:
         print(f"[Warning] Failed to generate SRT: {e}")

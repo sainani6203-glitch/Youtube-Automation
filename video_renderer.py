@@ -173,33 +173,33 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
     # 4.5. Add dynamic burned-in subtitle/caption overlays for each scene so viewers never get bored
     if scenes and voiceover_duration > 0:
         subtitle_clips = []
-        total_chars = sum(len(s.get("text", "")) for s in scenes)
-        if total_chars > 0:
-            curr_t = thumb_duration + intro_duration
-            for scene in scenes:
-                txt = scene.get("text", "")
-                if not txt:
-                    continue
-                fraction = len(txt) / total_chars
-                dur = max(2.0, voiceover_duration * fraction)
-                start_t = curr_t
-                end_t = min(curr_t + dur, curr_t + voiceover_duration + thumb_duration + intro_duration)
-                curr_t = end_t
-                
+        offset = thumb_duration + intro_duration
+        for scene in scenes:
+            txt = scene.get("text", "")
+            if not txt:
+                continue
+            scene_start = scene.get("start_time", 0.0)
+            scene_end = scene.get("end_time", scene_start + 2.0)
+            
+            start_t = offset + scene_start
+            end_t = offset + scene_end
+            
+            try:
+                sub_clip = TextClip(
+                    text=txt,
+                    font_size=38 if video_type == "short" else 44,
+                    color='white',
+                    stroke_color='black',
+                    stroke_width=2,
+                    size=(width - 150, None)
+                )
                 try:
-                    sub_clip = TextClip(
-                        text=txt,
-                        font_size=38 if video_type == "short" else 44,
-                        color='yellow',
-                        size=(width - 150, None)
-                    )
-                    try:
-                        sub_clip = sub_clip.with_position(('center', height - 400 if video_type == "short" else height - 220)).with_start(start_t).with_duration(end_t - start_t)
-                    except AttributeError:
-                        sub_clip = sub_clip.set_position(('center', height - 400 if video_type == "short" else height - 220)).set_start(start_t).set_duration(end_t - start_t)
-                    subtitle_clips.append(sub_clip)
-                except Exception as sub_err:
-                    print(f"[Note] Subtitle clip skipped for scene: {sub_err}")
+                    sub_clip = sub_clip.with_position(('center', height - 400 if video_type == "short" else height - 220)).with_start(start_t).with_duration(max(0.5, end_t - start_t))
+                except AttributeError:
+                    sub_clip = sub_clip.set_position(('center', height - 400 if video_type == "short" else height - 220)).set_start(start_t).set_duration(max(0.5, end_t - start_t))
+                subtitle_clips.append(sub_clip)
+            except Exception as sub_err:
+                print(f"[Note] Subtitle clip skipped for scene: {sub_err}")
         
         if subtitle_clips:
             try:
@@ -223,7 +223,7 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
     # 6. Add optional title watermark on main visual
     if title_text:
         try:
-            txt_clip = TextClip(text=title_text, font_size=50, color='white', bg_color='transparent', size=(width - 100, None))
+            txt_clip = TextClip(text=title_text, font_size=50, color='white', stroke_color='black', stroke_width=2, size=(width - 100, None))
             try:
                 txt_clip = txt_clip.with_position(('center', 150)).with_duration(total_duration)
             except AttributeError:
