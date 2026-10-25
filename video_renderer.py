@@ -246,7 +246,7 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
         def make_chime(t):
             f1, f2 = 587.33, 880.00
             val1 = 0.25 * np.sin(2 * np.pi * f1 * t) * np.exp(-3 * t)
-            val2 = 0.35 * np.sin(2 * np.pi * f2 * (t - 0.15)) * np.exp(-3 * (t - 0.15)) if t >= 0.15 else 0
+            val2 = np.where(t >= 0.15, 0.35 * np.sin(2 * np.pi * f2 * (t - 0.15)) * np.exp(-3 * (t - 0.15)), 0.0)
             return [val1 + val2, val1 + val2]
         
         chime_clip = AudioClip(make_chime, duration=0.5)
