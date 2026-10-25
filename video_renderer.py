@@ -324,8 +324,9 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
         fps=24,
         codec='libx264',
         audio_codec='aac',
+        audio_bitrate='128k',
         preset='medium',
-        threads=4
+        threads=1
     )
     
     # Close clips
