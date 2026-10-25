@@ -1,14 +1,27 @@
 import os
+import numpy as np
 from moviepy import VideoFileClip, AudioFileClip, TextClip, CompositeVideoClip, ColorClip, ImageClip, concatenate_videoclips, AudioClip, concatenate_audioclips, CompositeAudioClip
 from config import ASSETS_DIR
 from thumbnail_generator import generate_thumbnail
+
+def ensure_mono_audioclip(clip):
+    try:
+        duration = clip.duration
+        fps = 22050
+        arr = clip.to_soundarray(fps=fps)
+        if arr.ndim > 1:
+            arr = np.mean(arr, axis=1)
+        return AudioClip(lambda t: np.interp(t, np.linspace(0, duration, len(arr)), arr), duration=duration, fps=fps)
+    except Exception:
+        return clip
 
 def render_video(audio_path: str, video_clips_paths: list, output_path: str, video_type: str = "short", title_text: str = "", category: str = "", scenes: list = None):
     """
     Renders the final video by combining audio voiceover, stock video clips, captions, intro, and outro.
     video_type: 'short' (9:16 vertical, 1080x1920) or 'long' (16:9 horizontal, 1920x1080)
     """
-    audio = AudioFileClip(audio_path)
+    raw_audio = AudioFileClip(audio_path)
+    audio = ensure_mono_audioclip(raw_audio)
     voiceover_duration = audio.duration
     
     width, height = (1080, 1920) if video_type == "short" else (1920, 1080)
@@ -282,7 +295,8 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
     bgm_clip = None
     if os.path.exists(bgm_path):
         try:
-            bgm_clip = AudioFileClip(bgm_path)
+            raw_bgm = AudioFileClip(bgm_path)
+            bgm_clip = ensure_mono_audioclip(raw_bgm)
             if bgm_clip.duration < total_duration:
                 repeats = int(total_duration // bgm_clip.duration) + 1
                 bgm_clip = concatenate_audioclips([bgm_clip] * repeats)
