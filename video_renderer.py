@@ -211,10 +211,9 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
     import numpy as np
     def make_silence(t):
         if isinstance(t, np.ndarray):
-            zeros = np.zeros_like(t)
-            return np.array([zeros, zeros])
+            return np.zeros_like(t)
         else:
-            return [0.0, 0.0]
+            return 0.0
 
     audio_parts = []
     if thumb_clip and thumb_duration > 0:
@@ -254,11 +253,7 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
             f1, f2 = 587.33, 880.00
             val1 = 0.25 * np.sin(2 * np.pi * f1 * t) * np.exp(-3 * t)
             val2 = np.where(t >= 0.15, 0.35 * np.sin(2 * np.pi * f2 * (t - 0.15)) * np.exp(-3 * (t - 0.15)), 0.0)
-            combined = val1 + val2
-            if isinstance(t, np.ndarray):
-                return np.array([combined, combined])
-            else:
-                return [combined, combined]
+            return val1 + val2
         
         chime_clip = AudioClip(make_chime, duration=0.5)
         try:
