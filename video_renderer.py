@@ -268,7 +268,7 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
             val2 = np.where(t >= 0.15, 0.35 * np.sin(2 * np.pi * f2 * (t - 0.15)) * np.exp(-3 * (t - 0.15)), 0.0)
             return val1 + val2
         
-        chime_clip = AudioClip(make_chime, duration=0.5)
+        chime_clip = ensure_mono_audioclip(AudioClip(make_chime, duration=0.5))
         try:
             chime_clip = chime_clip.with_start(sub_start)
         except AttributeError:
@@ -290,7 +290,8 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
     sfx_path = os.path.join(ASSETS_DIR, sfx_filename)
     if os.path.exists(sfx_path):
         try:
-            sfx_clip = AudioFileClip(sfx_path)
+            raw_sfx = AudioFileClip(sfx_path)
+            sfx_clip = ensure_mono_audioclip(raw_sfx)
             sfx_start = thumb_duration + intro_duration
             try:
                 sfx_clip = sfx_clip.with_start(sfx_start)
