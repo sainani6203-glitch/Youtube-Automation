@@ -29,6 +29,30 @@ def create_default_bgm():
             clip.write_audiofile(bgm_path, fps=fps, logger=None)
             clip.close()
             
+    # Generate Category-Matched Sound Effects (SFX) for transitions/hooks
+    sfx_configs = {
+        "sfx_dark_psychology.mp3": (50.0, 2.0),     # Deep tense sub drop
+        "sfx_ancient_mysteries.mp3": (523.25, 1.5), # Mystical bell chime (C5)
+        "sfx_science_space.mp3": (1046.50, 1.0)     # Futuristic sci-fi sweep (C6)
+    }
+    
+    for filename, (freq, sfx_dur) in sfx_configs.items():
+        sfx_path = os.path.join(ASSETS_DIR, filename)
+        if not os.path.exists(sfx_path):
+            print(f"🔔 Generating category SFX: {filename}...")
+            t_sfx = np.linspace(0, sfx_dur, int(fps * sfx_dur))
+            if "psychology" in filename:
+                signal = 0.15 * np.sin(2 * np.pi * freq * t_sfx) * np.exp(-1.5 * t_sfx) * (1 + np.sin(2 * np.pi * 5 * t_sfx))
+            elif "mysteries" in filename:
+                signal = 0.15 * np.sin(2 * np.pi * freq * t_sfx) * np.exp(-3.0 * t_sfx) + 0.1 * np.sin(2 * np.pi * freq * 1.5 * t_sfx) * np.exp(-4.0 * t_sfx)
+            else:
+                signal = 0.12 * np.sin(2 * np.pi * freq * t_sfx * (1 - 0.5 * t_sfx / sfx_dur)) * np.exp(-2.0 * t_sfx)
+                
+            audio_array = np.vstack((signal, signal)).T
+            clip = AudioArrayClip(audio_array, fps=fps)
+            clip.write_audiofile(sfx_path, fps=fps, logger=None)
+            clip.close()
+
     # Ensure default bgm.mp3 exists as fallback
     default_bgm = os.path.join(ASSETS_DIR, "bgm.mp3")
     if not os.path.exists(default_bgm):
