@@ -180,11 +180,27 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
 
 def generate_fresh_topic(category_prompt: str, language: str = "English") -> str:
     """
-    Generates a unique, fresh, and engaging topic under the given category using Groq or Gemini.
+    Generates a unique, fresh, and engaging topic under the given category using Groq or Gemini,
+    avoiding previously used topics stored in topic_history.json.
     """
+    history_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "topic_history.json")
+    used_topics = []
+    if os.path.exists(history_file):
+        try:
+            with open(history_file, "r", encoding="utf-8") as f:
+                used_topics = json.load(f)
+        except Exception:
+            used_topics = []
+
+    exclusion_list_str = ""
+    if used_topics:
+        recent_used = used_topics[-30:] # keep last 30 to avoid prompt bloating
+        exclusion_list_str = f"CRITICAL: Do NOT repeat any of these recently used topics:\n" + "\n".join([f"- {t}" for t in recent_used])
+
     prompt = f"""
     Generate one unique, highly catchy, and viral YouTube video topic under this broad category: "{category_prompt}".
     The topic must be fresh, intriguing, and written entirely in {language}.
+    {exclusion_list_str}
     Return ONLY the topic title as a plain string, with no extra formatting, quotes, or markdown.
     """
 
@@ -195,7 +211,7 @@ def generate_fresh_topic(category_prompt: str, language: str = "English") -> str
             completion = groq_client.chat.completions.create(
                 model="openai/gpt-oss-120b",
                 messages=[{"role": "user", "content": prompt}],
-                temperature=0.8,
+                temperature=0.85,
                 max_tokens=100
             )
             topic_text = completion.choices[0].message.content.strip()
@@ -220,9 +236,20 @@ def generate_fresh_topic(category_prompt: str, language: str = "English") -> str
                 continue
 
     if not topic_text:
-        return category_prompt  # fallback to category name
+        topic_text = category_prompt  # fallback to category name
+    else:
+        topic_text = topic_text.replace('"', '').strip()
+
+    # Save to history
+    if topic_text and topic_text not in used_topics:
+        used_topics.append(topic_text)
+        try:
+            with open(history_file, "w", encoding="utf-8") as f:
+                json.dump(used_topics, f, indent=2, ensure_ascii=False)
+        except Exception as e:
+            print(f"[Warning] Could not save topic history: {e}")
         
-    return topic_text.replace('"', '')
+    return topic_text
 
 if __name__ == "__main__":
     print("Testing Script Generator...")
