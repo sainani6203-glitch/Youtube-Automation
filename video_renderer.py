@@ -208,14 +208,22 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
                 print(f"[Note] Subtitle composition skipped: {comp_err}")
 
     # 5. Assemble full audio sequence (Silence for thumbnail -> Silence for intro -> Voiceover -> Silence for outro)
+    import numpy as np
+    def make_silence(t):
+        if isinstance(t, np.ndarray):
+            zeros = np.zeros_like(t)
+            return np.array([zeros, zeros])
+        else:
+            return [0.0, 0.0]
+
     audio_parts = []
     if thumb_clip and thumb_duration > 0:
-        audio_parts.append(AudioClip(lambda t: [0, 0], duration=thumb_duration))
+        audio_parts.append(AudioClip(make_silence, duration=thumb_duration))
     if intro_clip and intro_duration > 0:
-        audio_parts.append(AudioClip(lambda t: [0, 0], duration=intro_duration))
+        audio_parts.append(AudioClip(make_silence, duration=intro_duration))
     audio_parts.append(audio)
     if outro_clip and outro_duration > 0:
-        audio_parts.append(AudioClip(lambda t: [0, 0], duration=outro_duration))
+        audio_parts.append(AudioClip(make_silence, duration=outro_duration))
         
     final_audio_voice = concatenate_audioclips(audio_parts)
     total_duration = final_audio_voice.duration
@@ -242,12 +250,15 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
             sub_reminder_clip = sub_reminder_clip.set_position(('center', height - 280)).set_start(sub_start).set_duration(5.0)
         final_visual = CompositeVideoClip([final_visual, sub_reminder_clip])
 
-        import numpy as np
         def make_chime(t):
             f1, f2 = 587.33, 880.00
             val1 = 0.25 * np.sin(2 * np.pi * f1 * t) * np.exp(-3 * t)
             val2 = np.where(t >= 0.15, 0.35 * np.sin(2 * np.pi * f2 * (t - 0.15)) * np.exp(-3 * (t - 0.15)), 0.0)
-            return [val1 + val2, val1 + val2]
+            combined = val1 + val2
+            if isinstance(t, np.ndarray):
+                return np.array([combined, combined])
+            else:
+                return [combined, combined]
         
         chime_clip = AudioClip(make_chime, duration=0.5)
         try:
