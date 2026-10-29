@@ -37,20 +37,20 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         example_title = "Amazing Cosmic Mystery Revealed"
 
     if video_type == "short":
-        cta_instruction = f"5. CRITICAL: The final scene MUST end with a strong Call-to-Action telling viewers to SUBSCRIBE to the channel and turn on the notification bell to discover more such facts, and also watch the full detailed video on the channel." if linked_long_video_url else "5. Conclude with a strong CTA to subscribe, like, and turn on the notification bell."
-        mid_cta_instruction = "6. MID-VIDEO VALUE & CTA: In the middle of the video (around scene 5), smoothly include a brief curiosity hook and call to subscribe (e.g. telling viewers that the next incredible hidden truth is even more shocking and to make sure they subscribe so they don't miss future mysteries)."
+        cta_instruction = f"5. BRIDGE & CTA: The final scene MUST end with a compelling teaser and Call-to-Action telling viewers to check out the full detailed investigation video on the channel and SUBSCRIBE for more mysteries." if linked_long_video_url else "5. Conclude with a strong CTA to subscribe, like, and turn on the notification bell."
+        mid_cta_instruction = "6. MID-VIDEO RETENTION HOOK: Around scene 5, drop an intense secondary teaser to keep viewers locked in until the very end."
         
         angle_instruction = ""
         if short_angle == "shocking_fact":
-            angle_instruction = "Focus specifically on ONE unique, surprising, shocking, or mind-boggling sub-fact of this topic (Do NOT give a general summary; dive into one specific startling detail)."
+            angle_instruction = "Focus strictly on ONE single, hard-hitting, mind-blowing core fact or piece of evidence (No generic summaries or multiple points; dive deep into one startling reality)."
         elif short_angle == "hidden_truth":
-            angle_instruction = "Focus specifically on ONE unique mysterious background, hidden truth, or lesser-known origin story related to this topic."
+            angle_instruction = "Focus strictly on ONE unique hidden truth or mysterious origin story related to this topic."
         elif short_angle == "unsolved_mystery":
-            angle_instruction = "Focus specifically on ONE unique unresolved mystery, missing evidence, or baffling unanswered question within this topic."
+            angle_instruction = "Focus strictly on ONE baffling unanswered question or missing piece of evidence."
         elif short_angle == "bizarre_experiment":
-            angle_instruction = "Focus specifically on ONE unique bizarre experiment, historical anomaly, or strange event related to this topic."
+            angle_instruction = "Focus strictly on ONE strange historical anomaly or bizarre event."
         else:
-            angle_instruction = "Focus on ONE unique, fascinating scientific paradox, strange phenomenon, or mind-bending perspective of this topic."
+            angle_instruction = "Focus on ONE fascinating scientific paradox or mind-bending perspective."
 
         language_instruction = f"The script narration text MUST be written in natural conversational mixed-language style ({script_script_name}), combining regional script and English words smoothly just like modern viral YouTube shorts." if script_lang_name.lower() in ["telugu", "hindi"] else f"The script narration text MUST be written entirely in {language}."
 
@@ -59,11 +59,11 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         {angle_instruction}
         CRITICAL MANDATE FOR TITLE: DO NOT copy any example title. The title MUST be strictly DUAL-LANGUAGE in this exact format: "[Regional {language} Title] | [English Title]". First write the title in authentic {language} script, followed by a pipe (|), and then the English title. Include "#shorts" at the end. Maximum 90 characters total.
         {language_instruction}
-        Requirements:
-        1. FIRST 3 SECONDS HOOK: Start directly with a mind-blowing question, shocking fact, or captivating mystery about the topic itself. CRITICAL: DO NOT use annoying command words like "agu", "apu", "stop scrolling", or telling viewers to stop/wait. Jump straight into the fascinating fact or secret.
-        2. FAST PACING & LENGTH: Keep total length around 120-150 words (approx 40-50 seconds when spoken).
-        3. 8-12 VISUAL SCENES: Break the script into 8 to 12 short, punchy sentences/scenes so that each visual clip stays on screen for only 3-4 seconds before cutting to the next.
-        4. STOCK FOOTAGE KEYWORDS: For each scene, provide a distinct, dynamic visual keyword search term IN ENGLISH (e.g., "glowing ancient artifact closeup", "mysterious dark forest drone shot", "futuristic laboratory digital display") to fetch high-impact stock footage on Pexels.
+        Requirements (5 Viral Execution Steps):
+        1. ZERO-SECOND HOOK: Start directly with an arresting, hard-hitting statement or shocking reality about the topic. NO slow intros, NO "hey guys", NO command words like "agu/apu". Jump straight into the mystery.
+        2. DIRECT HARD-HITTING FACTS: Instead of listing multiple random points, explain ONE single deep core truth/proof powerfully and dynamically.
+        3. FAST PACING & LENGTH: Keep total length around 120-150 words (approx 40-50 seconds when spoken) with punchy, fast-moving sentences.
+        4. 8-12 VISUAL SCENES & KEYWORDS: Break the script into 8 to 12 short scenes. For each scene, provide a distinct, high-impact visual search term IN ENGLISH (e.g., "ancient stone carving closeup dramatic lighting", "dark mysterious laboratory macro shot") for Pexels stock footage.
         {mid_cta_instruction}
         {cta_instruction}
         
