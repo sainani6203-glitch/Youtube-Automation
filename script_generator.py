@@ -85,23 +85,26 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         """
     else:
         prompt = f"""
-        Create a comprehensive, highly engaging and deeply detailed 10-12 minute long-form YouTube video script focusing on ONE SINGLE specific topic/mystery: "{topic}" (Do NOT list 5-6 different separate topics; instead, explore this ONE single subject deeply from every angle: its origin, history, deep mysteries, scientific analysis, architectural wonders, and final conclusion).
+        Create a comprehensive, highly engaging, and deeply researched 10-12 minute investigative documentary-style long-form YouTube video script focusing on ONE SINGLE specific topic/mystery: "{topic}" (Do NOT list 5-6 different separate topics; instead, explore this ONE single subject deeply from every angle).
         CRITICAL MANDATE FOR TITLE: DO NOT copy any example title. The title MUST be strictly DUAL-LANGUAGE in this exact format: "[Regional {language} Title] | [English Title]". First write the title in authentic {language} script, followed by a pipe (|), and then the English title. Maximum 90 characters total.
         The description and script narration text MUST be written entirely in {language}.
-        Requirements:
-        1. Powerful hook and comprehensive introduction to this single subject.
-        2. Narrative depth exploring various chapters/aspects of this ONE topic in detail.
-        3. CURIOSITY & VALUE LOOP (LONG-FORM): Establish a deep investigative narrative arc. Remind viewers throughout that subscribing gives them permanent access to our complete historical archives and masterclass deep-dives.
-        4. Strong conclusion and a powerful Call-to-Action telling viewers to LIKE, SHARE, and SUBSCRIBE to the channel.
-        5. CRITICAL: Each scene in the "scenes" array MUST contain a detailed, rich paragraph of at least 80-100 words of narration, so that when combined across 18-22 scenes, the total word count is between 1500-1800 words (approx 10-12 minutes when spoken).
-        6. For each scene, provide a specific visual keyword search term IN ENGLISH for stock footage.
+        
+        Requirements & Investigative Documentary Standards:
+        1. POWERFUL HOOK & MYSTERY SETUP: Start with an arresting question and a deep-dive introduction into the core enigma of this single subject.
+        2. EMPIRICAL PROOFS & HARD EVIDENCE: Every major claim or chapter MUST include concrete proofs—such as archaeological excavation findings, carbon-14 dating results, geological anomalies, ancient architectural blueprints, or historical manuscripts from recognized archives.
+        3. EXPERT THEORIES & DEBATES: Discuss recognized historians, scientists, or researchers, their published theories, and the ongoing scientific debate between conventional explanations and alternative anomalies.
+        4. INVESTIGATIVE NARRATIVE ARC: Structure the script like a high-end Netflix or National Geographic documentary, guiding viewers step-by-step through the evidence (e.g., "ippudu ee proof chudandi...", logical deduction, and revealing hidden layers).
+        5. CURIOSITY & VALUE LOOP: Establish a deep investigative narrative arc, reminding viewers throughout about our complete historical archives and masterclass deep-dives.
+        6. STRONG CONCLUSION & CTA: Conclude with profound insight and a powerful Call-to-Action telling viewers to LIKE, SHARE, and SUBSCRIBE to the channel.
+        7. LENGTH & WORD COUNT: Each scene in the "scenes" array MUST contain a detailed, rich paragraph of at least 80-100 words of narration, so that when combined across 18-22 scenes, the total word count is between 1500-1800 words (approx 10-12 minutes when spoken).
+        8. VISUAL KEYWORDS: For each scene, provide a specific, highly visual search term IN ENGLISH for stock footage representing the exact historical artifact, excavation site, or scientific proof being discussed.
         
         Return ONLY valid JSON in this exact format:
         {{
             "title": "Dual language title",
-            "description": "Detailed SEO description with timestamps",
+            "description": "Detailed SEO description with timestamps and reference proofs",
             "scenes": [
-                {{"text": "Detailed paragraph 1 with 80-100 words...", "visual_keyword": "keyword1"}},
+                {{"text": "Detailed paragraph 1 with 80-100 words incorporating historical/scientific proofs...", "visual_keyword": "keyword1"}},
                 {{"text": "Detailed paragraph 2 with 80-100 words...", "visual_keyword": "keyword2"}}
             ]
         }}
@@ -155,16 +158,27 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         
         for m_name in model_names:
             try:
-                model = genai.GenerativeModel(m_name)
+                model = genai.GenerativeModel(m_name, tools=['google_search'])
                 response = model.generate_content(
                     prompt,
                     generation_config=genai.types.GenerationConfig(max_output_tokens=8192)
                 )
                 if response and response.text:
-                    print(f"[Success] Used Gemini model: {m_name}")
+                    print(f"[Success] Used Gemini model with Google Search grounding: {m_name}")
                     break
             except Exception as e:
-                print(f"[Note] Model '{m_name}' skipped ({e})")
+                print(f"[Note] Model '{m_name}' with search tools skipped ({e}), trying without tools...")
+                try:
+                    model = genai.GenerativeModel(m_name)
+                    response = model.generate_content(
+                        prompt,
+                        generation_config=genai.types.GenerationConfig(max_output_tokens=8192)
+                    )
+                    if response and response.text:
+                        print(f"[Success] Used Gemini model (fallback without search): {m_name}")
+                        break
+                except Exception as e2:
+                    print(f"[Note] Model '{m_name}' completely failed ({e2})")
                 
         if not response or not response.text:
             raise RuntimeError("All Gemini and Groq models reached quota limits or failed.")
