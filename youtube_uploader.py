@@ -14,9 +14,13 @@ SCOPES = [
 
 def get_authenticated_service(language: str = "Telugu"):
     """Authenticates and returns the YouTube API service client using OAuth2."""
-    credentials_file = os.path.join(BASE_DIR, "client_secret.json")
-
     lang_suffix = f"_{language.lower()}" if language and language.lower() != "telugu" else ""
+    
+    if language.lower() == "hindi" and os.path.exists(os.path.join(BASE_DIR, "client_secret_hindi.json")):
+        credentials_file = os.path.join(BASE_DIR, "client_secret_hindi.json")
+    else:
+        credentials_file = os.path.join(BASE_DIR, "client_secret.json")
+
     token_file = os.path.join(BASE_DIR, f"token{lang_suffix}.pickle")
 
     if not os.path.exists(credentials_file):
