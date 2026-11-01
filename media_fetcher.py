@@ -5,22 +5,31 @@ import urllib.parse
 from config import PEXELS_API_KEY, ASSETS_DIR
 
 def fetch_wikimedia_image(query: str) -> str:
-    """Fetches a real historical/geographic image from Wikimedia Commons API."""
+    """Fetches a real historical/geographic image from Wikimedia Commons API with fallback keyword matching."""
     try:
-        url = f"https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch={urllib.parse.quote(query)}&gsrlimit=5&prop=imageinfo&iiprop=url&format=json"
-        headers = {"User-Agent": "YouTubeAutomationBot/1.0 (educational purpose)"}
-        resp = requests.get(url, headers=headers, timeout=10)
-        if resp.status_code == 200:
-            data = resp.json()
-            pages = data.get("query", {}).get("pages", {})
-            for page_id, page_data in pages.items():
-                imageinfo = page_data.get("imageinfo", [])
-                if imageinfo:
-                    img_url = imageinfo[0].get("url")
-                    if img_url and any(img_url.lower().endswith(ext) for ext in ['.jpg', '.jpeg', '.png']):
-                        img_resp = requests.get(img_url, timeout=15)
-                        if img_resp.status_code == 200:
-                            return img_resp.content
+        queries_to_try = [query]
+        words = query.split()
+        if len(words) > 4:
+            queries_to_try.append(" ".join(words[:4]))
+            queries_to_try.append(" ".join(words[-4:]))
+            if len(words) > 6:
+                queries_to_try.append(" ".join(words[1:5]))
+                
+        for q in queries_to_try:
+            url = f"https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch={urllib.parse.quote(q)}&gsrlimit=5&prop=imageinfo&iiprop=url&format=json"
+            headers = {"User-Agent": "YouTubeAutomationBot/1.0 (educational purpose)"}
+            resp = requests.get(url, headers=headers, timeout=10)
+            if resp.status_code == 200:
+                data = resp.json()
+                pages = data.get("query", {}).get("pages", {})
+                for page_id, page_data in pages.items():
+                    imageinfo = page_data.get("imageinfo", [])
+                    if imageinfo:
+                        img_url = imageinfo[0].get("url")
+                        if img_url and any(img_url.lower().endswith(ext) for ext in ['.jpg', '.jpeg', '.png']):
+                            img_resp = requests.get(img_url, timeout=15)
+                            if img_resp.status_code == 200:
+                                return img_resp.content
     except Exception as e:
         print(f"[Note] Wikimedia fetch failed for '{query}': {e}")
     return None
