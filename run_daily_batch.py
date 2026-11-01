@@ -7,6 +7,7 @@ from script_generator import generate_fresh_topic
 from config import TOPIC_SCHEDULE, LANGUAGES
 
 def run_daily_batch():
+    import os
     os.environ["SCHEDULED_PUBLISH"] = "true"
     print("==================================================")
     print(f"🌟 Starting OmniDaily 1-Long & 5-Shorts Daily Batch Across Languages: {LANGUAGES}")
