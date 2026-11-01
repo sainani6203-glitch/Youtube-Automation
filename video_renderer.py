@@ -343,7 +343,7 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
     
     # Write output file
     import multiprocessing
-    render_threads = 2 # Restricted to 2 threads to prevent OOM memory exhaustion on VPS
+    render_threads = 4 # Optimized for speed and safety with 16GB swap
     final_composite.write_videofile(
         output_path,
         fps=24,
