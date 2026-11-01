@@ -342,14 +342,16 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
         final_composite = final_visual.set_audio(final_audio)
     
     # Write output file
+    import multiprocessing
+    render_threads = min(6, multiprocessing.cpu_count() or 4)
     final_composite.write_videofile(
         output_path,
         fps=24,
         codec='libx264',
         audio_codec='aac',
         audio_bitrate='128k',
-        preset='medium',
-        threads=1
+        preset='fast',
+        threads=render_threads
     )
     
     # Close clips
