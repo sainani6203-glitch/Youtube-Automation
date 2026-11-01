@@ -129,17 +129,25 @@ def run_pipeline(video_type: str = "short", custom_topic: str = None, language: 
         
         # Check automation mode
         if "fully" in AUTOMATION_MODE.lower():
-            print("🚀 Fully-automated mode detected. Uploading directly to YouTube...")
+            print("🚀 Fully-automated mode detected. Uploading with 6:00 PM IST scheduled publishing...")
             desc = script_data.get("description", "")
             if linked_long_video_url:
                 desc += f"\n\n🔗 Watch the full detailed video here: {linked_long_video_url}"
                 
+            # Calculate 6:00 PM IST (12:30 UTC) for scheduled publishing
+            now_utc = datetime.datetime.utcnow()
+            publish_dt = now_utc.replace(hour=12, minute=30, second=0, microsecond=0)
+            if now_utc >= publish_dt:
+                publish_dt += datetime.timedelta(days=1)
+            publish_at_str = publish_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+
             video_id = upload_video_to_youtube(
                 video_path=final_video_path,
                 title=script_data.get("title"),
                 description=desc,
-                privacy_status="public",
-                language=language
+                privacy_status="private",
+                language=language,
+                publish_at=publish_at_str
             )
             
             # Add video to category playlist automatically (Long videos only)
