@@ -29,7 +29,7 @@ def generate_srt(scenes, srt_path):
         f.write("\n".join(srt_lines))
     return srt_path
 
-def run_pipeline(video_type: str = "short", custom_topic: str = None, language: str = DEFAULT_LANGUAGE, linked_long_video_url: str = None, short_angle: str = "shocking_fact"):
+def run_pipeline(video_type: str = "short", custom_topic: str = None, language: str = DEFAULT_LANGUAGE, linked_long_video_url: str = None, short_angle: str = "shocking_fact", scheduled: bool = False):
     """
     Runs the automated video generation pipeline for a given video type ('short' or 'long') and language.
     """
