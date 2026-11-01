@@ -350,7 +350,7 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
         codec='libx264',
         audio_codec='aac',
         audio_bitrate='128k',
-        preset='fast',
+        preset='ultrafast',
         threads=render_threads
     )
     
