@@ -2,14 +2,20 @@ import os
 from PIL import Image, ImageDraw, ImageFont
 from config import READY_TO_REVIEW_DIR
 
-def generate_thumbnail(title: str, output_path: str = None) -> str:
+def generate_thumbnail(title: str, category: str = "", output_path: str = None, vertical: bool = False) -> str:
     """
-    Generates a high-CTR 1280x720 YouTube thumbnail using Pillow with vibrant background and bold text.
+    Generates a high-CTR YouTube thumbnail using Pillow with vibrant background and bold text.
+    Supports category and vertical parameters for compatibility with video_renderer.py.
     """
     if not output_path:
-        output_path = os.path.join(READY_TO_REVIEW_DIR, "thumbnail.jpg")
-        
-    width, height = 1280, 720
+        filename = "thumbnail_short.jpg" if vertical else "thumbnail.jpg"
+        output_path = os.path.join(READY_TO_REVIEW_DIR, filename)
+
+    output_path = os.path.abspath(output_path)
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+    width, height = (1080, 1920) if vertical else (1280, 720)
+    
     # Create dark mysterious background
     image = Image.new("RGB", (width, height), color=(15, 23, 42))
     draw = ImageDraw.Draw(image)
@@ -21,11 +27,14 @@ def generate_thumbnail(title: str, output_path: str = None) -> str:
     # Draw central glowing / spotlight effect using circles
     draw.ellipse([width//2 - 450, height//2 - 350, width//2 + 450, height//2 + 350], fill=(30, 41, 59))
 
-    # Add text with robust font loading
+    # Add text with robust font loading (cross-platform Windows & Linux)
     font_large = None
     font_small = None
     
     font_paths = [
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+        "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+        "/usr/share/fonts/truetype/freefont/FreeSansBold.ttf",
         os.path.join(os.environ.get('WINDIR', 'C:\\Windows'), 'Fonts', 'arialbd.ttf'),
         os.path.join(os.environ.get('WINDIR', 'C:\\Windows'), 'Fonts', 'arial.ttf'),
         "arial.ttf"
@@ -34,8 +43,8 @@ def generate_thumbnail(title: str, output_path: str = None) -> str:
     for fpath in font_paths:
         if os.path.exists(fpath):
             try:
-                font_large = ImageFont.truetype(fpath, 65)
-                font_small = ImageFont.truetype(fpath, 45)
+                font_large = ImageFont.truetype(fpath, 65 if not vertical else 85)
+                font_small = ImageFont.truetype(fpath, 45 if not vertical else 55)
                 break
             except Exception:
                 continue
@@ -58,12 +67,12 @@ def generate_thumbnail(title: str, output_path: str = None) -> str:
         lines.append(current_line)
         
     # Draw title text centered
-    y_text = 180
+    y_text = 180 if not vertical else 600
     for line in lines[:3]: # max 3 lines
         draw.text((90, y_text), line, fill=(255, 255, 255), font=font_large)
-        y_text += 90
+        y_text += 90 if not vertical else 110
         
-    draw.text((90, 580), "100% UNTOLD MYSTERY", fill=(239, 68, 68), font=font_small)
+    draw.text((90, height - 140), "100% UNTOLD MYSTERY", fill=(239, 68, 68), font=font_small)
     
     image.save(output_path, "JPEG", quality=95)
     print(f"[Success] Thumbnail generated at: {output_path}")
