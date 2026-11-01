@@ -62,11 +62,12 @@ def get_authenticated_service(language: str = "Telugu"):
 
     return build("youtube", "v3", credentials=creds)
 
-def upload_video_to_youtube(video_path: str, title: str, description: str, tags: list = None, category_id: str = "27", privacy_status: str = "public", language: str = "Telugu"):
+def upload_video_to_youtube(video_path: str, title: str, description: str, tags: list = None, category_id: str = "27", privacy_status: str = "public", language: str = "Telugu", publish_at: str = None):
     """
     Uploads a video file to YouTube automatically using YouTube Data API v3.
     category_id '27' = Education, '28' = Science & Technology
     privacy_status: 'public', 'private', or 'unlisted'
+    publish_at: ISO 8601 datetime string for scheduled publishing (forces privacyStatus='private')
     """
     if not title or not title.strip():
         title = "Incredible Mystery & Science Facts #shorts"
@@ -79,6 +80,14 @@ def upload_video_to_youtube(video_path: str, title: str, description: str, tags:
     print(f"📤 Uploading '{title}' to YouTube ({language} channel)...")
     youtube = get_authenticated_service(language)
     
+    status_dict = {
+        "privacyStatus": privacy_status,
+        "selfDeclaredMadeForKids": False
+    }
+    if publish_at:
+        status_dict["privacyStatus"] = "private"
+        status_dict["publishAt"] = publish_at
+
     body = {
         "snippet": {
             "title": title,
@@ -86,10 +95,7 @@ def upload_video_to_youtube(video_path: str, title: str, description: str, tags:
             "tags": tags or ["shorts", "education", "facts", "tech"],
             "categoryId": category_id
         },
-        "status": {
-            "privacyStatus": privacy_status,
-            "selfDeclaredMadeForKids": False
-        }
+        "status": status_dict
     }
     
     media = MediaFileUpload(video_path, chunksize=-1, resumable=True)
