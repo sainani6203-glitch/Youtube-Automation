@@ -54,6 +54,7 @@ jobs:
         PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         AUTOMATION_MODE: "fully-automated"
+        SCHEDULED_PUBLISH: "true"
         LANGUAGES: "Telugu, Hindi"
       run: |
         python run_daily_batch.py
