@@ -120,9 +120,9 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
     # Try Groq first if available (bypasses Gemini rate/quota limits)
     if groq_client:
         try:
-            print("[Info] Generating script using Groq (openai/gpt-oss-120b)...")
+            print("[Info] Generating script using Groq (llama-3.3-70b-versatile)...")
             completion = groq_client.chat.completions.create(
-                model="openai/gpt-oss-120b",
+                model="llama-3.3-70b-versatile",
                 messages=[
                     {"role": "system", "content": "You are a professional YouTube scriptwriter and JSON generator. Return ONLY valid JSON."},
                     {"role": "user", "content": prompt}
@@ -228,7 +228,7 @@ def generate_fresh_topic(category_prompt: str, language: str = "English") -> str
     if groq_client:
         try:
             completion = groq_client.chat.completions.create(
-                model="openai/gpt-oss-120b",
+                model="llama-3.3-70b-versatile",
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.85,
                 max_tokens=100
