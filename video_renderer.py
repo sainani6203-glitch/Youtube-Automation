@@ -6,12 +6,17 @@ from thumbnail_generator import generate_thumbnail
 
 def ensure_mono_audioclip(clip):
     try:
+        if hasattr(clip, 'reader') and getattr(clip.reader, 'nchannels', 1) == 1:
+            return clip
         duration = clip.duration
+        if duration > 180:
+            return clip
         fps = 22050
         arr = clip.to_soundarray(fps=fps)
         if arr.ndim > 1:
             arr = np.mean(arr, axis=1)
-        return AudioClip(lambda t: np.interp(t, np.linspace(0, duration, len(arr)), arr), duration=duration, fps=fps)
+            return AudioClip(lambda t: np.interp(t, np.linspace(0, duration, len(arr)), arr), duration=duration, fps=fps)
+        return clip
     except Exception:
         return clip
 
@@ -50,7 +55,7 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
                 except AttributeError:
                     thumb_clip = thumb_clip.crop(x_center=thumb_clip.w/2, y_center=thumb_clip.h/2, width=width, height=height)
                 
-                thumb_duration = 2.0
+                thumb_duration = 2.0 if video_type != "short" else 1.0
                 try:
                     thumb_clip = thumb_clip.with_duration(thumb_duration)
                 except AttributeError:
@@ -239,6 +244,18 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
         
     final_audio_voice = concatenate_audioclips(audio_parts)
     total_duration = final_audio_voice.duration
+
+    if video_type == "short" and total_duration > 58.0:
+        print(f"[Info] Short total duration ({total_duration:.2f}s) exceeds 58s. Trimming to 58.0s to ensure YouTube Shorts compliance.")
+        try:
+            final_visual = final_visual.subclipped(0, 58.0)
+        except AttributeError:
+            final_visual = final_visual.subclip(0, 58.0)
+        try:
+            final_audio_voice = final_audio_voice.subclipped(0, 58.0)
+        except AttributeError:
+            final_audio_voice = final_audio_voice.subclip(0, 58.0)
+        total_duration = 58.0
 
     # 6. Add optional title watermark on main visual
     if title_text:

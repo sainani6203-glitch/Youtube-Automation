@@ -85,27 +85,24 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         """
     else:
         prompt = f"""
-        Create a comprehensive, highly engaging, and deeply researched 10-12 minute investigative documentary-style long-form YouTube video script focusing on ONE SINGLE specific topic/mystery: "{topic}" (Do NOT list 5-6 different separate topics; instead, explore this ONE single subject deeply from every angle).
+        Create a comprehensive, highly engaging, and deeply researched 8-minute investigative documentary-style long-form YouTube video script focusing on ONE SINGLE specific topic/mystery: "{topic}" (Do NOT list 5-6 different separate topics; instead, explore this ONE single subject deeply from every angle).
         CRITICAL MANDATE FOR TITLE: DO NOT copy any example title. The title MUST be strictly DUAL-LANGUAGE in this exact format: "[Regional {language} Title] | [English Title]". First write the title in authentic {language} script, followed by a pipe (|), and then the English title. Maximum 90 characters total.
         The description and script narration text MUST be written entirely in {language}.
         
-        Requirements & Investigative Documentary Standards:
-        1. POWERFUL HOOK & MYSTERY SETUP: Start with an arresting question and a deep-dive introduction into the core enigma of this single subject.
-        2. EMPIRICAL PROOFS & HARD EVIDENCE: Every major claim or chapter MUST include concrete proofs—such as archaeological excavation findings, carbon-14 dating results, geological anomalies, ancient architectural blueprints, or historical manuscripts from recognized archives.
-        3. EXPERT THEORIES & DEBATES: Discuss recognized historians, scientists, or researchers, their published theories, and the ongoing scientific debate between conventional explanations and alternative anomalies.
-        4. INVESTIGATIVE NARRATIVE ARC: Structure the script like a high-end Netflix or National Geographic documentary, guiding viewers step-by-step through the evidence (e.g., "ippudu ee proof chudandi...", logical deduction, and revealing hidden layers).
-        5. CURIOSITY & VALUE LOOP: Establish a deep investigative narrative arc, reminding viewers throughout about our complete historical archives and masterclass deep-dives.
-        6. STRONG CONCLUSION & CTA: Conclude with profound insight and a powerful Call-to-Action telling viewers to LIKE, SHARE, and SUBSCRIBE to the channel.
-        7. LENGTH & WORD COUNT: Each scene in the "scenes" array MUST contain a detailed, rich paragraph of at least 80-100 words of narration, so that when combined across 18-22 scenes, the total word count is between 1500-1800 words (approx 10-12 minutes when spoken).
-        8. VISUAL KEYWORDS: For each scene, provide a specific, highly visual search term IN ENGLISH for stock footage representing the exact historical artifact, excavation site, or scientific proof being discussed.
+        Requirements & 2-Part Investigative Structure (Total 8 Minutes / 1000-1200 Words across 12-15 scenes):
+        1. PART 1: FIRST 3 MINUTES (Scenes 1-5 / ~400 words) - THE HOOK & OVEVIEW: Start with an arresting question, shocking mystery setup, and a high-retention overview of the enigma, keeping viewers hooked instantly.
+        2. PART 2: NEXT 5 MINUTES (Scenes 6-15 / ~700 words) - LIVE PROOFS & HARD EVIDENCE: Dive deep into concrete live proofs—such as archaeological excavation reports, carbon-14 dating results, geological anomalies, scientific blueprints, and expert debates. Guide viewers step-by-step through the evidence like a Netflix/National Geographic documentary (e.g., using natural narrative transitions like "ippudu assaluaina proofs chudandi...").
+        3. STRONG CONCLUSION & CTA: Conclude with profound insight and a powerful Call-to-Action telling viewers to LIKE, SHARE, and SUBSCRIBE to the channel.
+        4. WORD COUNT & PACING: Each scene in the "scenes" array MUST contain a detailed, rich paragraph of at least 70-90 words of narration.
+        5. VISUAL KEYWORDS: For each scene, provide a specific, highly visual search term IN ENGLISH for stock footage representing the exact historical artifact, excavation site, or scientific proof being discussed.
         
         Return ONLY valid JSON in this exact format:
         {{
             "title": "Dual language title",
             "description": "Detailed SEO description with timestamps and reference proofs",
             "scenes": [
-                {{"text": "Detailed paragraph 1 with 80-100 words incorporating historical/scientific proofs...", "visual_keyword": "keyword1"}},
-                {{"text": "Detailed paragraph 2 with 80-100 words...", "visual_keyword": "keyword2"}}
+                {{"text": "Detailed paragraph 1 with 70-90 words for Part 1 hook...", "visual_keyword": "keyword1"}},
+                {{"text": "Detailed paragraph 2 with 70-90 words for Part 2 live proof...", "visual_keyword": "keyword2"}}
             ]
         }}
         """
