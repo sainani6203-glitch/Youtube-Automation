@@ -6,17 +6,12 @@ from thumbnail_generator import generate_thumbnail
 
 def ensure_mono_audioclip(clip):
     try:
-        if hasattr(clip, 'reader') and getattr(clip.reader, 'nchannels', 1) == 1:
-            return clip
         duration = clip.duration
-        if duration > 180:
-            return clip
         fps = 22050
         arr = clip.to_soundarray(fps=fps)
         if arr.ndim > 1:
             arr = np.mean(arr, axis=1)
-            return AudioClip(lambda t: np.interp(t, np.linspace(0, duration, len(arr)), arr), duration=duration, fps=fps)
-        return clip
+        return AudioClip(lambda t: np.interp(t, np.linspace(0, duration, len(arr)), arr), duration=duration, fps=fps)
     except Exception:
         return clip
 
