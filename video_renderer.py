@@ -183,8 +183,8 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
         
     final_visual = concatenate_videoclips(sequence_visuals)
 
-    # 4.5. Add dynamic burned-in subtitle/caption overlays for each scene so viewers never get bored
-    if scenes and voiceover_duration > 0:
+    # 4.5. Add dynamic burned-in subtitle/caption overlays for Shorts only (Long videos use uploaded .srt caption files)
+    if scenes and voiceover_duration > 0 and video_type == "short":
         subtitle_clips = []
         offset = thumb_duration + intro_duration
         for scene in scenes:

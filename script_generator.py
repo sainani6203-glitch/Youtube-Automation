@@ -85,24 +85,32 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         """
     else:
         prompt = f"""
-        Create a comprehensive, highly engaging, and deeply researched 8-minute investigative documentary-style long-form YouTube video script focusing on ONE SINGLE specific topic/mystery: "{topic}" (Do NOT list 5-6 different separate topics; instead, explore this ONE single subject deeply from every angle).
+        Create a rich, high-retention, and deeply engaging 5-6 minute investigative documentary-style long-form YouTube video script focusing on ONE SINGLE specific topic/mystery: "{topic}".
         CRITICAL MANDATE FOR TITLE: DO NOT copy any example title. The title MUST be strictly DUAL-LANGUAGE in this exact format: "[Regional {language} Title] | [English Title]". First write the title in authentic {language} script, followed by a pipe (|), and then the English title. Maximum 90 characters total.
         The description and script narration text MUST be written entirely in {language}.
         
-        Requirements & 2-Part Investigative Structure (Total 8 Minutes / 1000-1200 Words across 12-15 scenes):
-        1. PART 1: FIRST 3 MINUTES (Scenes 1-5 / ~400 words) - THE HOOK & OVEVIEW: Start with an arresting question, shocking mystery setup, and a high-retention overview of the enigma, keeping viewers hooked instantly.
-        2. PART 2: NEXT 5 MINUTES (Scenes 6-15 / ~700 words) - LIVE PROOFS & HARD EVIDENCE: Dive deep into concrete live proofs—such as archaeological excavation reports, carbon-14 dating results, geological anomalies, scientific blueprints, and expert debates. Guide viewers step-by-step through the evidence like a Netflix/National Geographic documentary (e.g., using natural narrative transitions like "ippudu assaluaina proofs chudandi...").
-        3. STRONG CONCLUSION & CTA: Conclude with profound insight and a powerful Call-to-Action telling viewers to LIKE, SHARE, and SUBSCRIBE to the channel.
-        4. WORD COUNT & PACING: Each scene in the "scenes" array MUST contain a detailed, rich paragraph of at least 70-90 words of narration.
-        5. VISUAL KEYWORDS: For each scene, provide a specific, highly visual search term IN ENGLISH for stock footage representing the exact historical artifact, excavation site, or scientific proof being discussed.
+        Requirements & Investigative Structure (Total 5-6 Minutes / ~750-800 Words across exactly 10 scenes):
+        1. PART 1: HOOK & MYSTERY SETUP (Scenes 1-3) - Start with an arresting question, shocking mystery setup, and an overview of the enigma, keeping viewers hooked instantly.
+        2. PART 2: LIVE PROOFS & HARD EVIDENCE (Scenes 4-8) - Dive deep into concrete live proofs—such as archaeological reports, scientific findings, experiments, or expert insights.
+        3. PART 3: CLIMAX & STRONG CTA (Scenes 9-10) - Conclude with profound insight and a powerful Call-to-Action telling viewers to LIKE, SHARE, and SUBSCRIBE.
+        4. PACING: Break the script into exactly 10 scenes. Each scene in the "scenes" array MUST contain narration text of about 75-80 words.
+        5. VISUAL KEYWORDS (STRICT MATCH): For each scene, provide a highly specific visual search term IN ENGLISH that 100% matches the exact narrative, objects, or scientific/historical elements discussed in that specific scene's text.
         
         Return ONLY valid JSON in this exact format:
         {{
             "title": "Dual language title",
             "description": "Detailed SEO description with timestamps and reference proofs",
             "scenes": [
-                {{"text": "Detailed paragraph 1 with 70-90 words for Part 1 hook...", "visual_keyword": "keyword1"}},
-                {{"text": "Detailed paragraph 2 with 70-90 words for Part 2 live proof...", "visual_keyword": "keyword2"}}
+                {{"text": "Paragraph 1 with 75-80 words...", "visual_keyword": "keyword1"}},
+                {{"text": "Paragraph 2 with 75-80 words...", "visual_keyword": "keyword2"}},
+                {{"text": "Paragraph 3 with 75-80 words...", "visual_keyword": "keyword3"}},
+                {{"text": "Paragraph 4 with 75-80 words...", "visual_keyword": "keyword4"}},
+                {{"text": "Paragraph 5 with 75-80 words...", "visual_keyword": "keyword5"}},
+                {{"text": "Paragraph 6 with 75-80 words...", "visual_keyword": "keyword6"}},
+                {{"text": "Paragraph 7 with 75-80 words...", "visual_keyword": "keyword7"}},
+                {{"text": "Paragraph 8 with 75-80 words...", "visual_keyword": "keyword8"}},
+                {{"text": "Paragraph 9 with 75-80 words...", "visual_keyword": "keyword9"}},
+                {{"text": "Paragraph 10 with 75-80 words...", "visual_keyword": "keyword10"}}
             ]
         }}
         """
