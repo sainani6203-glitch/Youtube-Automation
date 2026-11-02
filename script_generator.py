@@ -1,7 +1,7 @@
 import google.generativeai as genai
 import json
 import os
-from config import GEMINI_API_KEY
+from config import GEMINI_API_KEY, OPENAI_API_KEY
 
 try:
     from groq import Groq
@@ -10,6 +10,12 @@ try:
 except ImportError:
     GROQ_API_KEY = None
     groq_client = None
+
+try:
+    from openai import OpenAI
+    openai_client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
+except ImportError:
+    openai_client = None
 
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
@@ -146,9 +152,41 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
                 print(f"[Warning] Groq JSON output was truncated/invalid ({jde}), falling back to Gemini...")
                 text_result = None
         except Exception as e:
-            print(f"[Note] Groq generation failed ({e}), falling back to Gemini...")
+            print(f"[Note] Groq generation failed ({e}), falling back to OpenAI...")
             text_result = None
-    # Fallback to Gemini if Groq not available or failed
+
+    # Fallback to OpenAI GPT-4o-mini if Groq failed
+    if not text_result and openai_client:
+        try:
+            print("[Info] Generating script using OpenAI (gpt-4o-mini)...")
+            completion = openai_client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": "You are a professional YouTube scriptwriter and JSON generator. Return ONLY valid JSON."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.7,
+                max_tokens=4096
+            )
+            text_result = completion.choices[0].message.content.strip()
+            print("[Success] Generated script via OpenAI.")
+
+            try:
+                cleaned = text_result
+                if cleaned.startswith("```json"):
+                    cleaned = cleaned[7:]
+                if cleaned.endswith("```"):
+                    cleaned = cleaned[:-3]
+                parsed = json.loads(cleaned.strip())
+                return parsed
+            except json.JSONDecodeError as jde:
+                print(f"[Warning] OpenAI JSON output was truncated/invalid ({jde}), falling back to Gemini...")
+                text_result = None
+        except Exception as e:
+            print(f"[Note] OpenAI generation failed ({e}), falling back to Gemini...")
+            text_result = None
+
+    # Fallback to Gemini if Groq & OpenAI not available or failed
     if not text_result:
         if not GEMINI_API_KEY:
             raise ValueError("Neither GROQ_API_KEY nor GEMINI_API_KEY is available or working.")
