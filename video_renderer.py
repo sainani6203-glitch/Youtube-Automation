@@ -355,7 +355,7 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
     
     # Write output file
     import multiprocessing
-    render_threads = 4 # Optimized for speed and safety with 16GB swap
+    render_threads = 6 # Fully utilize all 6 vCPU cores with 16GB swap memory for max speed
     final_composite.write_videofile(
         output_path,
         fps=24,
