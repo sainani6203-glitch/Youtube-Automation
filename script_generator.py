@@ -91,15 +91,15 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         """
     else:
         prompt = f"""
-        Create a rich, high-retention, and deeply engaging 5-6 minute investigative documentary-style long-form YouTube video script focusing on ONE SINGLE specific topic/mystery: "{topic}".
+        Create a rich, high-retention, and deeply engaging exact 5 to 5.5 minute investigative documentary-style long-form YouTube video script focusing on ONE SINGLE specific topic/mystery: "{topic}".
         CRITICAL MANDATE FOR TITLE: DO NOT copy any example title. The title MUST be strictly DUAL-LANGUAGE in this exact format: "[Regional {language} Title] | [English Title]". First write the title in authentic {language} script, followed by a pipe (|), and then the English title. Maximum 90 characters total.
         The description and script narration text MUST be written entirely in {language}.
         
-        Requirements & Investigative Structure (Total 5-6 Minutes / ~750-800 Words across exactly 10 scenes):
+        Requirements & Investigative Structure (Total Exact 5 to 5.5 Minutes / ~700-750 Words across exactly 10 scenes):
         1. PART 1: HOOK & MYSTERY SETUP (Scenes 1-3) - Start with an arresting question, shocking mystery setup, and an overview of the enigma, keeping viewers hooked instantly.
         2. PART 2: LIVE PROOFS & HARD EVIDENCE (Scenes 4-8) - Dive deep into concrete live proofs—such as archaeological reports, scientific findings, experiments, or expert insights.
         3. PART 3: CLIMAX & STRONG CTA (Scenes 9-10) - Conclude with profound insight and a powerful Call-to-Action telling viewers to LIKE, SHARE, and SUBSCRIBE.
-        4. PACING: Break the script into exactly 10 scenes. Each scene in the "scenes" array MUST contain narration text of about 75-80 words.
+        4. PACING: Break the script into exactly 10 scenes. Each scene in the "scenes" array MUST contain narration text of about 70-75 words.
         5. VISUAL KEYWORDS (STRICT MATCH): For each scene, provide a highly specific visual search term IN ENGLISH that 100% matches the exact narrative, objects, or scientific/historical elements discussed in that specific scene's text.
         
         Return ONLY valid JSON in this exact format:
@@ -107,16 +107,16 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
             "title": "Dual language title",
             "description": "Detailed SEO description with timestamps and reference proofs",
             "scenes": [
-                {{"text": "Paragraph 1 with 75-80 words...", "visual_keyword": "keyword1"}},
-                {{"text": "Paragraph 2 with 75-80 words...", "visual_keyword": "keyword2"}},
-                {{"text": "Paragraph 3 with 75-80 words...", "visual_keyword": "keyword3"}},
-                {{"text": "Paragraph 4 with 75-80 words...", "visual_keyword": "keyword4"}},
-                {{"text": "Paragraph 5 with 75-80 words...", "visual_keyword": "keyword5"}},
-                {{"text": "Paragraph 6 with 75-80 words...", "visual_keyword": "keyword6"}},
-                {{"text": "Paragraph 7 with 75-80 words...", "visual_keyword": "keyword7"}},
-                {{"text": "Paragraph 8 with 75-80 words...", "visual_keyword": "keyword8"}},
-                {{"text": "Paragraph 9 with 75-80 words...", "visual_keyword": "keyword9"}},
-                {{"text": "Paragraph 10 with 75-80 words...", "visual_keyword": "keyword10"}}
+                {{"text": "Paragraph 1 with 70-75 words...", "visual_keyword": "keyword1"}},
+                {{"text": "Paragraph 2 with 70-75 words...", "visual_keyword": "keyword2"}},
+                {{"text": "Paragraph 3 with 70-75 words...", "visual_keyword": "keyword3"}},
+                {{"text": "Paragraph 4 with 70-75 words...", "visual_keyword": "keyword4"}},
+                {{"text": "Paragraph 5 with 70-75 words...", "visual_keyword": "keyword5"}},
+                {{"text": "Paragraph 6 with 70-75 words...", "visual_keyword": "keyword6"}},
+                {{"text": "Paragraph 7 with 70-75 words...", "visual_keyword": "keyword7"}},
+                {{"text": "Paragraph 8 with 70-75 words...", "visual_keyword": "keyword8"}},
+                {{"text": "Paragraph 9 with 70-75 words...", "visual_keyword": "keyword9"}},
+                {{"text": "Paragraph 10 with 70-75 words...", "visual_keyword": "keyword10"}}
             ]
         }}
         """
