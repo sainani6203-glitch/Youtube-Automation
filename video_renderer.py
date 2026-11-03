@@ -171,22 +171,26 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
         except AttributeError:
             main_visual = main_visual.set_duration(voiceover_duration)
 
-    # 4. Assemble full visual sequence (Thumbnail -> Intro -> Main -> Outro)
+    # 4. Assemble full visual sequence (Thumbnail/Intro/Outro for Long videos only, Shorts get clean main visual only)
     sequence_visuals = []
-    if thumb_clip:
-        sequence_visuals.append(thumb_clip)
-    if intro_clip:
-        sequence_visuals.append(intro_clip)
+    if video_type != "short":
+        if thumb_clip:
+            sequence_visuals.append(thumb_clip)
+        if intro_clip:
+            sequence_visuals.append(intro_clip)
+            
     sequence_visuals.append(main_visual)
-    if outro_clip:
-        sequence_visuals.append(outro_clip)
+    
+    if video_type != "short":
+        if outro_clip:
+            sequence_visuals.append(outro_clip)
         
     final_visual = concatenate_videoclips(sequence_visuals)
 
     # 4.5. Add dynamic burned-in subtitle/caption overlays for Shorts only (Long videos use uploaded .srt caption files)
     if scenes and voiceover_duration > 0 and video_type == "short":
         subtitle_clips = []
-        offset = thumb_duration + intro_duration
+        offset = 0 # No intro/thumb offset for shorts
         for scene in scenes:
             txt = scene.get("text", "")
             if not txt:
@@ -220,7 +224,7 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
             except Exception as comp_err:
                 print(f"[Note] Subtitle composition skipped: {comp_err}")
 
-    # 5. Assemble full audio sequence (Silence for thumbnail -> Silence for intro -> Voiceover -> Silence for outro)
+    # 5. Assemble full audio sequence
     import numpy as np
     def make_silence(t):
         if isinstance(t, np.ndarray):
@@ -229,13 +233,17 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
             return 0.0
 
     audio_parts = []
-    if thumb_clip and thumb_duration > 0:
-        audio_parts.append(AudioClip(make_silence, duration=thumb_duration))
-    if intro_clip and intro_duration > 0:
-        audio_parts.append(AudioClip(make_silence, duration=intro_duration))
+    if video_type != "short":
+        if thumb_clip and thumb_duration > 0:
+            audio_parts.append(AudioClip(make_silence, duration=thumb_duration))
+        if intro_clip and intro_duration > 0:
+            audio_parts.append(AudioClip(make_silence, duration=intro_duration))
+            
     audio_parts.append(audio)
-    if outro_clip and outro_duration > 0:
-        audio_parts.append(AudioClip(make_silence, duration=outro_duration))
+    
+    if video_type != "short":
+        if outro_clip and outro_duration > 0:
+            audio_parts.append(AudioClip(make_silence, duration=outro_duration))
         
     final_audio_voice = concatenate_audioclips(audio_parts)
     total_duration = final_audio_voice.duration
