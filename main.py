@@ -121,7 +121,8 @@ def run_pipeline(video_type: str = "short", custom_topic: str = None, language: 
             video_type=video_type,
             title_text=script_data.get("title"),
             category=category_theme,
-            scenes=script_data.get("scenes", [])
+            scenes=script_data.get("scenes", []),
+            language=language
         )
         print("==================================================")
         print(f"✅ Video rendered successfully!")
@@ -188,7 +189,7 @@ def run_pipeline(video_type: str = "short", custom_topic: str = None, language: 
                 weekday = datetime.datetime.now().weekday()
                 category_theme = TOPIC_SCHEDULE.get(weekday, "Incredible Mysteries and Science Facts")
                 is_vertical = (video_type == "short")
-                thumb_path = generate_thumbnail(script_data.get("title"), category=category_theme, vertical=is_vertical)
+                thumb_path = generate_thumbnail(script_data.get("title"), category=category_theme, vertical=is_vertical, language=language)
                 upload_thumbnail(video_id, thumb_path, language=language)
 
             # Auto-delete local files and stock clips to save storage

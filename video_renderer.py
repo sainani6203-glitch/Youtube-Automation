@@ -15,7 +15,7 @@ def ensure_mono_audioclip(clip):
     except Exception:
         return clip
 
-def render_video(audio_path: str, video_clips_paths: list, output_path: str, video_type: str = "short", title_text: str = "", category: str = "", scenes: list = None):
+def render_video(audio_path: str, video_clips_paths: list, output_path: str, video_type: str = "short", title_text: str = "", category: str = "", scenes: list = None, language: str = "Telugu"):
     """
     Renders the final video by combining audio voiceover, stock video clips, captions, intro, and outro.
     video_type: 'short' (9:16 vertical, 1080x1920) or 'long' (16:9 horizontal, 1920x1080)
@@ -33,7 +33,7 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
     if title_text:
         try:
             is_vertical = (video_type == "short")
-            thumb_path = generate_thumbnail(title_text, category=category, vertical=is_vertical)
+            thumb_path = generate_thumbnail(title_text, category=category, vertical=is_vertical, language=language)
             if video_type == "short" and thumb_path and os.path.exists(thumb_path):
                 thumb_clip = ImageClip(thumb_path)
                 try:
@@ -240,17 +240,17 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
     final_audio_voice = concatenate_audioclips(audio_parts)
     total_duration = final_audio_voice.duration
 
-    if video_type == "short" and total_duration > 58.0:
-        print(f"[Info] Short total duration ({total_duration:.2f}s) exceeds 58s. Trimming to 58.0s to ensure YouTube Shorts compliance.")
+    if video_type == "short" and total_duration > 56.0:
+        print(f"[Info] Short total duration ({total_duration:.2f}s) exceeds 56s. Trimming to 56.0s to ensure YouTube Shorts compliance.")
         try:
-            final_visual = final_visual.subclipped(0, 58.0)
+            final_visual = final_visual.subclipped(0, 56.0)
         except AttributeError:
-            final_visual = final_visual.subclip(0, 58.0)
+            final_visual = final_visual.subclip(0, 56.0)
         try:
-            final_audio_voice = final_audio_voice.subclipped(0, 58.0)
+            final_audio_voice = final_audio_voice.subclipped(0, 56.0)
         except AttributeError:
-            final_audio_voice = final_audio_voice.subclip(0, 58.0)
-        total_duration = 58.0
+            final_audio_voice = final_audio_voice.subclip(0, 56.0)
+        total_duration = 56.0
 
     # 6. Add optional title watermark on main visual
     if title_text:
