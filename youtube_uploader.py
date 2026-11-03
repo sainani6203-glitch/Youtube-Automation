@@ -9,7 +9,8 @@ from config import BASE_DIR
 # Scope required for uploading videos, captions, and managing playlists on YouTube
 SCOPES = [
     "https://www.googleapis.com/auth/youtube",
-    "https://www.googleapis.com/auth/youtube.force-ssl"
+    "https://www.googleapis.com/auth/youtube.force-ssl",
+    "https://www.googleapis.com/auth/youtube.upload"
 ]
 
 def get_authenticated_service(language: str = "Telugu"):
