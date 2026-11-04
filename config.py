@@ -9,7 +9,7 @@ PEXELS_API_KEY = os.getenv("PEXELS_API_KEY")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 AUTOMATION_MODE = os.getenv("AUTOMATION_MODE", "semi-automated")
 DEFAULT_LANGUAGE = os.getenv("DEFAULT_LANGUAGE", "Telugu")
-LANGUAGES = [lang.strip() for lang in os.getenv("LANGUAGES", DEFAULT_LANGUAGE).split(",")]
+LANGUAGES = [lang.strip() for lang in os.getenv("LANGUAGES", "Telugu,Hindi").split(",")]
 
 # Directories
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))

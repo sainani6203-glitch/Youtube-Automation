@@ -356,6 +356,18 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
             print(f"[Warning] BGM mixing skipped: {e}")
 
     # 8. Combine final visual and audio
+    if video_type == "short" and total_duration > 48.0:
+        print(f"[Info] Enforcing strict 48.0s cap for YouTube Short (current: {total_duration:.2f}s).")
+        try:
+            final_visual = final_visual.subclipped(0, 48.0)
+        except AttributeError:
+            final_visual = final_visual.subclip(0, 48.0)
+        try:
+            final_audio = final_audio.subclipped(0, 48.0)
+        except AttributeError:
+            final_audio = final_audio.subclip(0, 48.0)
+        total_duration = 48.0
+
     try:
         final_composite = final_visual.with_audio(final_audio)
     except AttributeError:
