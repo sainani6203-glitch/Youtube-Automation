@@ -16,7 +16,7 @@
 - **Host**: Contabo Performance VPS (Cloud VPS Plus 6 - 6 vCPU AMD EPYC, 12 GB RAM, 300 GB NVMe SSD).
 - **IP Address**: `169.58.25.200`
 - **OS**: Ubuntu 24.04.5 LTS
-- **Automation Schedule**: Cron job configured to run daily at **4:00 AM IST** (`30 22 * * *`).
+- **Automation Schedule**: Cron job configured to run daily at **4:00 AM IST** (`30 22 * * *`), which automatically performs `git pull origin main` to sync latest code updates before executing `run_daily_batch.py`.
 - **Log File**: `/var/log/youtube_automation.log`
 
 ## GitHub Actions Workflow

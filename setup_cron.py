@@ -1,6 +1,6 @@
 import subprocess
-# Run daily batch at 4:00 AM IST (22:30 UTC of previous day)
-cron_line = "30 22 * * * cd /root/youtube-automation && SCHEDULED_PUBLISH=true /root/youtube-automation/venv/bin/python run_daily_batch.py >> /var/log/youtube_automation.log 2>&1\n"
+# Run daily batch at 4:00 AM IST (22:30 UTC of previous day) with automatic git pull sync
+cron_line = "30 22 * * * cd /root/youtube-automation && git pull origin main && SCHEDULED_PUBLISH=true /root/youtube-automation/venv/bin/python run_daily_batch.py >> /var/log/youtube_automation.log 2>&1\n"
 current = subprocess.run(["crontab", "-l"], capture_output=True, text=True).stdout
 if cron_line.strip() not in current:
     # Remove any old cron jobs for run_daily_batch.py to avoid duplicates
