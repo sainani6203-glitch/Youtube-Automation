@@ -35,7 +35,7 @@ def get_context_aware_emoji(category: str, title: str) -> str:
     else:
         return random.choice(["😱", "🤯", "🚨", "🔥", "💥"])
 
-def generate_thumbnail(title: str, category: str = "", output_path: str = None, vertical: bool = False) -> str:
+def generate_thumbnail(title: str, category: str = "", output_path: str = None, vertical: bool = False, language: str = "Telugu") -> str:
     """
     Generates an ultra-attractive, high-CTR cinematic YouTube thumbnail with 100% topic-matched
     AI background (Pollinations.ai), Google Fonts 'Baloo 2' bold typography, Split-Color Keyword Pop,
