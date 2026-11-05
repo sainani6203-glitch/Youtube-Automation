@@ -7,7 +7,7 @@ from thumbnail_generator import generate_thumbnail
 def ensure_mono_audioclip(clip):
     try:
         duration = clip.duration
-        fps = 22050
+        fps = 44100
         arr = clip.to_soundarray(fps=fps)
         if arr.ndim > 1:
             arr = np.mean(arr, axis=1)
@@ -387,7 +387,8 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
         ffmpeg_params=[
             '-movflags', '+faststart',
             '-fps_mode', 'cfr',
-            '-pix_fmt', 'yuv420p'
+            '-pix_fmt', 'yuv420p',
+            '-ar', '44100'
         ]
     )
     
