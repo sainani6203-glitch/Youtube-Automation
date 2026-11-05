@@ -5,11 +5,16 @@ from main import run_pipeline
 from generate_default_bgm import create_default_bgm
 from script_generator import generate_fresh_topic
 from config import TOPIC_SCHEDULE, LANGUAGES
+from monitor_uploads import monitor_and_cleanup
 
 def run_daily_batch():
     print("==================================================")
     print(f"🌟 Starting OmniDaily 1-Long & 5-Shorts Daily Batch Across Languages: {LANGUAGES}")
     print("==================================================")
+
+    # Clean up any leftover processed videos from previous days first
+    print("🧹 Checking for any previously pending videos to clean up...")
+    monitor_and_cleanup()
 
     # Ensure default BGM exists
     create_default_bgm()

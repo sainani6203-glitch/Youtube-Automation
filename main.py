@@ -192,23 +192,64 @@ def run_pipeline(video_type: str = "short", custom_topic: str = None, language: 
                 thumb_path = generate_thumbnail(script_data.get("title"), category=category_theme, vertical=is_vertical, language=language)
                 upload_thumbnail(video_id, thumb_path, language=language)
 
-            # Auto-delete local files and stock clips to save storage
+            # [REMOVED IMMEDIATE DELETE] Preservation for processing check
             if video_id:
-                print("🧹 Cleaning up local storage (deleting local video, audio, stock clips, metadata, and subtitle files)...")
-                files_to_clean = [final_video_path, meta_path, audio_path, srt_path]
-                if thumb_path:
-                    files_to_clean.append(thumb_path)
-                if video_clips_paths:
-                    files_to_clean.extend(video_clips_paths)
-                for p in files_to_clean:
-                    if p and os.path.exists(p):
-                        try:
-                            os.remove(p)
-                            print(f"   -> Deleted local file: {os.path.basename(p)}")
-                        except Exception as e:
-                            print(f"[Warning] Could not delete {p}: {e}")
-                            
+                # Save to pending_uploads.json for the monitoring script
+                import json
+                pending_file = os.path.join(BASE_DIR, "pending_uploads.json")
+                pending_data = []
+                if os.path.exists(pending_file):
+                    try:
+                        with open(pending_file, "r") as f:
+                            pending_data = json.load(f)
+                    except: pending_data = []
+                
+                is_scheduled_run = os.environ.get("SCHEDULED_PUBLISH") == "true"
+                desc_text = script_data.get("description", "")
+                if linked_long_video_url:
+                    desc_text += f"\n\n🔗 Watch the full detailed video here: {linked_long_video_url}"
+
+                pending_data.append({
+                    "video_id": video_id,
+                    "language": language,
+                    "timestamp": datetime.datetime.now().isoformat(),
+                    "retry_count": 0,
+                    "upload_params": {
+                        "video_path": final_video_path,
+                        "title": script_data.get("title"),
+                        "description": desc_text,
+                        "privacy_status": "private" if is_scheduled_run else "public",
+                        "publish_at": publish_at_str if is_scheduled_run else None,
+                        "language": language
+                    },
+                    "files": [final_video_path, meta_path, audio_path, srt_path, thumb_path] + (video_clips_paths or [])
+                })
+                
+                with open(pending_file, "w") as f:
+                    json.dump(pending_data, f, indent=4)
+
+                print(f"✅ Video info saved to pending_uploads.json for monitoring.")
+                print(f"✅ Video preserved in storage: {final_video_path}")
+                print(f"ℹ️  Automatic cleanup will occur after YouTube processing is confirmed (usually 30-60 mins).")
                 return f"https://youtu.be/{video_id}"
+                
+            # Original cleanup code commented out:
+            # if video_id:
+            #     print("🧹 Cleaning up local storage (deleting local video, audio, stock clips, metadata, and subtitle files)...")
+            #     files_to_clean = [final_video_path, meta_path, audio_path, srt_path]
+            #     if thumb_path:
+            #         files_to_clean.append(thumb_path)
+            #     if video_clips_paths:
+            #         files_to_clean.extend(video_clips_paths)
+            #     for p in files_to_clean:
+            #         if p and os.path.exists(p):
+            #             try:
+            #                 os.remove(p)
+            #                 print(f"   -> Deleted local file: {os.path.basename(p)}")
+            #             except Exception as e:
+            #                 print(f"[Warning] Could not delete {p}: {e}")
+                            
+            #     return f"https://youtu.be/{video_id}"
         else:
             print(f"🛡️ Mode: SEMI-AUTOMATED. Video saved in: {READY_TO_REVIEW_DIR}")
             print("   (To enable 100% auto-upload, set AUTOMATION_MODE=fully-automated in .env)")

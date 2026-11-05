@@ -114,8 +114,42 @@ def upload_video_to_youtube(video_path: str, title: str, description: str, tags:
             
     video_id = response.get("id")
     print(f"[Success] Video successfully uploaded to YouTube! Video ID: {video_id}")
-    print(f"   -> Link: https://youtu.be/{video_id}")
+    print(f"   -> Link: https://youtu.be/ {video_id}")
     return video_id
+
+def get_video_status(video_id: str, language: str = "Telugu"):
+    """
+    Checks the status of a YouTube video by its ID.
+    Returns the uploadStatus: 'processed', 'uploaded', 'failed', 'rejected', or 'deleted'.
+    """
+    try:
+        youtube = get_authenticated_service(language)
+        request = youtube.videos().list(
+            part="status,snippet",
+            id=video_id
+        )
+        response = request.execute()
+
+        if not response.get("items"):
+            return "not_found"
+
+        video_item = response["items"][0]
+        status = video_item.get("status", {})
+        upload_status = status.get("uploadStatus")
+        
+        # Log for debugging
+        title = video_item.get("snippet", {}).get("title", "Unknown Title")
+        print(f"🔍 Checking status for '{title}' ({video_id}): {upload_status}")
+        
+        if upload_status == "failed":
+            print(f"   -> Failure Reason: {status.get('failureReason')}")
+        elif upload_status == "rejected":
+            print(f"   -> Rejection Reason: {status.get('rejectionReason')}")
+            
+        return upload_status
+    except Exception as e:
+        print(f"[Error] Could not fetch video status for {video_id}: {e}")
+        return "error"
 
 def upload_caption(video_id: str, srt_path: str, language_code: str = "en", language: str = "Telugu"):
     """
