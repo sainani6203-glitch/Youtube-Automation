@@ -21,8 +21,8 @@ def run_daily_batch():
 
     for idx, language in enumerate(LANGUAGES):
         if idx > 0:
-            print("\n⏳ Pausing 30 seconds before switching to next language batch to prevent TTS rate limits...")
-            time.sleep(30)
+            print("\n⏳ Pausing 5 minutes before switching to next language batch to prevent TTS and API rate limits...")
+            time.sleep(300)
 
         print(f"\n==================================================")
         print(f"🌍 Processing Language Batch: {language}")
