@@ -34,9 +34,10 @@ async def generate_voiceover_edge(text: str, output_audio_path: str, language: s
             
             success = False
             max_retries = 5
+            rate_str = "+6%" if language.lower() in ["hi", "hindi"] else "+3%"
             for attempt in range(1, max_retries + 1):
                 try:
-                    communicate = edge_tts.Communicate(chunk, voice, rate="+3%")
+                    communicate = edge_tts.Communicate(chunk, voice, rate=rate_str)
                     await communicate.save(chunk_path)
                     success = True
                     break
@@ -223,9 +224,10 @@ async def generate_voiceover_scenes_edge(scenes: list, output_audio_path: str, l
             
             success = False
             max_retries = 3
+            rate_str = "+6%" if language.lower() in ["hi", "hindi"] else "+3%"
             for attempt in range(1, max_retries + 1):
                 try:
-                    communicate = edge_tts.Communicate(text, voice, rate="+3%")
+                    communicate = edge_tts.Communicate(text, voice, rate=rate_str)
                     await communicate.save(chunk_path)
                     success = True
                     break

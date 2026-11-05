@@ -68,7 +68,7 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         Requirements (5 Viral Execution Steps):
         1. ZERO-SECOND HOOK: Start directly with an arresting, hard-hitting statement or shocking reality about the topic. NO slow intros, NO "hey guys", NO command words like "agu/apu". Jump straight into the mystery.
         2. DIRECT HARD-HITTING FACTS: Instead of listing multiple random points, explain ONE single deep core truth/proof powerfully and dynamically.
-        3. FAST PACING & LENGTH: Keep total length around 120-150 words (approx 40-50 seconds when spoken) with punchy, fast-moving sentences.
+        3. FAST PACING & LENGTH: Keep total length STRICTLY around 80-100 words (approx 40-45 seconds when spoken, ensuring total duration never exceeds 50 seconds) with punchy, fast-moving sentences.
         4. 8-12 VISUAL SCENES & KEYWORDS: Break the script into 8 to 12 short scenes. For each scene, provide a distinct, high-impact visual search term IN ENGLISH (e.g., "ancient stone carving closeup dramatic lighting", "dark mysterious laboratory macro shot") for Pexels stock footage.
         {mid_cta_instruction}
         {cta_instruction}
