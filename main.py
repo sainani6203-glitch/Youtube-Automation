@@ -1,7 +1,7 @@
 import os
 import datetime
 import json
-from config import TOPIC_SCHEDULE, READY_TO_REVIEW_DIR, AUTOMATION_MODE, DEFAULT_LANGUAGE, CATEGORY_PLAYLISTS
+from config import TOPIC_SCHEDULE, READY_TO_REVIEW_DIR, AUTOMATION_MODE, DEFAULT_LANGUAGE, CATEGORY_PLAYLISTS, BASE_DIR
 from script_generator import generate_video_script, generate_fresh_topic
 from tts_engine import create_voiceover_scenes_sync
 from media_fetcher import fetch_stock_video
