@@ -388,7 +388,9 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
             '-movflags', '+faststart',
             '-fps_mode', 'cfr',
             '-pix_fmt', 'yuv420p',
-            '-ar', '44100'
+            '-ar', '44100',
+            '-g', '48',
+            '-keyint_min', '24'
         ]
     )
     
