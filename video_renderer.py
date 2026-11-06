@@ -382,7 +382,7 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
         codec='libx264',
         audio_codec='aac',
         audio_bitrate='128k',
-        preset='ultrafast',
+        preset='veryfast',
         threads=render_threads,
         ffmpeg_params=[
             '-movflags', '+faststart',
@@ -390,7 +390,9 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
             '-pix_fmt', 'yuv420p',
             '-ar', '44100',
             '-g', '48',
-            '-keyint_min', '24'
+            '-keyint_min', '24',
+            '-profile:v', 'main',
+            '-level', '4.0'
         ]
     )
     
