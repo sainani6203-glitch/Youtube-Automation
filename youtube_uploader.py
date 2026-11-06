@@ -99,7 +99,7 @@ def upload_video_to_youtube(video_path: str, title: str, description: str, tags:
         "status": status_dict
     }
     
-    media = MediaFileUpload(video_path, chunksize=-1, resumable=True)
+    media = MediaFileUpload(video_path, chunksize=5 * 1024 * 1024, resumable=True)
     request = youtube.videos().insert(
         part="snippet,status",
         body=body,
@@ -107,10 +107,20 @@ def upload_video_to_youtube(video_path: str, title: str, description: str, tags:
     )
     
     response = None
+    import time
+    from googleapiclient.errors import HttpError
+    
     while response is None:
-        status, response = request.next_chunk()
-        if status:
-            print(f"   -> Upload progress: {int(status.progress() * 100)}%")
+        try:
+            status, response = request.next_chunk()
+            if status:
+                print(f"   -> Upload progress: {int(status.progress() * 100)}%")
+        except HttpError as he:
+            print(f"[Warning] Upload HTTP error during chunk: {he}. Retrying in 5 seconds...")
+            time.sleep(5)
+        except Exception as e:
+            print(f"[Warning] Upload error during chunk: {e}. Retrying in 5 seconds...")
+            time.sleep(5)
             
     video_id = response.get("id")
     print(f"[Success] Video successfully uploaded to YouTube! Video ID: {video_id}")

@@ -195,7 +195,6 @@ def run_pipeline(video_type: str = "short", custom_topic: str = None, language: 
             # [REMOVED IMMEDIATE DELETE] Preservation for processing check
             if video_id:
                 # Save to pending_uploads.json for the monitoring script
-                import json
                 pending_file = os.path.join(BASE_DIR, "pending_uploads.json")
                 pending_data = []
                 if os.path.exists(pending_file):

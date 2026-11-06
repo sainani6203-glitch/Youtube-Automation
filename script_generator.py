@@ -123,12 +123,23 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
 
     text_result = None
 
+    def parse_json_safely(raw_text):
+        cleaned = raw_text.strip()
+        if cleaned.startswith("```json"):
+            cleaned = cleaned[7:]
+        if cleaned.endswith("```"):
+            cleaned = cleaned[:-3]
+        cleaned = cleaned.strip()
+        import re
+        cleaned = re.sub(r'[\x00-\x1f\x7f-\x9f]', '', cleaned)
+        return json.loads(cleaned, strict=False)
+
     # Try Groq first if available (bypasses Gemini rate/quota limits)
     if groq_client:
         try:
-            print("[Info] Generating script using Groq (llama-3.3-70b-versatile)...")
+            print("[Info] Generating script using Groq (llama-3.1-8b-instant)...")
             completion = groq_client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
+                model="llama-3.1-8b-instant",
                 messages=[
                     {"role": "system", "content": "You are a professional YouTube scriptwriter and JSON generator. Return ONLY valid JSON."},
                     {"role": "user", "content": prompt}
@@ -139,16 +150,9 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
             text_result = completion.choices[0].message.content.strip()
             print("[Success] Generated script via Groq.")
 
-            # Test parsing JSON to ensure it wasn't truncated
             try:
-                cleaned = text_result
-                if cleaned.startswith("```json"):
-                    cleaned = cleaned[7:]
-                if cleaned.endswith("```"):
-                    cleaned = cleaned[:-3]
-                parsed = json.loads(cleaned.strip())
-                return parsed
-            except json.JSONDecodeError as jde:
+                return parse_json_safely(text_result)
+            except Exception as jde:
                 print(f"[Warning] Groq JSON output was truncated/invalid ({jde}), falling back to Gemini...")
                 text_result = None
         except Exception as e:
@@ -172,14 +176,8 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
             print("[Success] Generated script via OpenAI.")
 
             try:
-                cleaned = text_result
-                if cleaned.startswith("```json"):
-                    cleaned = cleaned[7:]
-                if cleaned.endswith("```"):
-                    cleaned = cleaned[:-3]
-                parsed = json.loads(cleaned.strip())
-                return parsed
-            except json.JSONDecodeError as jde:
+                return parse_json_safely(text_result)
+            except Exception as jde:
                 print(f"[Warning] OpenAI JSON output was truncated/invalid ({jde}), falling back to Gemini...")
                 text_result = None
         except Exception as e:
@@ -192,10 +190,12 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
             raise ValueError("Neither GROQ_API_KEY nor GEMINI_API_KEY is available or working.")
             
         model_names = [
+            "gemini-3.5-flash",
+            "gemini-3.8-flash",
+            "gemini-3.7-flash",
+            "gemini-3.6-flash",
             "gemini-flash-latest",
-            "gemini-pro-latest",
-            "gemini-3.1-pro-preview",
-            "gemini-3.5-flash-lite"
+            "gemini-pro-latest"
         ]
         response = None
         
@@ -227,13 +227,7 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
             raise RuntimeError("All Gemini and Groq models reached quota limits or failed.")
         text_result = response.text.strip()
 
-    # Clean up markdown code blocks if present
-    if text_result.startswith("```json"):
-        text_result = text_result[7:]
-    if text_result.endswith("```"):
-        text_result = text_result[:-3]
-        
-    return json.loads(text_result.strip())
+    return parse_json_safely(text_result)
 
 def generate_fresh_topic(category_prompt: str, language: str = "English") -> str:
     """
@@ -266,7 +260,7 @@ def generate_fresh_topic(category_prompt: str, language: str = "English") -> str
     if groq_client:
         try:
             completion = groq_client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
+                model="llama-3.1-8b-instant",
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.85,
                 max_tokens=100
@@ -277,10 +271,12 @@ def generate_fresh_topic(category_prompt: str, language: str = "English") -> str
 
     if not topic_text and GEMINI_API_KEY:
         model_names = [
+            "gemini-3.5-flash",
+            "gemini-3.8-flash",
+            "gemini-3.7-flash",
+            "gemini-3.6-flash",
             "gemini-flash-latest",
-            "gemini-pro-latest",
-            "gemini-3.1-pro-preview",
-            "gemini-3.5-flash-lite"
+            "gemini-pro-latest"
         ]
         for m_name in model_names:
             try:
