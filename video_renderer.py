@@ -26,7 +26,7 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
     
     width, height = (1080, 1920) if video_type == "short" else (1920, 1080)
     
-    # 0. Generate Thumbnail file. For YouTube Shorts, also add it as the first 2 seconds intro frame.
+    # 0. Generate Thumbnail file. For YouTube Shorts, also add it as the first 1 second intro frame.
     thumb_path = None
     thumb_clip = None
     thumb_duration = 0.0
@@ -51,10 +51,7 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
                     thumb_clip = thumb_clip.crop(x_center=thumb_clip.w/2, y_center=thumb_clip.h/2, width=width, height=height)
                 
                 thumb_duration = 2.0 if video_type != "short" else 1.0
-                try:
-                    thumb_clip = thumb_clip.with_duration(thumb_duration)
-                except AttributeError:
-                    thumb_clip = thumb_clip.set_duration(thumb_duration)
+                thumb_clip = thumb_clip.with_duration(thumb_duration)
         except Exception as e:
             print(f"[Warning] Could not generate/load thumbnail intro clip: {e}")
             thumb_clip = None
@@ -68,19 +65,10 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
         try:
             intro_clip = VideoFileClip(intro_path)
             intro_duration = intro_clip.duration
-            try:
-                intro_clip = intro_clip.resized(height=height)
-            except AttributeError:
-                intro_clip = intro_clip.resize(height=height)
+            intro_clip = intro_clip.resized(height=height)
             if intro_clip.w < width:
-                try:
-                    intro_clip = intro_clip.resized(width=width)
-                except AttributeError:
-                    intro_clip = intro_clip.resize(width=width)
-            try:
-                intro_clip = intro_clip.cropped(x_center=intro_clip.w/2, y_center=intro_clip.h/2, width=width, height=height)
-            except AttributeError:
-                intro_clip = intro_clip.crop(x_center=intro_clip.w/2, y_center=intro_clip.h/2, width=width, height=height)
+                intro_clip = intro_clip.resized(width=width)
+            intro_clip = intro_clip.cropped(x_center=intro_clip.w/2, y_center=intro_clip.h/2, width=width, height=height)
         except Exception as e:
             print(f"[Warning] Could not load intro.mp4: {e}")
             intro_clip = None
@@ -94,19 +82,10 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
         try:
             outro_clip = VideoFileClip(outro_path)
             outro_duration = outro_clip.duration
-            try:
-                outro_clip = outro_clip.resized(height=height)
-            except AttributeError:
-                outro_clip = outro_clip.resize(height=height)
+            outro_clip = outro_clip.resized(height=height)
             if outro_clip.w < width:
-                try:
-                    outro_clip = outro_clip.resized(width=width)
-                except AttributeError:
-                    outro_clip = outro_clip.resize(width=width)
-            try:
-                outro_clip = outro_clip.cropped(x_center=outro_clip.w/2, y_center=outro_clip.h/2, width=width, height=height)
-            except AttributeError:
-                outro_clip = outro_clip.crop(x_center=outro_clip.w/2, y_center=outro_clip.h/2, width=width, height=height)
+                outro_clip = outro_clip.resized(width=width)
+            outro_clip = outro_clip.cropped(x_center=outro_clip.w/2, y_center=outro_clip.h/2, width=width, height=height)
         except Exception as e:
             print(f"[Warning] Could not load outro.mp4: {e}")
             outro_clip = None
@@ -121,35 +100,16 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
         for path in valid_clips:
             try:
                 c = VideoFileClip(path)
-                try:
-                    if c.duration < clip_duration:
-                        repeats = int(clip_duration // c.duration) + 1
-                        c = concatenate_videoclips([c] * repeats).subclipped(0, clip_duration)
-                    else:
-                        c = c.subclipped(0, clip_duration)
-                except AttributeError:
-                    try:
-                        if c.duration < clip_duration:
-                            repeats = int(clip_duration // c.duration) + 1
-                            c = concatenate_videoclips([c] * repeats).subclip(0, clip_duration)
-                        else:
-                            c = c.subclip(0, clip_duration)
-                    except Exception:
-                        c = c.subclip(0, min(clip_duration, c.duration))
+                if c.duration < clip_duration:
+                    repeats = int(clip_duration // c.duration) + 1
+                    c = concatenate_videoclips([c] * repeats).subclipped(0, clip_duration)
+                else:
+                    c = c.subclipped(0, clip_duration)
                 
-                try:
-                    c = c.resized(height=height)
-                except AttributeError:
-                    c = c.resize(height=height)
+                c = c.resized(height=height)
                 if c.w < width:
-                    try:
-                        c = c.resized(width=width)
-                    except AttributeError:
-                        c = c.resize(width=width)
-                try:
-                    c = c.cropped(x_center=c.w/2, y_center=c.h/2, width=width, height=height)
-                except AttributeError:
-                    c = c.crop(x_center=c.w/2, y_center=c.h/2, width=width, height=height)
+                    c = c.resized(width=width)
+                c = c.cropped(x_center=c.w/2, y_center=c.h/2, width=width, height=height)
                 sub_clips.append(c)
             except Exception as e:
                 print(f"[Warning] Error loading clip {path}: {e}")
@@ -160,18 +120,11 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
             if main_visual.duration >= voiceover_duration or len(sub_clips) > 20:
                 break
             sub_clips.extend(sub_clips)
-        try:
-            main_visual = main_visual.subclipped(0, voiceover_duration)
-        except AttributeError:
-            main_visual = main_visual.subclip(0, voiceover_duration)
+        main_visual = main_visual.subclipped(0, voiceover_duration)
     else:
-        main_visual = ColorClip(size=(width, height), color=(20, 24, 33))
-        try:
-            main_visual = main_visual.with_duration(voiceover_duration)
-        except AttributeError:
-            main_visual = main_visual.set_duration(voiceover_duration)
+        main_visual = ColorClip(size=(width, height), color=(20, 24, 33)).with_duration(voiceover_duration)
 
-    # 4. Assemble full visual sequence (Thumbnail/Intro/Outro for Long videos only, Shorts get clean main visual only)
+    # 4. Assemble full visual sequence
     sequence_visuals = []
     if video_type != "short":
         if thumb_clip:
@@ -187,10 +140,10 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
         
     final_visual = concatenate_videoclips(sequence_visuals)
 
-    # 4.5. Add dynamic burned-in subtitle/caption overlays for Shorts only (Long videos use uploaded .srt caption files)
+    # 4.5. Add dynamic burned-in subtitle/caption overlays for Shorts only
     if scenes and voiceover_duration > 0 and video_type == "short":
         subtitle_clips = []
-        offset = 0 # No intro/thumb offset for shorts
+        offset = 0
         for scene in scenes:
             txt = scene.get("text", "")
             if not txt:
@@ -209,11 +162,7 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
                     stroke_color='black',
                     stroke_width=2,
                     size=(width - 150, None)
-                )
-                try:
-                    sub_clip = sub_clip.with_position(('center', height - 400 if video_type == "short" else height - 220)).with_start(start_t).with_duration(max(0.5, end_t - start_t))
-                except AttributeError:
-                    sub_clip = sub_clip.set_position(('center', height - 400 if video_type == "short" else height - 220)).set_start(start_t).set_duration(max(0.5, end_t - start_t))
+                ).with_position(('center', height - 400 if video_type == "short" else height - 220)).with_start(start_t).with_duration(max(0.5, end_t - start_t))
                 subtitle_clips.append(sub_clip)
             except Exception as sub_err:
                 print(f"[Note] Subtitle clip skipped for scene: {sub_err}")
@@ -225,62 +174,50 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
                 print(f"[Note] Subtitle composition skipped: {comp_err}")
 
     # 5. Assemble full audio sequence
-    import numpy as np
-    def make_silence(t):
-        if isinstance(t, np.ndarray):
-            return np.zeros_like(t)
-        else:
-            return 0.0
-
     audio_parts = []
     if video_type != "short":
         if thumb_clip and thumb_duration > 0:
-            audio_parts.append(AudioClip(make_silence, duration=thumb_duration))
+            audio_parts.append(AudioClip(lambda t: np.zeros_like(t) if isinstance(t, np.ndarray) else 0.0, duration=thumb_duration))
         if intro_clip and intro_duration > 0:
-            audio_parts.append(AudioClip(make_silence, duration=intro_duration))
+            audio_parts.append(AudioClip(lambda t: np.zeros_like(t) if isinstance(t, np.ndarray) else 0.0, duration=intro_duration))
             
     audio_parts.append(audio)
     
     if video_type != "short":
         if outro_clip and outro_duration > 0:
-            audio_parts.append(AudioClip(make_silence, duration=outro_duration))
+            audio_parts.append(AudioClip(lambda t: np.zeros_like(t) if isinstance(t, np.ndarray) else 0.0, duration=outro_duration))
         
     final_audio_voice = concatenate_audioclips(audio_parts)
     total_duration = final_audio_voice.duration
 
-    if video_type == "short" and total_duration > 50.0:
-        print(f"[Info] Short total duration ({total_duration:.2f}s) exceeds 50s. Trimming to 50.0s to ensure YouTube Shorts compliance.")
-        try:
-            final_visual = final_visual.subclipped(0, 50.0)
-        except AttributeError:
-            final_visual = final_visual.subclip(0, 50.0)
-        try:
-            final_audio_voice = final_audio_voice.subclipped(0, 50.0)
-        except AttributeError:
-            final_audio_voice = final_audio_voice.subclip(0, 50.0)
-        total_duration = 50.0
+    if video_type == "short":
+        max_short_duration = 48.0
+        if total_duration > max_short_duration:
+            print(f"[Info] Short total duration ({total_duration:.2f}s) exceeds {max_short_duration}s. Trimming to {max_short_duration}s.")
+            total_duration = max_short_duration
+        else:
+            total_duration = min(total_duration, max_short_duration)
+    else:
+        max_short_duration = total_duration
+
+    # Strictly trim final_visual and final_audio_voice to total_duration
+    final_visual = final_visual.subclipped(0, total_duration).with_duration(total_duration)
+    final_audio_voice = final_audio_voice.subclipped(0, total_duration).with_duration(total_duration)
 
     # 6. Add optional title watermark on main visual
     if title_text:
         try:
-            txt_clip = TextClip(text=title_text, font_size=50, color='white', stroke_color='black', stroke_width=2, size=(width - 100, None))
-            try:
-                txt_clip = txt_clip.with_position(('center', 150)).with_duration(total_duration)
-            except AttributeError:
-                txt_clip = txt_clip.set_position(('center', 150)).set_duration(total_duration)
-            final_visual = CompositeVideoClip([final_visual, txt_clip])
+            txt_clip = TextClip(text=title_text, font_size=50, color='white', stroke_color='black', stroke_width=2, size=(width - 100, None)).with_position(('center', 150)).with_duration(total_duration)
+            final_visual = CompositeVideoClip([final_visual, txt_clip]).with_duration(total_duration)
         except Exception as e:
             print(f"[Note] TextClip skipped: {e}")
 
-    # 6b. Add visual "SUBSCRIBE" reminder overlay & notification sound effect during the final seconds of the video
+    # 6b. Add visual "SUBSCRIBE" reminder overlay & notification sound effect during the final seconds
     try:
         sub_reminder_clip = TextClip(text="🔔 SUBSCRIBE FOR MORE", font_size=40, color='yellow', stroke_color='black', stroke_width=2)
         sub_start = max(0, total_duration - 5.0)
-        try:
-            sub_reminder_clip = sub_reminder_clip.with_position(('center', height - 280)).with_start(sub_start).with_duration(5.0)
-        except AttributeError:
-            sub_reminder_clip = sub_reminder_clip.set_position(('center', height - 280)).set_start(sub_start).set_duration(5.0)
-        final_visual = CompositeVideoClip([final_visual, sub_reminder_clip])
+        sub_reminder_clip = sub_reminder_clip.with_position(('center', height - 280)).with_start(sub_start).with_duration(5.0)
+        final_visual = CompositeVideoClip([final_visual, sub_reminder_clip]).with_duration(total_duration)
 
         def make_chime(t):
             f1, f2 = 587.33, 880.00
@@ -288,13 +225,8 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
             val2 = np.where(t >= 0.15, 0.35 * np.sin(2 * np.pi * f2 * (t - 0.15)) * np.exp(-3 * (t - 0.15)), 0.0)
             return val1 + val2
         
-        chime_clip = ensure_mono_audioclip(AudioClip(make_chime, duration=0.5))
-        try:
-            chime_clip = chime_clip.with_start(sub_start)
-        except AttributeError:
-            chime_clip = chime_clip.set_start(sub_start)
-            
-        final_audio_voice = CompositeAudioClip([final_audio_voice, chime_clip])
+        chime_clip = ensure_mono_audioclip(AudioClip(make_chime, duration=0.5)).with_start(sub_start).with_duration(0.5)
+        final_audio_voice = CompositeAudioClip([final_audio_voice, chime_clip]).with_duration(total_duration)
     except Exception as e:
         print(f"[Note] Subscribe reminder clip/audio skipped: {e}")
 
@@ -313,11 +245,8 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
             raw_sfx = AudioFileClip(sfx_path)
             sfx_clip = ensure_mono_audioclip(raw_sfx)
             sfx_start = thumb_duration + intro_duration
-            try:
-                sfx_clip = sfx_clip.with_start(sfx_start)
-            except AttributeError:
-                sfx_clip = sfx_clip.set_start(sfx_start)
-            final_audio_voice = CompositeAudioClip([final_audio_voice, sfx_clip])
+            sfx_clip = sfx_clip.with_start(sfx_start)
+            final_audio_voice = CompositeAudioClip([final_audio_voice, sfx_clip]).with_duration(total_duration)
         except Exception as e:
             print(f"[Note] SFX mixing skipped: {e}")
 
@@ -345,44 +274,19 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
                 if bgm_dur < total_duration:
                     repeats = int(total_duration // bgm_dur) + 1
                     bgm_clip = concatenate_audioclips([bgm_clip] * repeats)
-            try:
-                bgm_clip = bgm_clip.subclipped(0, total_duration)
-            except AttributeError:
-                bgm_clip = bgm_clip.subclip(0, total_duration)
+            bgm_clip = bgm_clip.subclipped(0, total_duration)
             bgm_volume = 0.35 if video_type == "short" else 0.45
-            try:
-                bgm_clip = bgm_clip.with_volume_scaled(bgm_volume)
-            except AttributeError:
-                bgm_clip = bgm_clip.volumex(bgm_volume)
-            final_audio = CompositeAudioClip([final_audio_voice, bgm_clip])
-            try:
-                final_audio = final_audio.with_duration(total_duration)
-            except AttributeError:
-                final_audio = final_audio.set_duration(total_duration)
+            bgm_clip = bgm_clip.with_volume_scaled(bgm_volume).with_duration(total_duration)
+            final_audio = CompositeAudioClip([final_audio_voice, bgm_clip]).with_duration(total_duration)
         except Exception as e:
             print(f"[Warning] BGM mixing skipped: {e}")
 
-    # 8. Combine final visual and audio
-    if video_type == "short":
-        total_duration = min(total_duration, 48.0)
-        print(f"[Info] Enforcing strict 48.0s cap for YouTube Short (final duration: {total_duration:.2f}s).")
-        try:
-            final_visual = final_visual.subclipped(0, total_duration)
-            final_audio = final_audio.subclipped(0, total_duration)
-        except AttributeError:
-            final_visual = final_visual.subclip(0, total_duration)
-            final_audio = final_audio.subclip(0, total_duration)
+    # Final strict enforcement of total_duration on visual and audio
+    final_visual = final_visual.subclipped(0, total_duration).with_duration(total_duration)
+    final_audio = final_audio.subclipped(0, total_duration).with_duration(total_duration)
 
-    try:
-        final_composite = final_visual.with_audio(final_audio)
-    except AttributeError:
-        final_composite = final_visual.set_audio(final_audio)
+    final_composite = final_visual.with_audio(final_audio).with_duration(total_duration)
     
-    # Write output file
-    import multiprocessing
-    render_threads = 6 # Fully utilize all 6 vCPU cores with 16GB swap memory for max speed
-    
-    # Set reasonable bitrates to prevent massive file sizes (12GB+) and YouTube processing errors
     target_bitrate = "8000k" if video_type != "short" else "4000k"
     
     final_composite.write_videofile(
@@ -420,14 +324,5 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
         except:
             pass
             
-    print(f"[Success] Video successfully rendered at: {output_path}")
+    print(f"[Success] Video successfully rendered at: {output_path} (Duration: {total_duration:.2f}s)")
     return output_path
-
-if __name__ == "__main__":
-    print("Testing Video Renderer...")
-    from tts_engine import create_voiceover_sync
-    test_audio = "test_render_audio.mp3"
-    create_voiceover_sync("This is a test video rendering check.", test_audio)
-    render_video(test_audio, [], "test_output.mp4", "short", "Smart Tech Tip")
-    if os.path.exists(test_audio): os.remove(test_audio)
-    if os.path.exists("test_output.mp4"): os.remove("test_output.mp4")
