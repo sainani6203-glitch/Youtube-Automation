@@ -354,7 +354,11 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
                 bgm_clip = bgm_clip.with_volume_scaled(bgm_volume)
             except AttributeError:
                 bgm_clip = bgm_clip.volumex(bgm_volume)
-            final_audio = CompositeAudioClip([final_audio_voice, bgm_clip], duration=total_duration)
+            final_audio = CompositeAudioClip([final_audio_voice, bgm_clip])
+            try:
+                final_audio = final_audio.with_duration(total_duration)
+            except AttributeError:
+                final_audio = final_audio.set_duration(total_duration)
         except Exception as e:
             print(f"[Warning] BGM mixing skipped: {e}")
 
