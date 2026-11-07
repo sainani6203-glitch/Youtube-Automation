@@ -347,10 +347,11 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
                 bgm_clip = bgm_clip.subclipped(0, total_duration)
             except AttributeError:
                 bgm_clip = bgm_clip.subclip(0, total_duration)
+            bgm_volume = 0.35 if video_type == "short" else 0.45
             try:
-                bgm_clip = bgm_clip.with_volume_scaled(0.55)
+                bgm_clip = bgm_clip.with_volume_scaled(bgm_volume)
             except AttributeError:
-                bgm_clip = bgm_clip.volumex(0.55)
+                bgm_clip = bgm_clip.volumex(bgm_volume)
             final_audio = CompositeAudioClip([final_audio_voice, bgm_clip])
         except Exception as e:
             print(f"[Warning] BGM mixing skipped: {e}")
@@ -358,8 +359,12 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
     # 8. Combine final visual and audio
     if video_type == "short" and total_duration > 48.0:
         print(f"[Info] Enforcing strict 48.0s cap for YouTube Short (current: {total_duration:.2f}s).")
-        final_visual = final_visual.subclipped(0, 48.0)
-        final_audio = final_audio.subclipped(0, 48.0)
+        try:
+            final_visual = final_visual.subclipped(0, 48.0)
+            final_audio = final_audio.subclipped(0, 48.0)
+        except AttributeError:
+            final_visual = final_visual.subclip(0, 48.0)
+            final_audio = final_audio.subclip(0, 48.0)
         total_duration = 48.0
 
     try:
@@ -370,10 +375,15 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
     # Write output file
     import multiprocessing
     render_threads = 6 # Fully utilize all 6 vCPU cores with 16GB swap memory for max speed
+    
+    # Set reasonable bitrates to prevent massive file sizes (12GB+) and YouTube processing errors
+    target_bitrate = "8000k" if video_type != "short" else "4000k"
+    
     final_composite.write_videofile(
         output_path,
         fps=24,
         codec='libx264',
+        bitrate=target_bitrate,
         audio_codec='aac',
         audio_bitrate='128k',
         preset='veryfast',
