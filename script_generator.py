@@ -17,6 +17,15 @@ try:
 except ImportError:
     openai_client = None
 
+# Initialize local Ollama client (OpenAI compatible endpoint)
+try:
+    ollama_client = OpenAI(
+        base_url="http://localhost:11434/v1",
+        api_key="ollama"  # Ollama doesn't require a real API key
+    )
+except Exception:
+    ollama_client = None
+
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
 
@@ -184,10 +193,35 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
             print(f"[Note] OpenAI generation failed ({e}), falling back to Gemini...")
             text_result = None
 
-    # Fallback to Gemini if Groq & OpenAI not available or failed
+    # Fallback to Local Ollama (llama3) if OpenAI/Groq failed
+    if not text_result and ollama_client:
+        try:
+            print("[Info] Generating script using Local Ollama (llama3)...")
+            completion = ollama_client.chat.completions.create(
+                model="llama3",
+                messages=[
+                    {"role": "system", "content": "You are a professional YouTube scriptwriter and JSON generator. Return ONLY valid JSON."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.7,
+                max_tokens=4096
+            )
+            text_result = completion.choices[0].message.content.strip()
+            print("[Success] Generated script via Local Ollama.")
+
+            try:
+                return parse_json_safely(text_result)
+            except Exception as jde:
+                print(f"[Warning] Local Ollama JSON output was truncated/invalid ({jde}), falling back to Gemini...")
+                text_result = None
+        except Exception as e:
+            print(f"[Note] Local Ollama generation failed ({e}), falling back to Gemini...")
+            text_result = None
+
+    # Fallback to Gemini if Groq, OpenAI & Ollama not available or failed
     if not text_result:
         if not GEMINI_API_KEY:
-            raise ValueError("Neither GROQ_API_KEY nor GEMINI_API_KEY is available or working.")
+            raise ValueError("Neither GROQ_API_KEY, GEMINI_API_KEY nor Ollama is available or working.")
             
         model_names = [
             "gemini-3.5-flash",
@@ -261,6 +295,18 @@ def generate_fresh_topic(category_prompt: str, language: str = "English") -> str
         try:
             completion = groq_client.chat.completions.create(
                 model="llama-3.1-8b-instant",
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.85,
+                max_tokens=100
+            )
+            topic_text = completion.choices[0].message.content.strip()
+        except Exception:
+            pass
+
+    if not topic_text and ollama_client:
+        try:
+            completion = ollama_client.chat.completions.create(
+                model="llama3",
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.85,
                 max_tokens=100
