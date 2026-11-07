@@ -340,9 +340,11 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
         try:
             raw_bgm = AudioFileClip(bgm_path)
             bgm_clip = ensure_mono_audioclip(raw_bgm)
-            if bgm_clip.duration < total_duration:
-                repeats = int(total_duration // bgm_clip.duration) + 1
-                bgm_clip = concatenate_audioclips([bgm_clip] * repeats)
+            bgm_dur = getattr(bgm_clip, 'duration', None)
+            if bgm_dur and bgm_dur > 0 and bgm_dur < 86400:
+                if bgm_dur < total_duration:
+                    repeats = int(total_duration // bgm_dur) + 1
+                    bgm_clip = concatenate_audioclips([bgm_clip] * repeats)
             try:
                 bgm_clip = bgm_clip.subclipped(0, total_duration)
             except AttributeError:
@@ -357,15 +359,15 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
             print(f"[Warning] BGM mixing skipped: {e}")
 
     # 8. Combine final visual and audio
-    if video_type == "short" and total_duration > 48.0:
-        print(f"[Info] Enforcing strict 48.0s cap for YouTube Short (current: {total_duration:.2f}s).")
+    if video_type == "short":
+        total_duration = min(total_duration, 48.0)
+        print(f"[Info] Enforcing strict 48.0s cap for YouTube Short (final duration: {total_duration:.2f}s).")
         try:
-            final_visual = final_visual.subclipped(0, 48.0)
-            final_audio = final_audio.subclipped(0, 48.0)
+            final_visual = final_visual.subclipped(0, total_duration)
+            final_audio = final_audio.subclipped(0, total_duration)
         except AttributeError:
-            final_visual = final_visual.subclip(0, 48.0)
-            final_audio = final_audio.subclip(0, 48.0)
-        total_duration = 48.0
+            final_visual = final_visual.subclip(0, total_duration)
+            final_audio = final_audio.subclip(0, total_duration)
 
     try:
         final_composite = final_visual.with_audio(final_audio)
