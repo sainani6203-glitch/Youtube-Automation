@@ -143,8 +143,33 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         cleaned = re.sub(r'[\x00-\x1f\x7f-\x9f]', '', cleaned)
         return json.loads(cleaned, strict=False)
 
-    # Try Groq first if available (bypasses Gemini rate/quota limits)
-    if groq_client:
+    # Try Local Ollama first (100% free, local, unlimited)
+    if ollama_client:
+        try:
+            print("[Info] Generating script using Local Ollama (llama3)...")
+            completion = ollama_client.chat.completions.create(
+                model="llama3",
+                messages=[
+                    {"role": "system", "content": "You are a professional YouTube scriptwriter and JSON generator. Return ONLY valid JSON."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.7,
+                max_tokens=4096
+            )
+            text_result = completion.choices[0].message.content.strip()
+            print("[Success] Generated script via Local Ollama.")
+
+            try:
+                return parse_json_safely(text_result)
+            except Exception as jde:
+                print(f"[Warning] Local Ollama JSON output was truncated/invalid ({jde}), falling back to Groq...")
+                text_result = None
+        except Exception as e:
+            print(f"[Note] Local Ollama generation failed ({e}), falling back to Groq...")
+            text_result = None
+
+    # Try Groq second if available
+    if not text_result and groq_client:
         try:
             print("[Info] Generating script using Groq (llama-3.1-8b-instant)...")
             completion = groq_client.chat.completions.create(
@@ -162,13 +187,13 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
             try:
                 return parse_json_safely(text_result)
             except Exception as jde:
-                print(f"[Warning] Groq JSON output was truncated/invalid ({jde}), falling back to Gemini...")
+                print(f"[Warning] Groq JSON output was truncated/invalid ({jde}), falling back to OpenAI...")
                 text_result = None
         except Exception as e:
             print(f"[Note] Groq generation failed ({e}), falling back to OpenAI...")
             text_result = None
 
-    # Fallback to OpenAI GPT-4o-mini if Groq failed
+    # Fallback to OpenAI GPT-4o-mini if Groq/Ollama failed
     if not text_result and openai_client:
         try:
             print("[Info] Generating script using OpenAI (gpt-4o-mini)...")
@@ -193,32 +218,7 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
             print(f"[Note] OpenAI generation failed ({e}), falling back to Gemini...")
             text_result = None
 
-    # Fallback to Local Ollama (llama3) if OpenAI/Groq failed
-    if not text_result and ollama_client:
-        try:
-            print("[Info] Generating script using Local Ollama (llama3)...")
-            completion = ollama_client.chat.completions.create(
-                model="llama3",
-                messages=[
-                    {"role": "system", "content": "You are a professional YouTube scriptwriter and JSON generator. Return ONLY valid JSON."},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.7,
-                max_tokens=4096
-            )
-            text_result = completion.choices[0].message.content.strip()
-            print("[Success] Generated script via Local Ollama.")
-
-            try:
-                return parse_json_safely(text_result)
-            except Exception as jde:
-                print(f"[Warning] Local Ollama JSON output was truncated/invalid ({jde}), falling back to Gemini...")
-                text_result = None
-        except Exception as e:
-            print(f"[Note] Local Ollama generation failed ({e}), falling back to Gemini...")
-            text_result = None
-
-    # Fallback to Gemini if Groq, OpenAI & Ollama not available or failed
+    # Fallback to Gemini if Ollama, Groq & OpenAI not available or failed
     if not text_result:
         if not GEMINI_API_KEY:
             raise ValueError("Neither GROQ_API_KEY, GEMINI_API_KEY nor Ollama is available or working.")
@@ -291,10 +291,10 @@ def generate_fresh_topic(category_prompt: str, language: str = "English") -> str
 
     topic_text = None
 
-    if groq_client:
+    if ollama_client:
         try:
-            completion = groq_client.chat.completions.create(
-                model="llama-3.1-8b-instant",
+            completion = ollama_client.chat.completions.create(
+                model="llama3",
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.85,
                 max_tokens=100
@@ -303,10 +303,10 @@ def generate_fresh_topic(category_prompt: str, language: str = "English") -> str
         except Exception:
             pass
 
-    if not topic_text and ollama_client:
+    if not topic_text and groq_client:
         try:
-            completion = ollama_client.chat.completions.create(
-                model="llama3",
+            completion = groq_client.chat.completions.create(
+                model="llama-3.1-8b-instant",
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.85,
                 max_tokens=100
