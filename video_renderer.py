@@ -250,22 +250,24 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
         except Exception as e:
             print(f"[Note] SFX mixing skipped: {e}")
 
-    # 7. Select category-matched background music from assets/
-    bgm_filename = "bgm.mp3"
-    if "Dark Psychology" in category:
-        bgm_filename = "bgm_dark_psychology.mp3"
-    elif "Ancient" in category:
-        bgm_filename = "bgm_ancient_mysteries.mp3"
-    elif "Incredible Science" in category:
-        bgm_filename = "bgm_science_space.mp3"
-        
-    bgm_path = os.path.join(ASSETS_DIR, bgm_filename)
-    if not os.path.exists(bgm_path):
-        bgm_path = os.path.join(ASSETS_DIR, "bgm.mp3")
+    # 7. Select category-matched background music (Long videos only, skip for shorts)
+    bgm_path = None
+    if video_type != "short":
+        bgm_filename = "bgm.mp3"
+        if "Dark Psychology" in category:
+            bgm_filename = "bgm_dark_psychology.mp3"
+        elif "Ancient" in category:
+            bgm_filename = "bgm_ancient_mysteries.mp3"
+        elif "Incredible Science" in category:
+            bgm_filename = "bgm_science_space.mp3"
+            
+        bgm_path = os.path.join(ASSETS_DIR, bgm_filename)
+        if not os.path.exists(bgm_path):
+            bgm_path = os.path.join(ASSETS_DIR, "bgm.mp3")
 
     final_audio = final_audio_voice
     bgm_clip = None
-    if os.path.exists(bgm_path):
+    if bgm_path and os.path.exists(bgm_path):
         try:
             raw_bgm = AudioFileClip(bgm_path)
             bgm_clip = ensure_mono_audioclip(raw_bgm)
