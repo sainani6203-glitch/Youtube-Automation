@@ -1,9 +1,9 @@
 import os
 import numpy as np
 try:
-    from moviepy.editor import AudioArrayClip
+    from moviepy.editor import AudioClip
 except ImportError:
-    from moviepy import AudioArrayClip
+    from moviepy import AudioClip
 from config import ASSETS_DIR
 
 def create_default_bgm():
@@ -27,8 +27,16 @@ def create_default_bgm():
                 np.sin(2 * np.pi * f1 * t) + 
                 np.sin(2 * np.pi * f2 * t)
             ) * (0.3 + 0.7 * np.sin(2 * np.pi * mod * t))
-            audio_array = np.vstack((signal, signal)).T
-            clip = AudioArrayClip(audio_array, fps=fps)
+            
+            def make_frame(time, sig=signal, time_axis=t):
+                sig_l = np.interp(time, time_axis, sig)
+                sig_r = np.interp(time, time_axis, sig)
+                if isinstance(time, np.ndarray):
+                    return np.vstack((sig_l, sig_r)).T
+                else:
+                    return np.array([sig_l, sig_r])
+                    
+            clip = AudioClip(make_frame, duration=duration, fps=fps)
             clip.write_audiofile(bgm_path, fps=fps, logger=None)
             clip.close()
             
@@ -51,8 +59,15 @@ def create_default_bgm():
             else:
                 signal = 0.12 * np.sin(2 * np.pi * freq * t_sfx * (1 - 0.5 * t_sfx / sfx_dur)) * np.exp(-2.0 * t_sfx)
                 
-            audio_array = np.vstack((signal, signal)).T
-            clip = AudioArrayClip(audio_array, fps=fps)
+            def make_sfx_frame(time, sig=signal, time_axis=t_sfx):
+                sig_l = np.interp(time, time_axis, sig)
+                sig_r = np.interp(time, time_axis, sig)
+                if isinstance(time, np.ndarray):
+                    return np.vstack((sig_l, sig_r)).T
+                else:
+                    return np.array([sig_l, sig_r])
+                    
+            clip = AudioClip(make_sfx_frame, duration=sfx_dur, fps=fps)
             clip.write_audiofile(sfx_path, fps=fps, logger=None)
             clip.close()
 
