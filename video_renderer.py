@@ -140,8 +140,8 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
         
     final_visual = concatenate_videoclips(sequence_visuals)
 
-    # 4.5. Add dynamic burned-in subtitle/caption overlays for Shorts only
-    if scenes and voiceover_duration > 0 and video_type == "short":
+    # 4.5. Burned-in subtitles disabled as requested
+    if False and scenes and voiceover_duration > 0 and video_type == "short":
         subtitle_clips = []
         offset = 0
         for scene in scenes:
@@ -169,7 +169,7 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
         
         if subtitle_clips:
             try:
-                final_visual = CompositeVideoClip([final_visual] + subtitle_clips)
+                final_visual = CompositeVideoClip([final_visual] + subtitle_clips, duration=final_visual.duration)
             except Exception as comp_err:
                 print(f"[Note] Subtitle composition skipped: {comp_err}")
 
@@ -285,7 +285,7 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
     final_visual = final_visual.subclipped(0, total_duration).with_duration(total_duration)
     final_audio = final_audio.subclipped(0, total_duration).with_duration(total_duration)
 
-    final_composite = final_visual.with_audio(final_audio).with_duration(total_duration)
+    final_composite = final_visual.with_audio(final_audio).subclipped(0, total_duration).with_duration(total_duration)
     
     target_bitrate = "8000k" if video_type != "short" else "4000k"
     
