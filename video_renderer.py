@@ -42,6 +42,14 @@ def set_aud(clip, aud):
     try: return clip.set_audio(aud)
     except: return clip.with_audio(aud)
 
+def resize_clip(clip, **kwargs):
+    try: return clip.resize(**kwargs)
+    except: return clip.resized(**kwargs)
+
+def crop_clip(clip, **kwargs):
+    try: return clip.crop(**kwargs)
+    except: return clip.cropped(**kwargs)
+
 def render_video(audio_path: str, video_clips_paths: list, output_path: str, video_type: str = "short", title_text: str = "", category: str = "", scenes: list = None, language: str = "Telugu"):
     """
     Renders the final video by combining audio voiceover, stock video clips, captions, intro, and outro.
@@ -63,19 +71,10 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
             thumb_path = generate_thumbnail(title_text, category=category, vertical=is_vertical, language=language)
             if video_type == "short" and thumb_path and os.path.exists(thumb_path):
                 thumb_clip = ImageClip(thumb_path)
-                try:
-                    thumb_clip = thumb_clip.resized(height=height)
-                except AttributeError:
-                    thumb_clip = thumb_clip.resize(height=height)
+                thumb_clip = resize_clip(thumb_clip, height=height)
                 if thumb_clip.w < width:
-                    try:
-                        thumb_clip = thumb_clip.resized(width=width)
-                    except AttributeError:
-                        thumb_clip = thumb_clip.resize(width=width)
-                try:
-                    thumb_clip = thumb_clip.cropped(x_center=thumb_clip.w/2, y_center=thumb_clip.h/2, width=width, height=height)
-                except AttributeError:
-                    thumb_clip = thumb_clip.crop(x_center=thumb_clip.w/2, y_center=thumb_clip.h/2, width=width, height=height)
+                    thumb_clip = resize_clip(thumb_clip, width=width)
+                thumb_clip = crop_clip(thumb_clip, x_center=thumb_clip.w/2, y_center=thumb_clip.h/2, width=width, height=height)
                 
                 thumb_duration = 2.0 if video_type != "short" else 1.0
                 thumb_clip = set_dur(thumb_clip, thumb_duration)
@@ -92,10 +91,10 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
         try:
             intro_clip = VideoFileClip(intro_path)
             intro_duration = intro_clip.duration
-            intro_clip = intro_clip.resized(height=height)
+            intro_clip = resize_clip(intro_clip, height=height)
             if intro_clip.w < width:
-                intro_clip = intro_clip.resized(width=width)
-            intro_clip = intro_clip.cropped(x_center=intro_clip.w/2, y_center=intro_clip.h/2, width=width, height=height)
+                intro_clip = resize_clip(intro_clip, width=width)
+            intro_clip = crop_clip(intro_clip, x_center=intro_clip.w/2, y_center=intro_clip.h/2, width=width, height=height)
         except Exception as e:
             print(f"[Warning] Could not load intro.mp4: {e}")
             intro_clip = None
@@ -109,10 +108,10 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
         try:
             outro_clip = VideoFileClip(outro_path)
             outro_duration = outro_clip.duration
-            outro_clip = outro_clip.resized(height=height)
+            outro_clip = resize_clip(outro_clip, height=height)
             if outro_clip.w < width:
-                outro_clip = outro_clip.resized(width=width)
-            outro_clip = outro_clip.cropped(x_center=outro_clip.w/2, y_center=outro_clip.h/2, width=width, height=height)
+                outro_clip = resize_clip(outro_clip, width=width)
+            outro_clip = crop_clip(outro_clip, x_center=outro_clip.w/2, y_center=outro_clip.h/2, width=width, height=height)
         except Exception as e:
             print(f"[Warning] Could not load outro.mp4: {e}")
             outro_clip = None
@@ -133,10 +132,10 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
                 else:
                     c = trim_clip(c, 0, clip_duration)
                 
-                c = c.resized(height=height)
+                c = resize_clip(c, height=height)
                 if c.w < width:
-                    c = c.resized(width=width)
-                c = c.cropped(x_center=c.w/2, y_center=c.h/2, width=width, height=height)
+                    c = resize_clip(c, width=width)
+                c = crop_clip(c, x_center=c.w/2, y_center=c.h/2, width=width, height=height)
                 sub_clips.append(c)
             except Exception as e:
                 print(f"[Warning] Error loading clip {path}: {e}")
