@@ -167,6 +167,38 @@ def fetch_stock_video(query: str, orientation: str = "portrait", output_filename
         except Exception as e:
             print(f"[Warning] Pexels fallback failed: {e}")
 
+    # 4. Tier 4: Local Procedural Cinematic Gradient Fallback (Guaranteed Success)
+    print(f"   -> [Local Cinematic Fallback] Generating procedural cinematic gradient visual for: '{query}'...")
+    try:
+        from PIL import Image, ImageDraw
+        import io
+        width = 1080 if orientation == "portrait" else 1920
+        height = 1920 if orientation == "portrait" else 1080
+        
+        img = Image.new("RGB", (width, height), color=(15, 23, 42))
+        draw = ImageDraw.Draw(img)
+        
+        colors = [(30, 41, 59), (15, 23, 42), (88, 28, 135), (30, 58, 138), (17, 24, 39)]
+        c1 = random.choice(colors)
+        c2 = random.choice(colors)
+        
+        for y in range(0, height, 10):
+            r = int(c1[0] + (c2[0] - c1[0]) * (y / height))
+            g = int(c1[1] + (c2[1] - c1[1]) * (y / height))
+            b = int(c1[2] + (c2[2] - c1[2]) * (y / height))
+            draw.line([(0, y), (width, y)], fill=(r, g, b))
+            
+        byte_arr = io.BytesIO()
+        img.save(byte_arr, format='JPEG', quality=90)
+        img_bytes = byte_arr.getvalue()
+        
+        res_path = image_to_video_clip(img_bytes, output_path)
+        if res_path:
+            print(f"   -> [Local Fallback Success] Created cinematic procedural video clip.")
+            return res_path
+    except Exception as fallback_err:
+        print(f"[Warning] Local fallback generation failed: {fallback_err}")
+
     return None
 
 if __name__ == "__main__":
