@@ -15,6 +15,26 @@ def ensure_mono_audioclip(clip):
     except Exception:
         return clip
 
+def set_dur(clip, d):
+    try: return clip.with_duration(d)
+    except: return clip.set_duration(d)
+
+def sub_clip(clip, start, end):
+    try: return clip.subclipped(start, end)
+    except: return clip.subclip(start, end)
+
+def set_pos(clip, pos):
+    try: return clip.with_position(pos)
+    except: return clip.set_position(pos)
+
+def set_vol(clip, vol):
+    try: return clip.with_volume_scaled(vol)
+    except: return clip.volumex(vol)
+
+def set_aud(clip, aud):
+    try: return clip.with_audio(aud)
+    except: return clip.set_audio(aud)
+
 def render_video(audio_path: str, video_clips_paths: list, output_path: str, video_type: str = "short", title_text: str = "", category: str = "", scenes: list = None, language: str = "Telugu"):
     """
     Renders the final video by combining audio voiceover, stock video clips, captions, intro, and outro.
