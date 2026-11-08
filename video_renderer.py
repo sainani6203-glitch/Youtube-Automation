@@ -26,7 +26,7 @@ def set_dur(clip, d):
     try: return clip.set_duration(d)
     except: return clip.with_duration(d)
 
-def sub_clip(clip, start, end):
+def trim_clip(clip, start, end):
     try: return clip.subclip(start, end)
     except: return clip.subclipped(start, end)
 
@@ -129,9 +129,9 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
                 c = VideoFileClip(path)
                 if c.duration < clip_duration:
                     repeats = int(clip_duration // c.duration) + 1
-                    c = sub_clip(concatenate_videoclips([c] * repeats), 0, clip_duration)
+                    c = trim_clip(concatenate_videoclips([c] * repeats), 0, clip_duration)
                 else:
-                    c = sub_clip(c, 0, clip_duration)
+                    c = trim_clip(c, 0, clip_duration)
                 
                 c = c.resized(height=height)
                 if c.w < width:
@@ -147,7 +147,7 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
             if main_visual.duration >= voiceover_duration or len(sub_clips) > 20:
                 break
             sub_clips.extend(sub_clips)
-        main_visual = sub_clip(main_visual, 0, voiceover_duration)
+        main_visual = trim_clip(main_visual, 0, voiceover_duration)
     else:
         main_visual = set_dur(ColorClip(size=(width, height), color=(20, 24, 33)), voiceover_duration)
 
@@ -228,8 +228,8 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
         max_short_duration = total_duration
 
     # Strictly trim final_visual and final_audio_voice to total_duration
-    final_visual = set_dur(sub_clip(final_visual, 0, total_duration), total_duration)
-    final_audio_voice = set_dur(sub_clip(final_audio_voice, 0, total_duration), total_duration)
+    final_visual = set_dur(trim_clip(final_visual, 0, total_duration), total_duration)
+    final_audio_voice = set_dur(trim_clip(final_audio_voice, 0, total_duration), total_duration)
 
     # 6. Add optional title watermark on main visual
     if title_text:
@@ -304,7 +304,7 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
                 if bgm_dur < total_duration:
                     repeats = int(total_duration // bgm_dur) + 1
                     bgm_clip = concatenate_audioclips([bgm_clip] * repeats)
-            bgm_clip = sub_clip(bgm_clip, 0, total_duration)
+            bgm_clip = trim_clip(bgm_clip, 0, total_duration)
             bgm_volume = 0.35 if video_type == "short" else 0.45
             bgm_clip = set_dur(set_vol(bgm_clip, bgm_volume), total_duration)
             final_audio = set_dur(CompositeAudioClip([final_audio_voice, bgm_clip], duration=total_duration), total_duration)
@@ -312,10 +312,10 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
             print(f"[Warning] BGM mixing skipped: {e}")
 
     # Final strict enforcement of total_duration on visual and audio
-    final_visual = set_dur(sub_clip(final_visual, 0, total_duration), total_duration)
-    final_audio = set_dur(sub_clip(final_audio, 0, total_duration), total_duration)
+    final_visual = set_dur(trim_clip(final_visual, 0, total_duration), total_duration)
+    final_audio = set_dur(trim_clip(final_audio, 0, total_duration), total_duration)
 
-    final_composite = set_dur(sub_clip(set_aud(final_visual, final_audio), 0, total_duration), total_duration)
+    final_composite = set_dur(trim_clip(set_aud(final_visual, final_audio), 0, total_duration), total_duration)
     
     target_bitrate = "8000k" if video_type != "short" else "4000k"
     
