@@ -62,7 +62,10 @@ def image_to_video_clip(img_bytes: bytes, output_path: str) -> str:
         with open(temp_img_path, "wb") as f:
             f.write(img_bytes)
             
-        from moviepy import ImageClip
+        try:
+            from moviepy.editor import ImageClip
+        except ImportError:
+            from moviepy import ImageClip
         clip_duration = 4.0
         try:
             img_clip = ImageClip(temp_img_path).with_duration(clip_duration)

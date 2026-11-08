@@ -1,5 +1,8 @@
 import os
-from moviepy import ColorClip, TextClip, CompositeVideoClip
+try:
+    from moviepy.editor import ColorClip, TextClip, CompositeVideoClip
+except ImportError:
+    from moviepy import ColorClip, TextClip, CompositeVideoClip
 from config import ASSETS_DIR
 
 def create_default_outro():

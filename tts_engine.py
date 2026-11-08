@@ -3,7 +3,10 @@ import edge_tts
 import os
 import time
 import re
-from moviepy import AudioFileClip, concatenate_audioclips
+try:
+    from moviepy.editor import AudioFileClip, concatenate_audioclips
+except ImportError:
+    from moviepy import AudioFileClip, concatenate_audioclips
 from gtts import gTTS
 
 VOICE_MAP = {
