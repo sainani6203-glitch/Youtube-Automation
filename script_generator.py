@@ -109,7 +109,7 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         2. PART 2: LIVE PROOFS & HARD EVIDENCE (Scenes 4-8) - Dive deep into concrete live proofs—such as archaeological reports, scientific findings, experiments, or expert insights.
         3. PART 3: CLIMAX & STRONG CTA (Scenes 9-10) - Conclude with profound insight and a powerful Call-to-Action telling viewers to LIKE, SHARE, and SUBSCRIBE.
         4. PACING: Break the script into exactly 10 scenes. Each scene in the "scenes" array MUST contain narration text of about 70-75 words.
-        5. VISUAL KEYWORDS (STRICT MATCH): For each scene, provide a highly specific visual search term IN ENGLISH that 100% matches the exact narrative, objects, or scientific/historical elements discussed in that specific scene's text.
+        5. VISUAL KEYWORDS (STRICT MATCH & PROOFS): For each scene, provide a highly specific visual search term IN ENGLISH that 100% matches the exact narrative. For geography and mystery topics, explicitly include terms like "satellite map view", "archaeological excavation artifact photo", "real historical archive photography", or "museum document proof".
         
         Return ONLY valid JSON in this exact format:
         {{

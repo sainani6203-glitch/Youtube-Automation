@@ -23,11 +23,11 @@ for d in [OUTPUT_DIR, READY_TO_REVIEW_DIR, ASSETS_DIR]:
 # Topic Rotation Schedule (Focused on Single Deep Subjects)
 TOPIC_SCHEDULE = {
     0: "Dark Psychology & Human Behavior",       # Monday
-    1: "World Geography & Secret Earth Wonders", # Tuesday
+    1: "Dark Psychology & Human Behavior",       # Tuesday
     2: "Incredible Science & Space Secrets",    # Wednesday
-    3: "Dark Psychology & Human Behavior",       # Thursday
+    3: "World Geography & Secret Earth Wonders", # Thursday
     4: "World Geography & Secret Earth Wonders", # Friday
-    5: "Incredible Science & Space Secrets",    # Saturday
+    5: "World Geography & Secret Earth Wonders", # Saturday
     6: "World Geography & Secret Earth Wonders", # Sunday
 }
 
