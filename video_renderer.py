@@ -251,13 +251,7 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
     final_visual = set_dur(trim_clip(final_visual, 0, total_duration), total_duration)
     final_audio_voice = set_dur(trim_clip(final_audio_voice, 0, total_duration), total_duration)
 
-    # 6. Add optional title watermark on main visual
-    if title_text:
-        try:
-            txt_clip = set_dur(TextClip(text=title_text, font_size=50, color='white', stroke_color='black', stroke_width=2, size=(width - 100, None)).set_position(('center', 150)), total_duration)
-            final_visual = set_dur(CompositeVideoClip([final_visual, txt_clip], duration=total_duration), total_duration)
-        except Exception as e:
-            print(f"[Note] TextClip skipped: {e}")
+    # (Title watermark overlay removed to keep video clean and professional)
 
     # 6b. Add visual "SUBSCRIBE" reminder overlay & notification sound effect during the final seconds
     try:
