@@ -99,33 +99,45 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         }}
         """
     else:
-        prompt = f"""
-        Create a rich, high-retention, and deeply engaging exact 5 to 5.5 minute investigative documentary-style long-form YouTube video script focusing on ONE SINGLE specific topic/mystery: "{topic}".
-        CRITICAL MANDATE FOR TITLE: DO NOT copy any example title. The title MUST be strictly DUAL-LANGUAGE in this exact format: "[Regional {language} Title] | [English Title]". First write the title in authentic {language} script, followed by a pipe (|), and then the English title. Maximum 90 characters total.
-        The description and script narration text MUST be written entirely in {language}.
+        is_geo = any(k in topic.lower() for k in ["geography", "earth", "wonder", "island", "mystery", "civilization", "secret", "ancient", "ruins", "ocean", "desert", "cave", "map", "historical"])
         
+        if is_geo:
+            duration_desc = "exact 10 to 12 minute master-class documentary-style long-form YouTube video script (~1500-1800 words across exactly 18 to 20 scenes)"
+            structure_desc = """
+        Requirements & Investigative Structure (Total Exact 10 to 12 Minutes / ~1500-1800 Words across exactly 18-20 scenes):
+        1. PART 1: HOOK & ENIGMA SETUP (Scenes 1-4) - Arresting hook, geographical location coordinates, and deep historical mystery introduction.
+        2. PART 2: ANCIENT CONTEXT & BACKSTORY (Scenes 5-9) - Detailed exploration of historical records, local legends, and previous expeditions.
+        3. PART 3: LIVE PROOFS, SATELLITE MAPS & EVIDENCE (Scenes 10-16) - Deep dive into concrete archaeological findings, satellite map analysis, scientific measurements, and expert proofs.
+        4. PART 4: UNRESOLVED ANOMALIES & CLIMAX CTA (Scenes 17-20) - Deep philosophical analysis, final unsolved questions, and powerful Call-to-Action.
+        5. PACING: Exactly 18 to 20 scenes. Each scene in the "scenes" array MUST contain narration text of about 75-85 words.
+        6. VISUAL KEYWORDS (STRICT PROOFS & MAPS): For each scene, explicitly include terms like "satellite map view with coordinates", "archaeological excavation artifact closeup", "real historical archive photography", "ancient manuscript map", or "historical expedition photo".
+            """
+            json_scenes_example = ",\n".join([f'                {{"text": "Paragraph {i} with 75-85 words...", "visual_keyword": "keyword{i}"}}' for i in range(1, 21)])
+        else:
+            duration_desc = "exact 5 to 5.5 minute investigative documentary-style long-form YouTube video script (~700-750 words across exactly 10 scenes)"
+            structure_desc = """
         Requirements & Investigative Structure (Total Exact 5 to 5.5 Minutes / ~700-750 Words across exactly 10 scenes):
         1. PART 1: HOOK & MYSTERY SETUP (Scenes 1-3) - Start with an arresting question, shocking mystery setup, and an overview of the enigma, keeping viewers hooked instantly.
         2. PART 2: LIVE PROOFS & HARD EVIDENCE (Scenes 4-8) - Dive deep into concrete live proofs—such as archaeological reports, scientific findings, experiments, or expert insights.
         3. PART 3: CLIMAX & STRONG CTA (Scenes 9-10) - Conclude with profound insight and a powerful Call-to-Action telling viewers to LIKE, SHARE, and SUBSCRIBE.
         4. PACING: Break the script into exactly 10 scenes. Each scene in the "scenes" array MUST contain narration text of about 70-75 words.
         5. VISUAL KEYWORDS (STRICT MATCH & PROOFS): For each scene, provide a highly specific visual search term IN ENGLISH that 100% matches the exact narrative. For geography and mystery topics, explicitly include terms like "satellite map view", "archaeological excavation artifact photo", "real historical archive photography", or "museum document proof".
+            """
+            json_scenes_example = ",\n".join([f'                {{"text": "Paragraph {i} with 70-75 words...", "visual_keyword": "keyword{i}"}}' for i in range(1, 11)])
+
+        prompt = f"""
+        Create a rich, high-retention, and deeply engaging {duration_desc} focusing on ONE SINGLE specific topic/mystery: "{topic}".
+        CRITICAL MANDATE FOR TITLE: DO NOT copy any example title. The title MUST be strictly DUAL-LANGUAGE in this exact format: "[Regional {language} Title] | [English Title]". First write the title in authentic {language} script, followed by a pipe (|), and then the English title. Maximum 90 characters total.
+        The description and script narration text MUST be written entirely in {language}.
+        
+        {structure_desc}
         
         Return ONLY valid JSON in this exact format:
         {{
             "title": "Dual language title",
             "description": "Detailed SEO description with timestamps and reference proofs",
             "scenes": [
-                {{"text": "Paragraph 1 with 70-75 words...", "visual_keyword": "keyword1"}},
-                {{"text": "Paragraph 2 with 70-75 words...", "visual_keyword": "keyword2"}},
-                {{"text": "Paragraph 3 with 70-75 words...", "visual_keyword": "keyword3"}},
-                {{"text": "Paragraph 4 with 70-75 words...", "visual_keyword": "keyword4"}},
-                {{"text": "Paragraph 5 with 70-75 words...", "visual_keyword": "keyword5"}},
-                {{"text": "Paragraph 6 with 70-75 words...", "visual_keyword": "keyword6"}},
-                {{"text": "Paragraph 7 with 70-75 words...", "visual_keyword": "keyword7"}},
-                {{"text": "Paragraph 8 with 70-75 words...", "visual_keyword": "keyword8"}},
-                {{"text": "Paragraph 9 with 70-75 words...", "visual_keyword": "keyword9"}},
-                {{"text": "Paragraph 10 with 70-75 words...", "visual_keyword": "keyword10"}}
+{json_scenes_example}
             ]
         }}
         """
