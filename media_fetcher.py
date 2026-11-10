@@ -125,9 +125,9 @@ def fetch_stock_video(query: str, orientation: str = "portrait", output_filename
             return res_path
 
     # 2. Tier 1: Smart AI Cinematic B-Roll (Pollinations.ai)
-    print(f"   -> [AI Cinematic B-Roll] Generating 8K cinematic visual for: '{query}' via Pollinations.ai...")
+    print(f"   -> [AI Cinematic B-Roll] Generating 8K vibrant cinematic visual for: '{query}' via Pollinations.ai...")
     try:
-        ai_prompt = f"{query}, masterpiece, ultra detailed, hyperrealistic 8k resolution, Unreal Engine 5 render, dramatic cinematic moody lighting, documentary film still"
+        ai_prompt = f"{query}, masterpiece, ultra detailed, hyperrealistic 8k resolution, Unreal Engine 5 render, extremely vibrant rich colors, cinematic HDR lighting, golden hour glow, highly saturated, visually stunning photorealistic cinematic film still"
         encoded_prompt = urllib.parse.quote(ai_prompt)
         ai_image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=1280&height=720&nologo=true&seed={random.randint(1000, 99999)}"
         
@@ -168,9 +168,9 @@ def fetch_stock_video(query: str, orientation: str = "portrait", output_filename
             print(f"[Warning] Pexels fallback failed: {e}")
 
     # 4. Tier 4: Guaranteed Cinematic AI Visual Fallback
-    print(f"   -> [Cinematic AI Fallback] Generating stunning 8K cinematic background visual for: '{query}'...")
+    print(f"   -> [Cinematic AI Fallback] Generating stunning 8K vibrant cinematic background visual for: '{query}'...")
     try:
-        fallback_prompt = f"epic cinematic mystery and wonder background, {query}, highly detailed 8k resolution, dramatic moody lighting, photorealistic documentary style"
+        fallback_prompt = f"epic cinematic mystery and wonder background, {query}, highly detailed 8k resolution, extremely vibrant rich colors, cinematic HDR lighting, golden hour glow, highly saturated, photorealistic documentary style"
         encoded_fallback = urllib.parse.quote(fallback_prompt)
         fallback_url = f"https://image.pollinations.ai/prompt/{encoded_fallback}?width=1280&height=720&nologo=true&seed={random.randint(1000, 99999)}"
         
