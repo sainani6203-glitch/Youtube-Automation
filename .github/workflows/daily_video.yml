@@ -2,8 +2,6 @@ name: Daily YouTube Automation
 
 on:
   workflow_dispatch: # Allows manual trigger from GitHub anytime
-  repository_dispatch:
-    types: [run-daily-batch]
 
 jobs:
   generate-and-upload:

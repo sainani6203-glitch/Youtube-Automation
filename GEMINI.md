@@ -21,7 +21,7 @@
 
 ## GitHub Actions Workflow
 - **File**: `.github/workflows/daily_video.yml`
-- **Schedule/Trigger**: External API trigger via `repository_dispatch` (`run-daily-batch`) and `workflow_dispatch` (manual trigger).
+- **Schedule/Trigger**: Manual trigger via `workflow_dispatch`.
 - **Secrets Required**:
   - `GEMINI_API_KEY`
   - `PEXELS_API_KEY`
