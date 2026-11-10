@@ -20,15 +20,15 @@ ASSETS_DIR = os.path.join(BASE_DIR, "assets")
 for d in [OUTPUT_DIR, READY_TO_REVIEW_DIR, ASSETS_DIR]:
     os.makedirs(d, exist_ok=True)
 
-# Topic Rotation Schedule (Focused on Single Deep Subjects)
+# Topic Rotation Schedule (Focused on 100% World Geography & Earth Wonders Niche)
 TOPIC_SCHEDULE = {
-    0: "Dark Psychology & Human Behavior",       # Monday
-    1: "Dark Psychology & Human Behavior",       # Tuesday
-    2: "Incredible Science & Space Secrets",    # Wednesday
-    3: "World Geography & Secret Earth Wonders", # Thursday
-    4: "World Geography & Secret Earth Wonders", # Friday
-    5: "World Geography & Secret Earth Wonders", # Saturday
-    6: "World Geography & Secret Earth Wonders", # Sunday
+    0: "World Geography & Secret Earth Wonders",       # Monday
+    1: "World Geography & Secret Earth Wonders",       # Tuesday
+    2: "World Geography & Secret Earth Wonders",       # Wednesday
+    3: "World Geography & Secret Earth Wonders",       # Thursday
+    4: "World Geography & Secret Earth Wonders",       # Friday
+    5: "World Geography & Secret Earth Wonders",       # Saturday
+    6: "World Geography & Secret Earth Wonders",       # Sunday
 }
 
 # YouTube Playlist IDs (Language-specific)
