@@ -176,17 +176,6 @@ def fetch_stock_video(query: str, orientation: str = "portrait", output_filename
         height = 1920 if orientation == "portrait" else 1080
         
         img = Image.new("RGB", (width, height), color=(15, 23, 42))
-        draw = ImageDraw.Draw(img)
-        
-        colors = [(30, 41, 59), (15, 23, 42), (88, 28, 135), (30, 58, 138), (17, 24, 39)]
-        c1 = random.choice(colors)
-        c2 = random.choice(colors)
-        
-        for y in range(0, height, 10):
-            r = int(c1[0] + (c2[0] - c1[0]) * (y / height))
-            g = int(c1[1] + (c2[1] - c1[1]) * (y / height))
-            b = int(c1[2] + (c2[2] - c1[2]) * (y / height))
-            draw.line([(0, y), (width, y)], fill=(r, g, b))
             
         byte_arr = io.BytesIO()
         img.save(byte_arr, format='JPEG', quality=90)

@@ -136,28 +136,7 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
             sub_clips.extend(sub_clips)
         main_visual = trim_clip(main_visual, 0, voiceover_duration)
     else:
-        try:
-            from PIL import Image, ImageDraw
-            import io
-            img = Image.new("RGB", (width, height), color=(15, 23, 42))
-            draw = ImageDraw.Draw(img)
-            for y in range(0, height, 10):
-                r = int(30 + 20 * (y / height))
-                g = int(41 + 10 * (y / height))
-                b = int(59 + 40 * (y / height))
-                draw.line([(0, y), (width, y)], fill=(r, g, b))
-            temp_grad = os.path.join(ASSETS_DIR, f"temp_grad_{random.randint(1000,9999)}.jpg")
-            img.save(temp_grad, format='JPEG')
-            try:
-                from moviepy.editor import ImageClip
-            except ImportError:
-                from moviepy import ImageClip
-            img_c = set_dur(ImageClip(temp_grad), voiceover_duration)
-            main_visual = resize_clip(img_c, height=height)
-            if os.path.exists(temp_grad):
-                os.remove(temp_grad)
-        except Exception:
-            main_visual = set_dur(ColorClip(size=(width, height), color=(20, 24, 33)), voiceover_duration)
+        main_visual = set_dur(ColorClip(size=(width, height), color=(15, 23, 42)), voiceover_duration)
 
     # 4. Assemble full visual sequence
     sequence_visuals = []
