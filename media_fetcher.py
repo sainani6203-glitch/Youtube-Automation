@@ -5,19 +5,39 @@ import urllib.parse
 from config import PEXELS_API_KEY, ASSETS_DIR
 
 def fetch_wikimedia_image(query: str) -> str:
-    """Fetches a real historical/geographic image from Wikimedia Commons API with fallback keyword matching."""
+    """Fetches a real historical/geographic photograph from Wikipedia or Wikimedia Commons API."""
     try:
+        headers = {"User-Agent": "YouTubeAutomationBot/1.0 (educational purpose)"}
+        
+        # 1. Try Wikipedia Page Images API first (most accurate for real monuments/places)
+        wiki_search_url = f"https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={urllib.parse.quote(query)}&format=json&srlimit=3"
+        resp = requests.get(wiki_search_url, headers=headers, timeout=10)
+        if resp.status_code == 200:
+            search_results = resp.json().get("query", {}).get("search", [])
+            for res in search_results:
+                title = res.get("title")
+                if title:
+                    page_img_url = f"https://en.wikipedia.org/w/api.php?action=query&titles={urllib.parse.quote(title)}&prop=pageimages&pithumbsize=1200&format=json"
+                    img_resp = requests.get(page_img_url, headers=headers, timeout=10)
+                    if img_resp.status_code == 200:
+                        pages = img_resp.json().get("query", {}).get("pages", {})
+                        for p_id, p_data in pages.items():
+                            thumb = p_data.get("thumbnail", {}).get("source")
+                            if thumb:
+                                r_img = requests.get(thumb, timeout=15)
+                                if r_img.status_code == 200:
+                                    print(f"   -> [Real Archive Success] Fetched real photograph from Wikipedia for '{title}'")
+                                    return r_img.content
+
+        # 2. Fallback to Wikimedia Commons search
         queries_to_try = [query]
         words = query.split()
-        if len(words) > 4:
-            queries_to_try.append(" ".join(words[:4]))
-            queries_to_try.append(" ".join(words[-4:]))
-            if len(words) > 6:
-                queries_to_try.append(" ".join(words[1:5]))
-                
+        if len(words) > 3:
+            queries_to_try.append(" ".join(words[:3]))
+            queries_to_try.append(" ".join(words[-3:]))
+            
         for q in queries_to_try:
             url = f"https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch={urllib.parse.quote(q)}&gsrlimit=5&prop=imageinfo&iiprop=url&format=json"
-            headers = {"User-Agent": "YouTubeAutomationBot/1.0 (educational purpose)"}
             resp = requests.get(url, headers=headers, timeout=10)
             if resp.status_code == 200:
                 data = resp.json()
@@ -29,9 +49,10 @@ def fetch_wikimedia_image(query: str) -> str:
                         if img_url and any(img_url.lower().endswith(ext) for ext in ['.jpg', '.jpeg', '.png']):
                             img_resp = requests.get(img_url, timeout=15)
                             if img_resp.status_code == 200:
+                                print(f"   -> [Real Archive Success] Fetched real photograph from Wikimedia Commons for '{q}'")
                                 return img_resp.content
     except Exception as e:
-        print(f"[Note] Wikimedia fetch failed for '{query}': {e}")
+        print(f"[Note] Wikimedia/Wikipedia fetch failed for '{query}': {e}")
     return None
 
 def fetch_nasa_image(query: str) -> str:
