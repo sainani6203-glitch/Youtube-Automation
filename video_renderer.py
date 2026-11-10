@@ -136,7 +136,32 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
             sub_clips.extend(sub_clips)
         main_visual = trim_clip(main_visual, 0, voiceover_duration)
     else:
-        main_visual = set_dur(ColorClip(size=(width, height), color=(15, 23, 42)), voiceover_duration)
+        try:
+            import requests, urllib.parse
+            ai_prompt = f"epic cinematic mystery background {category} 8k resolution, photorealistic"
+            encoded_prompt = urllib.parse.quote(ai_prompt)
+            url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=1080&height=1920&nologo=true&seed={random.randint(1000, 99999)}"
+            r = requests.get(url, timeout=15)
+            if r.status_code == 200:
+                temp_img = os.path.join(ASSETS_DIR, f"fallback_{random.randint(1000,9999)}.jpg")
+                with open(temp_img, "wb") as f:
+                    f.write(r.content)
+                try:
+                    from moviepy.editor import ImageClip
+                except ImportError:
+                    from moviepy import ImageClip
+                img_c = ImageClip(temp_img)
+                try:
+                    img_c = img_c.resized(height=height)
+                except:
+                    img_c = img_c.resize(height=height)
+                main_visual = set_dur(img_c, voiceover_duration)
+                if os.path.exists(temp_img):
+                    os.remove(temp_img)
+            else:
+                main_visual = set_dur(ColorClip(size=(width, height), color=(15, 23, 42)), voiceover_duration)
+        except Exception:
+            main_visual = set_dur(ColorClip(size=(width, height), color=(15, 23, 42)), voiceover_duration)
 
     # 4. Assemble full visual sequence
     sequence_visuals = []

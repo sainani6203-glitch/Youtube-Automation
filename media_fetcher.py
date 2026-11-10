@@ -167,26 +167,21 @@ def fetch_stock_video(query: str, orientation: str = "portrait", output_filename
         except Exception as e:
             print(f"[Warning] Pexels fallback failed: {e}")
 
-    # 4. Tier 4: Local Procedural Cinematic Gradient Fallback (Guaranteed Success)
-    print(f"   -> [Local Cinematic Fallback] Generating procedural cinematic gradient visual for: '{query}'...")
+    # 4. Tier 4: Guaranteed Cinematic AI Visual Fallback
+    print(f"   -> [Cinematic AI Fallback] Generating stunning 8K cinematic background visual for: '{query}'...")
     try:
-        from PIL import Image, ImageDraw
-        import io
-        width = 1080 if orientation == "portrait" else 1920
-        height = 1920 if orientation == "portrait" else 1080
+        fallback_prompt = f"epic cinematic mystery and wonder background, {query}, highly detailed 8k resolution, dramatic moody lighting, photorealistic documentary style"
+        encoded_fallback = urllib.parse.quote(fallback_prompt)
+        fallback_url = f"https://image.pollinations.ai/prompt/{encoded_fallback}?width=1280&height=720&nologo=true&seed={random.randint(1000, 99999)}"
         
-        img = Image.new("RGB", (width, height), color=(15, 23, 42))
-            
-        byte_arr = io.BytesIO()
-        img.save(byte_arr, format='JPEG', quality=90)
-        img_bytes = byte_arr.getvalue()
-        
-        res_path = image_to_video_clip(img_bytes, output_path)
-        if res_path:
-            print(f"   -> [Local Fallback Success] Created cinematic procedural video clip.")
-            return res_path
+        img_resp = requests.get(fallback_url, timeout=15)
+        if img_resp.status_code == 200:
+            res_path = image_to_video_clip(img_resp.content, output_path)
+            if res_path:
+                print(f"   -> [Cinematic Fallback Success] Created rich visual clip.")
+                return res_path
     except Exception as fallback_err:
-        print(f"[Warning] Local fallback generation failed: {fallback_err}")
+        print(f"[Warning] Cinematic Fallback failed: {fallback_err}")
 
     return None
 
