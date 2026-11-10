@@ -61,27 +61,15 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
     
     width, height = (1080, 1920) if video_type == "short" else (1920, 1080)
     
-    # 0. Generate Thumbnail file. For YouTube Shorts, also add it as the first 1 second intro frame.
+    # 0. Generate Thumbnail file for YouTube upload. (Thumbnail intro frame removed so video starts directly with hook).
     thumb_path = None
-    thumb_clip = None
-    thumb_duration = 0.0
     if title_text:
         try:
             is_vertical = (video_type == "short")
             thumb_path = generate_thumbnail(title_text, category=category, vertical=is_vertical, language=language)
-            if video_type == "short" and thumb_path and os.path.exists(thumb_path):
-                thumb_clip = ImageClip(thumb_path)
-                thumb_clip = resize_clip(thumb_clip, height=height)
-                if thumb_clip.w < width:
-                    thumb_clip = resize_clip(thumb_clip, width=width)
-                thumb_clip = crop_clip(thumb_clip, x_center=thumb_clip.w/2, y_center=thumb_clip.h/2, width=width, height=height)
-                
-                thumb_duration = 2.0 if video_type != "short" else 1.0
-                thumb_clip = set_dur(thumb_clip, thumb_duration)
         except Exception as e:
-            print(f"[Warning] Could not generate/load thumbnail intro clip: {e}")
-            thumb_clip = None
-            thumb_duration = 0.0
+            print(f"[Warning] Could not generate thumbnail: {e}")
+            thumb_path = None
 
     # 1. Check for custom intro in assets/intro.mp4
     intro_path = os.path.join(ASSETS_DIR, "intro.mp4")
@@ -174,8 +162,6 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
     # 4. Assemble full visual sequence
     sequence_visuals = []
     if video_type != "short":
-        if thumb_clip:
-            sequence_visuals.append(thumb_clip)
         if intro_clip:
             sequence_visuals.append(intro_clip)
             
@@ -223,8 +209,6 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
     # 5. Assemble full audio sequence
     audio_parts = []
     if video_type != "short":
-        if thumb_clip and thumb_duration > 0:
-            audio_parts.append(AudioClip(lambda t: np.zeros_like(t) if isinstance(t, np.ndarray) else 0.0, duration=thumb_duration))
         if intro_clip and intro_duration > 0:
             audio_parts.append(AudioClip(lambda t: np.zeros_like(t) if isinstance(t, np.ndarray) else 0.0, duration=intro_duration))
             
@@ -286,7 +270,7 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
         try:
             raw_sfx = AudioFileClip(sfx_path)
             sfx_clip = ensure_mono_audioclip(raw_sfx)
-            sfx_start = thumb_duration + intro_duration
+            sfx_start = intro_duration
             sfx_clip = sfx_clip.set_start(sfx_start)
             final_audio_voice = set_dur(CompositeAudioClip([final_audio_voice, sfx_clip], duration=total_duration), total_duration)
         except Exception as e:
@@ -356,7 +340,6 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
     
     # Close clips
     audio.close()
-    if thumb_clip: thumb_clip.close()
     if intro_clip: intro_clip.close()
     if outro_clip: outro_clip.close()
     if bgm_clip: bgm_clip.close()
