@@ -42,11 +42,88 @@ def set_aud(clip, aud):
     try: return clip.set_audio(aud)
     except: return clip.with_audio(aud)
 
-def safe_text_clip(text_content, font_size=40, **kwargs):
+def safe_text_clip(text_content, font_size=40, color='white', stroke_color='black', stroke_width=2, size=None, **kwargs):
+    """Generates a text clip using PIL (Pillow) to completely bypass ImageMagick security policy restrictions on Linux."""
     try:
-        return TextClip(text=text_content, font_size=font_size, **kwargs)
-    except TypeError:
-        return TextClip(txt=text_content, fontsize=font_size, **kwargs)
+        from PIL import Image, ImageDraw, ImageFont
+        import tempfile
+        
+        max_w = size[0] if size and size[0] else 1000
+        
+        try:
+            font = ImageFont.truetype("DejaVuSans-Bold.ttf", font_size)
+        except:
+            try:
+                font = ImageFont.truetype("arial.ttf", font_size)
+            except:
+                font = ImageFont.load_default()
+
+        words = text_content.split()
+        lines = []
+        current_line = ""
+        for word in words:
+            test_line = current_line + " " + word if current_line else word
+            if len(test_line) * (font_size * 0.45) > max_w and current_line:
+                lines.append(current_line)
+                current_line = word
+            else:
+                current_line = test_line
+        if current_line:
+            lines.append(current_line)
+        if not lines:
+            lines = [text_content]
+
+        line_spacing = int(font_size * 0.3)
+        dummy_img = Image.new("RGBA", (10, 10))
+        draw_dummy = ImageDraw.Draw(dummy_img)
+        
+        line_heights = []
+        max_line_w = 0
+        for line in lines:
+            bbox = draw_dummy.textbbox((0, 0), line, font=font)
+            lw = bbox[2] - bbox[0]
+            lh = bbox[3] - bbox[1]
+            max_line_w = max(max_line_w, lw)
+            line_heights.append(lh)
+
+        total_h = sum(line_heights) + line_spacing * (len(lines) - 1) + 20
+        img_w = max(max_line_w + 40, 100)
+        img_h = max(total_h, 40)
+
+        txt_img = Image.new("RGBA", (img_w, img_h), (0, 0, 0, 0))
+        draw = ImageDraw.Draw(txt_img)
+
+        y_text = 10
+        for i, line in enumerate(lines):
+            bbox = draw.textbbox((0, 0), line, font=font)
+            lw = bbox[2] - bbox[0]
+            x_text = (img_w - lw) / 2
+            
+            if stroke_width > 0 and stroke_color:
+                for adj_x in range(-stroke_width, stroke_width + 1):
+                    for adj_y in range(-stroke_width, stroke_width + 1):
+                        if adj_x != 0 or adj_y != 0:
+                            draw.text((x_text + adj_x, y_text + adj_y), line, font=font, fill=stroke_color)
+            
+            draw.text((x_text, y_text), line, font=font, fill=color)
+            y_text += line_heights[i] + line_spacing
+
+        temp_fd, temp_path = tempfile.mkstemp(suffix=".png")
+        os.close(temp_fd)
+        txt_img.save(temp_path, "PNG")
+
+        try:
+            from moviepy.editor import ImageClip
+        except ImportError:
+            from moviepy import ImageClip
+        
+        return ImageClip(temp_path)
+    except Exception as e:
+        print(f"[Warning] PIL safe_text_clip failed: {e}, falling back to TextClip")
+        try:
+            return TextClip(text=text_content, font_size=font_size, **kwargs)
+        except:
+            return TextClip(txt=text_content, fontsize=font_size, **kwargs)
 
 def safe_composite_audio(clips, duration=None):
     try:
