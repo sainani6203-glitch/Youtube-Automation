@@ -177,7 +177,7 @@ def generate_voiceover_openai(text: str, output_audio_path: str):
 async def generate_voiceover(text: str, output_audio_path: str, language: str = "en"):
     """
     Generates speech audio using edge-tts neural voices.
-    Fallback chain: edge-tts retry -> pyttsx3 (Free Offline) -> OpenAI TTS -> gTTS.
+    Fallback chain: edge-tts retry -> OpenAI TTS (onyx natural male voice) -> pyttsx3 (Free Offline male voice) -> gTTS.
     """
     lang_lower = language.lower()
     try:
@@ -192,19 +192,19 @@ async def generate_voiceover(text: str, output_audio_path: str, language: str = 
             print(f"[Success] Generated voiceover via edge-tts on retry: {output_audio_path}")
             return output_audio_path
         except Exception as e2:
-            print(f"[Warning] edge-tts retry also failed ({e2}). Trying 100% free offline pyttsx3 fallback...")
+            print(f"[Warning] edge-tts retry also failed ({e2}). Trying OpenAI TTS fallback (onyx human-like male voice)...")
             try:
-                generate_voiceover_pyttsx3(text, output_audio_path, language)
-                print(f"[Success] Generated voiceover via offline pyttsx3: {output_audio_path}")
+                generate_voiceover_openai(text, output_audio_path)
+                print(f"[Success] Generated voiceover via OpenAI TTS: {output_audio_path}")
                 return output_audio_path
             except Exception as e3:
-                print(f"[Warning] pyttsx3 fallback failed ({e3}). Trying OpenAI TTS fallback...")
+                print(f"[Warning] OpenAI TTS fallback failed ({e3}). Trying offline pyttsx3 fallback...")
                 try:
-                    generate_voiceover_openai(text, output_audio_path)
-                    print(f"[Success] Generated voiceover via OpenAI TTS: {output_audio_path}")
+                    generate_voiceover_pyttsx3(text, output_audio_path, language)
+                    print(f"[Success] Generated voiceover via offline pyttsx3: {output_audio_path}")
                     return output_audio_path
                 except Exception as e4:
-                    print(f"[Warning] OpenAI TTS fallback failed ({e4}). Falling back to gTTS...")
+                    print(f"[Warning] pyttsx3 fallback failed ({e4}). Falling back to gTTS...")
                     generate_voiceover_gtts_fallback(text, output_audio_path, language)
                     print(f"[Success] Generated voiceover via gTTS fallback: {output_audio_path}")
                     return output_audio_path
@@ -254,6 +254,120 @@ async def generate_voiceover_scenes_edge(scenes: list, output_audio_path: str, l
             if idx < len(scenes) - 1:
                 await asyncio.sleep(0.5)
                 
+        audio_clips = [AudioFileClip(fp) for fp in temp_files]
+        final_clip = concatenate_audioclips(audio_clips)
+        final_clip.write_audiofile(output_audio_path, logger=None)
+        
+        for clip in audio_clips:
+            clip.close()
+        final_clip.close()
+        return output_audio_path
+    finally:
+        for fp in temp_files:
+            if os.path.exists(fp):
+                try:
+                    os.remove(fp)
+                except:
+                    pass
+
+def generate_voiceover_scenes_openai(scenes: list, output_audio_path: str):
+    """
+    Fallback TTS using OpenAI Audio Speech API (`tts-1` with `onyx` deep male voice) for scenes.
+    """
+    from config import OPENAI_API_KEY
+    if not OPENAI_API_KEY:
+        raise RuntimeError("OPENAI_API_KEY not configured.")
+    from openai import OpenAI
+    client = OpenAI(api_key=OPENAI_API_KEY)
+    print("[Info] Falling back to OpenAI TTS (onyx deep male voice) for scenes...")
+    
+    temp_files = []
+    current_time = 0.0
+    try:
+        for idx, scene in enumerate(scenes):
+            text = scene.get("text", "")
+            if not text:
+                continue
+            chunk_path = f"{output_audio_path}_openai_scene_{idx}.mp3"
+            temp_files.append(chunk_path)
+            
+            response = client.audio.speech.create(
+                model="tts-1",
+                voice="onyx",
+                input=text
+            )
+            response.stream_to_file(chunk_path)
+            
+            clip = AudioFileClip(chunk_path)
+            dur = clip.duration
+            clip.close()
+            
+            scene["start_time"] = current_time
+            scene["end_time"] = current_time + dur
+            scene["duration"] = dur
+            current_time = scene["end_time"]
+            
+        audio_clips = [AudioFileClip(fp) for fp in temp_files]
+        final_clip = concatenate_audioclips(audio_clips)
+        final_clip.write_audiofile(output_audio_path, logger=None)
+        
+        for clip in audio_clips:
+            clip.close()
+        final_clip.close()
+        return output_audio_path
+    finally:
+        for fp in temp_files:
+            if os.path.exists(fp):
+                try:
+                    os.remove(fp)
+                except:
+                    pass
+
+def generate_voiceover_scenes_pyttsx3(scenes: list, output_audio_path: str, language: str = "en"):
+    print(f"[Info] Falling back to offline pyttsx3 TTS for scenes...")
+    import pyttsx3
+    engine = pyttsx3.init()
+    voices = engine.getProperty('voices')
+    lang_code = language[:2].lower()
+    
+    chosen_voice = None
+    for voice in voices:
+        v_info = (voice.name + " " + voice.id).lower()
+        if lang_code in v_info or lang_code in [l.lower() for l in voice.languages]:
+            if any(m in v_info for m in ["male", "david", "hemant", "ravi", "george", "microsoft david", "kumar"]):
+                chosen_voice = voice.id
+                break
+    if not chosen_voice:
+        for voice in voices:
+            v_info = (voice.name + " " + voice.id).lower()
+            if lang_code in v_info or lang_code in [l.lower() for l in voice.languages]:
+                chosen_voice = voice.id
+                break
+    if chosen_voice:
+        engine.setProperty('voice', chosen_voice)
+        
+    temp_files = []
+    current_time = 0.0
+    try:
+        for idx, scene in enumerate(scenes):
+            text = scene.get("text", "")
+            if not text:
+                continue
+            chunk_path = f"{output_audio_path}_pyttsx3_scene_{idx}.mp3"
+            temp_files.append(chunk_path)
+            
+            engine.save_to_file(text, chunk_path)
+            engine.runAndWait()
+            
+            clip = AudioFileClip(chunk_path)
+            dur = clip.duration
+            clip.close()
+            
+            scene["start_time"] = current_time
+            scene["end_time"] = current_time + dur
+            scene["duration"] = dur
+            current_time = scene["end_time"]
+            
         audio_clips = [AudioFileClip(fp) for fp in temp_files]
         final_clip = concatenate_audioclips(audio_clips)
         final_clip.write_audiofile(output_audio_path, logger=None)
@@ -330,10 +444,29 @@ async def generate_voiceover_scenes(scenes: list, output_audio_path: str, langua
         print(f"[Success] Generated synchronized voiceover scenes via edge-tts: {output_audio_path}")
         return output_audio_path
     except Exception as e:
-        print(f"[Warning] edge-tts scenes generation failed ({e}). Falling back to gTTS...")
-        generate_voiceover_scenes_gtts(scenes, output_audio_path, language)
-        print(f"[Success] Generated synchronized voiceover scenes via gTTS fallback: {output_audio_path}")
-        return output_audio_path
+        print(f"[Warning] edge-tts scenes generation failed ({e}). Attempting retry...")
+        try:
+            await asyncio.sleep(3)
+            await generate_voiceover_scenes_edge(scenes, output_audio_path, language)
+            print(f"[Success] Generated synchronized voiceover scenes via edge-tts on retry: {output_audio_path}")
+            return output_audio_path
+        except Exception as e2:
+            print(f"[Warning] edge-tts retry also failed ({e2}). Trying OpenAI TTS fallback (onyx human-like male voice)...")
+            try:
+                generate_voiceover_scenes_openai(scenes, output_audio_path)
+                print(f"[Success] Generated synchronized voiceover scenes via OpenAI TTS: {output_audio_path}")
+                return output_audio_path
+            except Exception as e3:
+                print(f"[Warning] OpenAI TTS fallback failed ({e3}). Trying offline pyttsx3 fallback...")
+                try:
+                    generate_voiceover_scenes_pyttsx3(scenes, output_audio_path, language)
+                    print(f"[Success] Generated synchronized voiceover scenes via offline pyttsx3: {output_audio_path}")
+                    return output_audio_path
+                except Exception as e4:
+                    print(f"[Warning] pyttsx3 fallback failed ({e4}). Falling back to gTTS...")
+                    generate_voiceover_scenes_gtts(scenes, output_audio_path, language)
+                    print(f"[Success] Generated synchronized voiceover scenes via gTTS fallback: {output_audio_path}")
+                    return output_audio_path
 
 def create_voiceover_scenes_sync(scenes: list, output_audio_path: str, language: str = "en"):
     """Synchronous wrapper for generate_voiceover_scenes with exact timing calculation"""
