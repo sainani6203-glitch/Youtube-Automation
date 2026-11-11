@@ -76,13 +76,42 @@ def fetch_nasa_image(query: str) -> str:
         print(f"[Note] NASA fetch failed for '{query}': {e}")
     return None
 
-def image_to_video_clip(img_bytes: bytes, output_path: str) -> str:
-    """Converts image bytes into a 4-second dynamic video clip with Ken Burns zoom effect using MoviePy."""
+def image_to_video_clip(img_bytes: bytes, output_path: str, orientation: str = "portrait") -> str:
+    """Converts image bytes into a 4-second dynamic video clip with precise crop and Ken Burns zoom effect."""
     temp_img_path = output_path.replace(".mp4", "_temp.jpg")
     try:
         with open(temp_img_path, "wb") as f:
             f.write(img_bytes)
             
+        target_w = 1080 if orientation == "portrait" else 1920
+        target_h = 1920 if orientation == "portrait" else 1080
+        
+        try:
+            from PIL import Image
+            with Image.open(temp_img_path) as img:
+                img = img.convert("RGB")
+                orig_w, orig_h = img.size
+                target_ratio = target_w / target_h
+                orig_ratio = orig_w / orig_h
+                
+                if orig_ratio > target_ratio:
+                    new_h = target_h
+                    new_w = int(orig_w * (target_h / orig_h))
+                else:
+                    new_w = target_w
+                    new_h = int(orig_h * (target_w / orig_w))
+                    
+                img_resized = img.resize((new_w, new_h), Image.Resampling.LANCZOS)
+                left = (new_w - target_w) / 2
+                top = (new_h - target_h) / 2
+                right = left + target_w
+                bottom = top + target_h
+                
+                img_cropped = img_resized.crop((left, top, right, bottom))
+                img_cropped.save(temp_img_path, quality=95)
+        except Exception as pil_err:
+            print(f"[Note] PIL resize/crop fallback skipped: {pil_err}")
+
         try:
             from moviepy.editor import ImageClip
         except ImportError:
@@ -140,7 +169,7 @@ def fetch_stock_video(query: str, orientation: str = "portrait", output_filename
             img_bytes = fetch_nasa_image(query)
 
     if img_bytes:
-        res_path = image_to_video_clip(img_bytes, output_path)
+        res_path = image_to_video_clip(img_bytes, output_path, orientation)
         if res_path:
             print(f"   -> [Archive Success] Converted authentic archive image to cinematic video clip.")
             return res_path
@@ -154,7 +183,7 @@ def fetch_stock_video(query: str, orientation: str = "portrait", output_filename
         
         img_resp = requests.get(ai_image_url, timeout=20)
         if img_resp.status_code == 200:
-            res_path = image_to_video_clip(img_resp.content, output_path)
+            res_path = image_to_video_clip(img_resp.content, output_path, orientation)
             if res_path:
                 print(f"   -> [AI Cinematic Success] Generated 100% topic-matched video clip.")
                 return res_path
@@ -197,7 +226,7 @@ def fetch_stock_video(query: str, orientation: str = "portrait", output_filename
         
         img_resp = requests.get(fallback_url, timeout=15)
         if img_resp.status_code == 200:
-            res_path = image_to_video_clip(img_resp.content, output_path)
+            res_path = image_to_video_clip(img_resp.content, output_path, orientation)
             if res_path:
                 print(f"   -> [Cinematic Fallback Success] Created rich visual clip.")
                 return res_path
