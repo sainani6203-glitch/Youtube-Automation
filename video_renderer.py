@@ -346,6 +346,10 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
             
     audio_parts.append(audio)
     
+    if video_type == "short":
+        # Add 3.5s trailing buffer for Subscribe CTA so voiceover never cuts off
+        audio_parts.append(AudioClip(lambda t: np.zeros_like(t) if isinstance(t, np.ndarray) else 0.0, duration=3.5))
+    
     if video_type != "short":
         if outro_clip and outro_duration > 0:
             audio_parts.append(AudioClip(lambda t: np.zeros_like(t) if isinstance(t, np.ndarray) else 0.0, duration=outro_duration))
@@ -354,14 +358,22 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
     total_duration = final_audio_voice.duration
 
     if video_type == "short":
-        max_short_duration = 48.0
+        max_short_duration = 58.0
         if total_duration > max_short_duration:
             print(f"[Info] Short total duration ({total_duration:.2f}s) exceeds {max_short_duration}s. Trimming to {max_short_duration}s.")
             total_duration = max_short_duration
-        else:
-            total_duration = min(total_duration, max_short_duration)
     else:
         max_short_duration = total_duration
+
+    # Ensure final_visual matches total_duration (extend last frame if needed)
+    if final_visual.duration < total_duration:
+        diff = total_duration - final_visual.duration
+        try:
+            last_frame = trim_clip(final_visual, final_visual.duration - 0.1, final_visual.duration)
+            last_frame = set_dur(last_frame, diff)
+            final_visual = concatenate_videoclips([final_visual, last_frame])
+        except:
+            pass
 
     # Strictly trim final_visual and final_audio_voice to total_duration
     final_visual = set_dur(trim_clip(final_visual, 0, total_duration), total_duration)
