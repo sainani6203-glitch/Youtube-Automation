@@ -281,7 +281,9 @@ def generate_fresh_topic(category_prompt: str, language: str = "English") -> str
         exclusion_list_str = f"CRITICAL: Do NOT repeat any of these recently used topics:\n" + "\n".join([f"- {t}" for t in recent_used])
 
     prompt = f"""
-    Generate one unique, highly catchy, and viral YouTube video topic under this broad category: "{category_prompt}".
+    Generate one unique, highly catchy, and viral YouTube video topic strictly under this category: "{category_prompt}".
+    The topic must be focused strictly on physical geography, earth wonders, nature, places, landmarks, mysteries of nature, maps, or geographical anomalies on Earth. 
+    STRICTLY FORBIDDEN: Do NOT generate topics about space, astronomy, planets, stars, galaxies, psychology, dark psychology, human brain, mind control, or human behavior unless the category explicitly asks for it.
     The topic must be fresh, intriguing, and written entirely in {language}.
     {exclusion_list_str}
     Return ONLY the topic title as a plain string, with no extra formatting, quotes, or markdown.
