@@ -152,7 +152,7 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.7,
-                max_tokens=4096
+                max_tokens=8192
             )
             text_result = completion.choices[0].message.content.strip()
             print("[Success] Generated script via Local Ollama.")
@@ -202,7 +202,7 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.7,
-                max_tokens=4096
+                max_tokens=8192
             )
             text_result = completion.choices[0].message.content.strip()
             print("[Success] Generated script via OpenAI.")
