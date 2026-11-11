@@ -130,6 +130,8 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
 
     text_result = None
 
+    max_tokens_val = 16384 if video_type == "long" else 8192
+
     def parse_json_safely(raw_text):
         cleaned = raw_text.strip()
         if cleaned.startswith("```json"):
@@ -139,7 +141,22 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         cleaned = cleaned.strip()
         import re
         cleaned = re.sub(r'[\x00-\x1f\x7f-\x9f]', '', cleaned)
-        return json.loads(cleaned, strict=False)
+        try:
+            return json.loads(cleaned, strict=False)
+        except Exception as e:
+            print(f"[Warning] JSON parse failed ({e}), attempting truncation repair...")
+            last_brace = cleaned.rfind("}")
+            if last_brace != -1:
+                fixed = cleaned[:last_brace+1]
+                if not fixed.endswith("]"):
+                    if not fixed.strip().endswith("}"):
+                        fixed = fixed[:fixed.rfind("}")] + "}"
+                    fixed += "\n  ]\n}"
+                try:
+                    return json.loads(fixed, strict=False)
+                except Exception:
+                    pass
+            raise e
 
     # Try Local Ollama first (100% free, local, unlimited)
     if ollama_client:
@@ -152,7 +169,7 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.7,
-                max_tokens=8192
+                max_tokens=max_tokens_val
             )
             text_result = completion.choices[0].message.content.strip()
             print("[Success] Generated script via Local Ollama.")
@@ -177,7 +194,7 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.7,
-                max_tokens=8192
+                max_tokens=max_tokens_val
             )
             text_result = completion.choices[0].message.content.strip()
             print("[Success] Generated script via Groq.")
@@ -202,7 +219,7 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.7,
-                max_tokens=8192
+                max_tokens=max_tokens_val
             )
             text_result = completion.choices[0].message.content.strip()
             print("[Success] Generated script via OpenAI.")
@@ -236,7 +253,7 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
                 model = genai.GenerativeModel(m_name, tools=['google_search'])
                 response = model.generate_content(
                     prompt,
-                    generation_config=genai.types.GenerationConfig(max_output_tokens=8192)
+                    generation_config=genai.types.GenerationConfig(max_output_tokens=max_tokens_val)
                 )
                 if response and response.text:
                     print(f"[Success] Used Gemini model with Google Search grounding: {m_name}")
@@ -247,7 +264,7 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
                     model = genai.GenerativeModel(m_name)
                     response = model.generate_content(
                         prompt,
-                        generation_config=genai.types.GenerationConfig(max_output_tokens=8192)
+                        generation_config=genai.types.GenerationConfig(max_output_tokens=max_tokens_val)
                     )
                     if response and response.text:
                         print(f"[Success] Used Gemini model (fallback without search): {m_name}")
