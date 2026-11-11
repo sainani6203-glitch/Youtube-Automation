@@ -90,6 +90,12 @@ def safe_text_clip(text_content, font_size=40, color='white', stroke_color='blac
         img_w = max(max_line_w + 40, 100)
         img_h = max(total_h, 40)
 
+        # Force even dimensions to prevent yuv420p horizontal/vertical line artifacts
+        if img_w % 2 != 0:
+            img_w += 1
+        if img_h % 2 != 0:
+            img_h += 1
+
         txt_img = Image.new("RGBA", (img_w, img_h), (0, 0, 0, 0))
         draw = ImageDraw.Draw(txt_img)
 
@@ -135,12 +141,34 @@ def safe_composite_audio(clips, duration=None):
         return comp
 
 def resize_clip(clip, **kwargs):
-    try: return clip.resize(**kwargs)
-    except: return clip.resized(**kwargs)
+    try: 
+        c = clip.resize(**kwargs)
+    except: 
+        c = clip.resized(**kwargs)
+    if hasattr(c, 'w') and hasattr(c, 'h') and c.w and c.h:
+        w, h = int(c.w), int(c.h)
+        ew, eh = (w // 2) * 2, (h // 2) * 2
+        if w != ew or h != eh:
+            try: c = c.resize(width=ew, height=eh)
+            except:
+                try: c = c.resized(width=ew, height=eh)
+                except: pass
+    return c
 
 def crop_clip(clip, **kwargs):
-    try: return clip.crop(**kwargs)
-    except: return clip.cropped(**kwargs)
+    try: 
+        c = clip.crop(**kwargs)
+    except: 
+        c = clip.cropped(**kwargs)
+    if hasattr(c, 'w') and hasattr(c, 'h') and c.w and c.h:
+        w, h = int(c.w), int(c.h)
+        ew, eh = (w // 2) * 2, (h // 2) * 2
+        if w != ew or h != eh:
+            try: c = c.resize(width=ew, height=eh)
+            except:
+                try: c = c.resized(width=ew, height=eh)
+                except: pass
+    return c
 
 def render_video(audio_path: str, video_clips_paths: list, output_path: str, video_type: str = "short", title_text: str = "", category: str = "", scenes: list = None, language: str = "Telugu"):
     """
