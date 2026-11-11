@@ -265,7 +265,7 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
 
     # 6b. Add visual "SUBSCRIBE" reminder overlay & notification sound effect during the final seconds
     try:
-        sub_reminder_clip = TextClip(text="🔔 SUBSCRIBE FOR MORE", font_size=40, color='yellow', stroke_color='black', stroke_width=2)
+        sub_reminder_clip = safe_text_clip(text_content="🔔 SUBSCRIBE FOR MORE", font_size=40, color='yellow', stroke_color='black', stroke_width=2)
         sub_start = max(0, total_duration - 5.0)
         sub_reminder_clip = set_dur(sub_reminder_clip.set_position(('center', height - 280)).set_start(sub_start), 5.0)
         final_visual = set_dur(CompositeVideoClip([final_visual, sub_reminder_clip], duration=total_duration), total_duration)
@@ -278,7 +278,7 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
         
         chime_clip = set_dur(AudioClip(make_chime, duration=0.5).set_start(sub_start), 0.5)
         chime_clip = ensure_mono_audioclip(chime_clip)
-        final_audio_voice = set_dur(CompositeAudioClip([final_audio_voice, chime_clip], duration=total_duration), total_duration)
+        final_audio_voice = set_dur(safe_composite_audio([final_audio_voice, chime_clip], duration=total_duration), total_duration)
     except Exception as e:
         print(f"[Note] Subscribe reminder clip/audio skipped: {e}")
 
@@ -298,7 +298,7 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
             sfx_clip = ensure_mono_audioclip(raw_sfx)
             sfx_start = intro_duration
             sfx_clip = sfx_clip.set_start(sfx_start)
-            final_audio_voice = set_dur(CompositeAudioClip([final_audio_voice, sfx_clip], duration=total_duration), total_duration)
+            final_audio_voice = set_dur(safe_composite_audio([final_audio_voice, sfx_clip], duration=total_duration), total_duration)
         except Exception as e:
             print(f"[Note] SFX mixing skipped: {e}")
 
@@ -331,7 +331,7 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
             bgm_clip = trim_clip(bgm_clip, 0, total_duration)
             bgm_volume = 0.35 if video_type == "short" else 0.45
             bgm_clip = set_dur(set_vol(bgm_clip, bgm_volume), total_duration)
-            final_audio = set_dur(CompositeAudioClip([final_audio_voice, bgm_clip], duration=total_duration), total_duration)
+            final_audio = set_dur(safe_composite_audio([final_audio_voice, bgm_clip], duration=total_duration), total_duration)
         except Exception as e:
             print(f"[Warning] BGM mixing skipped: {e}")
 
