@@ -197,29 +197,31 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
         
     final_visual = concatenate_videoclips(sequence_visuals)
 
-    # 4.5. Burned-in subtitles disabled as requested
-    if False and scenes and voiceover_duration > 0 and video_type == "short":
+    # 4.5. Burned-in subtitles enabled for professional engagement
+    if scenes and voiceover_duration > 0:
         subtitle_clips = []
-        offset = 0
+        offset = intro_duration if video_type != "short" else 0
         for scene in scenes:
             txt = scene.get("text", "")
             if not txt:
                 continue
             scene_start = scene.get("start_time", 0.0)
-            scene_end = scene.get("end_time", scene_start + 2.0)
+            scene_end = scene.get("end_time", scene_start + 3.0)
             
             start_t = offset + scene_start
             end_t = offset + scene_end
             
             try:
-                sub_clip = TextClip(
-                    text=txt,
-                    font_size=38 if video_type == "short" else 44,
+                sub_clip = safe_text_clip(
+                    text_content=txt[:120] + ("..." if len(txt) > 120 else ""),
+                    font_size=36 if video_type == "short" else 42,
                     color='white',
                     stroke_color='black',
                     stroke_width=2,
                     size=(width - 150, None)
-                ).with_position(('center', height - 400 if video_type == "short" else height - 220)).with_start(start_t).with_duration(max(0.5, end_t - start_t))
+                )
+                sub_clip = set_pos(sub_clip, ('center', height - 350 if video_type == "short" else height - 200))
+                sub_clip = set_dur(sub_clip.with_start(start_t), max(0.8, end_t - start_t))
                 subtitle_clips.append(sub_clip)
             except Exception as sub_err:
                 print(f"[Note] Subtitle clip skipped for scene: {sub_err}")
