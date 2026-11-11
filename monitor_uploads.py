@@ -35,6 +35,34 @@ def monitor_and_cleanup():
         retry_count = entry.get("retry_count", 0)
         upload_params = entry.get("upload_params")
 
+        if not video_id:
+            print(f"🔄 Found offline-rendered video waiting for upload ({language}). Attempting upload...")
+            if upload_params:
+                video_path = upload_params.get("video_path")
+                if video_path and os.path.exists(video_path):
+                    try:
+                        new_video_id = upload_video_to_youtube(
+                            video_path=video_path,
+                            title=upload_params.get("title"),
+                            description=upload_params.get("description"),
+                            privacy_status=upload_params.get("privacy_status", "public"),
+                            language=upload_params.get("language", "Telugu"),
+                            publish_at=upload_params.get("publish_at")
+                        )
+                        if new_video_id:
+                            print(f"[Success] Offline video uploaded successfully! Video ID: {new_video_id}")
+                            entry["video_id"] = new_video_id
+                            entry["timestamp"] = datetime.datetime.now().isoformat()
+                            still_pending.append(entry)
+                        else:
+                            still_pending.append(entry)
+                    except Exception as e:
+                        print(f"[Warning] Offline upload attempt failed (auth/token issue?): {e}")
+                        still_pending.append(entry)
+                else:
+                    print(f"[Warning] Video file missing locally: {video_path}")
+            continue
+
         status = get_video_status(video_id, language=language)
 
         if status == "processed":

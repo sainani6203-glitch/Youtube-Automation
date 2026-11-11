@@ -135,31 +135,37 @@ def run_pipeline(video_type: str = "short", custom_topic: str = None, language: 
                 desc += f"\n\n🔗 Watch the full detailed video here: {linked_long_video_url}"
                 
             is_scheduled = os.environ.get("SCHEDULED_PUBLISH") == "true"
-            if is_scheduled:
-                print("🚀 Fully-automated batch mode: Uploading with 6:00 PM IST scheduled publishing...")
-                now_utc = datetime.datetime.utcnow()
-                publish_dt = now_utc.replace(hour=12, minute=30, second=0, microsecond=0)
-                if now_utc >= publish_dt:
-                    publish_dt += datetime.timedelta(days=1)
-                publish_at_str = publish_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+            video_id = None
+            try:
+                if is_scheduled:
+                    print("🚀 Fully-automated batch mode: Uploading with scheduled publishing...")
+                    now_utc = datetime.datetime.utcnow()
+                    publish_dt = now_utc.replace(hour=12, minute=30, second=0, microsecond=0)
+                    if now_utc >= publish_dt:
+                        publish_dt += datetime.timedelta(days=1)
+                    publish_at_str = publish_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
 
-                video_id = upload_video_to_youtube(
-                    video_path=final_video_path,
-                    title=script_data.get("title"),
-                    description=desc,
-                    privacy_status="private",
-                    language=language,
-                    publish_at=publish_at_str
-                )
-            else:
-                print("🚀 Manual run mode: Uploading directly as public...")
-                video_id = upload_video_to_youtube(
-                    video_path=final_video_path,
-                    title=script_data.get("title"),
-                    description=desc,
-                    privacy_status="public",
-                    language=language
-                )
+                    video_id = upload_video_to_youtube(
+                        video_path=final_video_path,
+                        title=script_data.get("title"),
+                        description=desc,
+                        privacy_status="private",
+                        language=language,
+                        publish_at=publish_at_str
+                    )
+                else:
+                    print("🚀 Manual run mode: Uploading directly as public...")
+                    video_id = upload_video_to_youtube(
+                        video_path=final_video_path,
+                        title=script_data.get("title"),
+                        description=desc,
+                        privacy_status="public",
+                        language=language
+                    )
+            except Exception as upload_err:
+                print(f"[Warning] YouTube upload failed (OAuth token expired or network error?): {upload_err}")
+                print(f"🛡️ OFFLINE RENDER FALLBACK: Video rendered successfully and saved locally for later upload: {final_video_path}")
+                video_id = None
             
             # Add video to category playlist automatically (Long videos only)
             if video_id and video_type == "long":
@@ -192,45 +198,47 @@ def run_pipeline(video_type: str = "short", custom_topic: str = None, language: 
                 thumb_path = generate_thumbnail(script_data.get("title"), category=category_theme, vertical=is_vertical, language=language)
                 upload_thumbnail(video_id, thumb_path, language=language)
 
-            # [REMOVED IMMEDIATE DELETE] Preservation for processing check
+            # Save to pending_uploads.json (handles both successful uploads and offline renders)
+            pending_file = os.path.join(BASE_DIR, "pending_uploads.json")
+            pending_data = []
+            if os.path.exists(pending_file):
+                try:
+                    with open(pending_file, "r") as f:
+                        pending_data = json.load(f)
+                except: pending_data = []
+            
+            is_scheduled_run = os.environ.get("SCHEDULED_PUBLISH") == "true"
+            desc_text = script_data.get("description", "")
+            if linked_long_video_url:
+                desc_text += f"\n\n🔗 Watch the full detailed video here: {linked_long_video_url}"
+
+            pending_data.append({
+                "video_id": video_id,
+                "language": language,
+                "timestamp": datetime.datetime.now().isoformat(),
+                "retry_count": 0,
+                "upload_params": {
+                    "video_path": final_video_path,
+                    "title": script_data.get("title"),
+                    "description": desc_text,
+                    "privacy_status": "private" if is_scheduled_run else "public",
+                    "publish_at": publish_at_str if is_scheduled_run else None,
+                    "language": language
+                },
+                "files": [final_video_path, meta_path, audio_path, srt_path] + ([thumb_path] if thumb_path else []) + (video_clips_paths or [])
+            })
+            
+            with open(pending_file, "w") as f:
+                json.dump(pending_data, f, indent=4)
+
             if video_id:
-                # Save to pending_uploads.json for the monitoring script
-                pending_file = os.path.join(BASE_DIR, "pending_uploads.json")
-                pending_data = []
-                if os.path.exists(pending_file):
-                    try:
-                        with open(pending_file, "r") as f:
-                            pending_data = json.load(f)
-                    except: pending_data = []
-                
-                is_scheduled_run = os.environ.get("SCHEDULED_PUBLISH") == "true"
-                desc_text = script_data.get("description", "")
-                if linked_long_video_url:
-                    desc_text += f"\n\n🔗 Watch the full detailed video here: {linked_long_video_url}"
-
-                pending_data.append({
-                    "video_id": video_id,
-                    "language": language,
-                    "timestamp": datetime.datetime.now().isoformat(),
-                    "retry_count": 0,
-                    "upload_params": {
-                        "video_path": final_video_path,
-                        "title": script_data.get("title"),
-                        "description": desc_text,
-                        "privacy_status": "private" if is_scheduled_run else "public",
-                        "publish_at": publish_at_str if is_scheduled_run else None,
-                        "language": language
-                    },
-                    "files": [final_video_path, meta_path, audio_path, srt_path, thumb_path] + (video_clips_paths or [])
-                })
-                
-                with open(pending_file, "w") as f:
-                    json.dump(pending_data, f, indent=4)
-
                 print(f"✅ Video info saved to pending_uploads.json for monitoring.")
                 print(f"✅ Video preserved in storage: {final_video_path}")
                 print(f"ℹ️  Automatic cleanup will occur after YouTube processing is confirmed (usually 30-60 mins).")
                 return f"https://youtu.be/{video_id}"
+            else:
+                print(f"📦 Offline render queued successfully in pending_uploads.json. Will upload automatically once token is refreshed.")
+                return None
                 
             # Original cleanup code commented out:
             # if video_id:
