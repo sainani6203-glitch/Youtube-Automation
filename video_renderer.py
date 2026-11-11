@@ -103,7 +103,8 @@ def safe_text_clip(text_content, font_size=40, color='white', stroke_color='blac
         for i, line in enumerate(lines):
             bbox = draw.textbbox((0, 0), line, font=font)
             lw = bbox[2] - bbox[0]
-            x_text = (img_w - lw) / 2
+            x_text = int(((img_w - lw) / 2) // 2 * 2)
+            y_text = int(y_text // 2 * 2)
             
             if stroke_width > 0 and stroke_color:
                 for adj_x in range(-stroke_width, stroke_width + 1):
@@ -460,6 +461,7 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
         ffmpeg_params=[
             '-movflags', '+faststart',
             '-fps_mode', 'cfr',
+            '-vf', 'scale=trunc(iw/2)*2:trunc(ih/2)*2',
             '-pix_fmt', 'yuv420p',
             '-ar', '44100',
             '-g', '48',
