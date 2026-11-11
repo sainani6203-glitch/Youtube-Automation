@@ -137,9 +137,12 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
                 else:
                     c = trim_clip(c, 0, clip_duration)
                 
+                # Strictly resize to fill target dimensions (fill the smaller dimension first)
                 c = resize_clip(c, height=height)
                 if c.w < width:
                     c = resize_clip(c, width=width)
+                
+                # Perform a centered crop to match exact target dimensions
                 c = crop_clip(c, x_center=c.w/2, y_center=c.h/2, width=width, height=height)
                 sub_clips.append(c)
             except Exception as e:
