@@ -42,6 +42,21 @@ def set_aud(clip, aud):
     try: return clip.set_audio(aud)
     except: return clip.with_audio(aud)
 
+def safe_text_clip(text_content, font_size=40, **kwargs):
+    try:
+        return TextClip(text=text_content, font_size=font_size, **kwargs)
+    except TypeError:
+        return TextClip(txt=text_content, fontsize=font_size, **kwargs)
+
+def safe_composite_audio(clips, duration=None):
+    try:
+        return CompositeAudioClip(clips, duration=duration)
+    except TypeError:
+        comp = CompositeAudioClip(clips)
+        if duration is not None:
+            comp = set_dur(comp, duration)
+        return comp
+
 def resize_clip(clip, **kwargs):
     try: return clip.resize(**kwargs)
     except: return clip.resized(**kwargs)
@@ -79,6 +94,7 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
         try:
             intro_clip = VideoFileClip(intro_path)
             intro_duration = intro_clip.duration
+            # Robust Resize & Crop to fill 100% of the target resolution
             intro_clip = resize_clip(intro_clip, height=height)
             if intro_clip.w < width:
                 intro_clip = resize_clip(intro_clip, width=width)
@@ -96,6 +112,7 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
         try:
             outro_clip = VideoFileClip(outro_path)
             outro_duration = outro_clip.duration
+            # Robust Resize & Crop to fill 100% of the target resolution
             outro_clip = resize_clip(outro_clip, height=height)
             if outro_clip.w < width:
                 outro_clip = resize_clip(outro_clip, width=width)
