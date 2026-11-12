@@ -161,10 +161,10 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
     # Try Groq models first with rotation and retry/backoff
     if not text_result and groq_client:
         groq_models = [
+            "llama-3.3-70b-versatile",
             "llama-3.1-8b-instant",
-            "llama-3.1-70b-versatile",
-            "mixtral-8x7b-32768",
-            "gemma2-9b-it"
+            "llama-3.2-90b-vision-preview",
+            "llama3-70b-8192"
         ]
         import time
         for g_model in groq_models:
@@ -342,7 +342,7 @@ def generate_fresh_topic(category_prompt: str, language: str = "English") -> str
             pass
 
     if not topic_text and groq_client:
-        groq_models = ["llama-3.1-8b-instant", "llama-3.1-70b-versatile", "mixtral-8x7b-32768"]
+        groq_models = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "llama-3.2-90b-vision-preview"]
         import time
         for g_model in groq_models:
             success = False
