@@ -2,6 +2,10 @@ google-generativeai>=0.3.0
 edge-tts>=6.1.9
 gTTS>=2.3.0
 moviepy==1.0.3
+proglog<=1.0.0
+decorator<5.0
+imageio<3.0
+imageio_ffmpeg>=0.2.0
 requests>=2.31.0
 google-api-python-client>=2.110.0
 google-auth-oauthlib>=1.2.0
