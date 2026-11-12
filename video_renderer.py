@@ -121,8 +121,8 @@ def safe_text_clip(text_content, font_size=40, color='white', stroke_color='blac
             line_heights.append(lh)
 
         total_h = sum(line_heights) + line_spacing * (len(lines) - 1) + 40
-        img_w = max(max_line_w + 40, 100)
-        img_h = max(total_h, 40)
+        img_w = max(max_line_w + 60, 100)
+        img_h = max(total_h + 20, 50)
 
         # Force even dimensions to prevent yuv420p horizontal/vertical line artifacts
         if img_w % 2 != 0:
@@ -132,6 +132,15 @@ def safe_text_clip(text_content, font_size=40, color='white', stroke_color='blac
 
         txt_img = Image.new("RGBA", (img_w, img_h), (0, 0, 0, 0))
         draw = ImageDraw.Draw(txt_img)
+
+        # Draw a sleek semi-transparent dark background pill for ultra-clean readability
+        draw.rounded_rectangle(
+            [10, 5, img_w - 10, img_h - 5],
+            radius=18,
+            fill=(0, 0, 0, 190),
+            outline=(255, 255, 255, 60),
+            width=2
+        )
 
         y_text = 20
         for i, line in enumerate(lines):
