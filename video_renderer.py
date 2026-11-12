@@ -86,7 +86,7 @@ def safe_text_clip(text_content, font_size=40, color='white', stroke_color='blac
             max_line_w = max(max_line_w, lw)
             line_heights.append(lh)
 
-        total_h = sum(line_heights) + line_spacing * (len(lines) - 1) + 20
+        total_h = sum(line_heights) + line_spacing * (len(lines) - 1) + 40
         img_w = max(max_line_w + 40, 100)
         img_h = max(total_h, 40)
 
@@ -99,7 +99,7 @@ def safe_text_clip(text_content, font_size=40, color='white', stroke_color='blac
         txt_img = Image.new("RGBA", (img_w, img_h), (0, 0, 0, 0))
         draw = ImageDraw.Draw(txt_img)
 
-        y_text = 10
+        y_text = 20
         for i, line in enumerate(lines):
             bbox = draw.textbbox((0, 0), line, font=font)
             lw = bbox[2] - bbox[0]
@@ -307,7 +307,7 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
     if scenes and voiceover_duration > 0:
         subtitle_clips = []
         offset = intro_duration if video_type != "short" else 0
-        for scene in scenes:
+        for idx, scene in enumerate(scenes):
             txt = scene.get("text", "")
             if not txt:
                 continue
@@ -315,6 +315,8 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
             scene_end = scene.get("end_time", scene_start + 3.0)
             
             start_t = offset + scene_start
+            if idx == 0:
+                start_t = max(0.3, start_t)
             end_t = offset + scene_end
             
             try:
@@ -473,7 +475,7 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
         ffmpeg_params=[
             '-movflags', '+faststart',
             '-fps_mode', 'cfr',
-            '-vf', 'scale=trunc(iw/2)*2:trunc(ih/2)*2',
+            '-vf', 'yadif,scale=trunc(iw/2)*2:trunc(ih/2)*2',
             '-pix_fmt', 'yuv420p',
             '-ar', '44100',
             '-g', '48',
