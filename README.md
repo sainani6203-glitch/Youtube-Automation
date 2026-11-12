@@ -9,7 +9,7 @@ This project is a fully engineered, automated YouTube video generation system fo
 - `script_generator.py`: Generates viral scripts & metadata using the Gemini API (with robust model fallback).
 - `tts_engine.py`: Synthesizes studio-quality voiceovers using `edge-tts`.
 - `media_fetcher.py`: Fetches high-definition stock video clips from the Pexels API.
-- `video_renderer.py`: Assembles audio, clips, and captions into final MP4 videos using `MoviePy` (MoviePy v2.x compatible).
+- `video_renderer.py`: Assembles audio, clips, and captions into final MP4 videos using `MoviePy` (v1.x).
 - `thumbnail_generator.py`: Generates high-CTR cinematic thumbnails with dynamic layout variation and category color grading. (Auto-push tested)
 - `youtube_uploader.py`: Connects to YouTube Data API v3 for automated video uploading.
 - `main.py`: Orchestrates individual video generation.

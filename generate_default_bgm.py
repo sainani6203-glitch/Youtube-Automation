@@ -1,9 +1,6 @@
 import os
 import numpy as np
-try:
-    from moviepy.editor import AudioClip
-except ImportError:
-    from moviepy import AudioClip
+from moviepy.editor import AudioClip
 from config import ASSETS_DIR
 
 def create_default_bgm():

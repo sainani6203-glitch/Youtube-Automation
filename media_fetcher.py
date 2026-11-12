@@ -112,24 +112,15 @@ def image_to_video_clip(img_bytes: bytes, output_path: str, orientation: str = "
         except Exception as pil_err:
             print(f"[Note] PIL resize/crop fallback skipped: {pil_err}")
 
-        try:
-            from moviepy.editor import ImageClip
-        except ImportError:
-            from moviepy import ImageClip
+        from moviepy.editor import ImageClip
         clip_duration = 4.0
-        try:
-            img_clip = ImageClip(temp_img_path).with_duration(clip_duration)
-        except AttributeError:
-            img_clip = ImageClip(temp_img_path).set_duration(clip_duration)
+        img_clip = ImageClip(temp_img_path).set_duration(clip_duration)
             
         # Apply smooth cinematic zoom-in (Ken Burns effect)
         try:
-            img_clip = img_clip.resized(lambda t: 1.0 + 0.05 * t)
+            img_clip = img_clip.resize(lambda t: 1.0 + 0.05 * t)
         except Exception:
-            try:
-                img_clip = img_clip.resize(lambda t: 1.0 + 0.05 * t)
-            except Exception:
-                pass
+            pass
                 
         img_clip.write_videofile(output_path, fps=24, codec="libx264", audio=False, logger=None)
         img_clip.close()

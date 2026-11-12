@@ -4,10 +4,7 @@ from PIL import Image
 if not hasattr(Image, 'ANTIALIAS'):
     Image.ANTIALIAS = Image.Resampling.LANCZOS
 
-try:
-    from moviepy.editor import VideoFileClip, AudioFileClip, TextClip, CompositeVideoClip, ColorClip, ImageClip, concatenate_videoclips, AudioClip, concatenate_audioclips, CompositeAudioClip
-except ImportError:
-    from moviepy import VideoFileClip, AudioFileClip, TextClip, CompositeVideoClip, ColorClip, ImageClip, concatenate_videoclips, AudioClip, concatenate_audioclips, CompositeAudioClip
+from moviepy.editor import VideoFileClip, AudioFileClip, TextClip, CompositeVideoClip, ColorClip, ImageClip, concatenate_videoclips, AudioClip, concatenate_audioclips, CompositeAudioClip
 from config import ASSETS_DIR
 from thumbnail_generator import generate_thumbnail
 
@@ -16,15 +13,43 @@ def ensure_mono_audioclip(clip):
         duration = clip.duration
         fps = 44100
         arr = clip.to_soundarray(fps=fps)
-        if arr.ndim > 1:
-            arr = np.mean(arr, axis=1)
-        return AudioClip(lambda t: np.interp(t, np.linspace(0, duration, len(arr)), arr), duration=duration, fps=fps)
+        if arr.ndim == 1:
+            stereo_arr = np.column_stack([arr, arr])
+        elif arr.ndim > 1 and arr.shape[1] == 1:
+            stereo_arr = np.column_stack([arr[:, 0], arr[:, 0]])
+        elif arr.ndim > 1 and arr.shape[1] >= 2:
+            stereo_arr = arr[:, :2]
+        else:
+            stereo_arr = np.column_stack([arr.flatten(), arr.flatten()])
+
+        def make_frame(t):
+            if isinstance(t, np.ndarray):
+                t_flat = t[:, 0] if t.ndim > 1 else t
+                indices = np.clip((t_flat * fps).astype(int), 0, len(stereo_arr) - 1)
+                return stereo_arr[indices]
+            else:
+                idx = int(np.clip(t * fps, 0, len(stereo_arr) - 1))
+                return stereo_arr[idx]
+
+        return AudioClip(make_frame, duration=duration, fps=fps)
     except Exception:
         return clip
+
+def make_silent_clip(duration):
+    def make_frame(t):
+        if isinstance(t, np.ndarray):
+            t_flat = t[:, 0] if t.ndim > 1 else t
+            return np.zeros((len(t_flat), 2))
+        return np.array([0.0, 0.0])
+    return AudioClip(make_frame, duration=duration, fps=44100)
 
 def set_dur(clip, d):
     try: return clip.set_duration(d)
     except: return clip.with_duration(d)
+
+def set_start(clip, t):
+    try: return clip.set_start(t)
+    except: return clip.with_start(t)
 
 def trim_clip(clip, start, end):
     try: return clip.subclip(start, end)
@@ -41,6 +66,15 @@ def set_vol(clip, vol):
 def set_aud(clip, aud):
     try: return clip.set_audio(aud)
     except: return clip.with_audio(aud)
+
+def safe_composite_video(clips, duration=None):
+    try:
+        return CompositeVideoClip(clips, duration=duration)
+    except TypeError:
+        comp = CompositeVideoClip(clips)
+        if duration is not None:
+            comp = set_dur(comp, duration)
+        return comp
 
 def safe_text_clip(text_content, font_size=40, color='white', stroke_color='black', stroke_width=2, size=None, **kwargs):
     """Generates a text clip using PIL (Pillow) to completely bypass ImageMagick security policy restrictions on Linux."""
@@ -119,10 +153,7 @@ def safe_text_clip(text_content, font_size=40, color='white', stroke_color='blac
         os.close(temp_fd)
         txt_img.save(temp_path, "PNG")
 
-        try:
-            from moviepy.editor import ImageClip
-        except ImportError:
-            from moviepy import ImageClip
+        from moviepy.editor import ImageClip
         
         return ImageClip(temp_path)
     except Exception as e:
@@ -272,15 +303,9 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
                 temp_img = os.path.join(ASSETS_DIR, f"fallback_{random.randint(1000,9999)}.jpg")
                 with open(temp_img, "wb") as f:
                     f.write(r.content)
-                try:
-                    from moviepy.editor import ImageClip
-                except ImportError:
-                    from moviepy import ImageClip
+                from moviepy.editor import ImageClip
                 img_c = ImageClip(temp_img)
-                try:
-                    img_c = img_c.resized(height=height)
-                except:
-                    img_c = img_c.resize(height=height)
+                img_c = img_c.resize(height=height)
                 main_visual = set_dur(img_c, voiceover_duration)
                 if os.path.exists(temp_img):
                     os.remove(temp_img)
@@ -329,14 +354,14 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
                     size=(width - 150, None)
                 )
                 sub_clip = set_pos(sub_clip, ('center', height - 350 if video_type == "short" else height - 200))
-                sub_clip = set_dur(sub_clip.with_start(start_t), max(0.8, end_t - start_t))
+                sub_clip = set_dur(set_start(sub_clip, start_t), max(0.8, end_t - start_t))
                 subtitle_clips.append(sub_clip)
             except Exception as sub_err:
                 print(f"[Note] Subtitle clip skipped for scene: {sub_err}")
         
         if subtitle_clips:
             try:
-                final_visual = CompositeVideoClip([final_visual] + subtitle_clips, duration=final_visual.duration)
+                final_visual = safe_composite_video([final_visual] + subtitle_clips, duration=final_visual.duration)
             except Exception as comp_err:
                 print(f"[Note] Subtitle composition skipped: {comp_err}")
 
@@ -387,26 +412,27 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
     try:
         sub_reminder_clip = safe_text_clip(text_content="🔔 SUBSCRIBE FOR MORE", font_size=40, color='yellow', stroke_color='black', stroke_width=2)
         sub_start = max(0, total_duration - 5.0)
-        sub_reminder_clip = set_dur(sub_reminder_clip.set_position(('center', height - 280)).set_start(sub_start), 5.0)
-        final_visual = set_dur(CompositeVideoClip([final_visual, sub_reminder_clip], duration=total_duration), total_duration)
+        sub_reminder_clip = set_dur(set_start(sub_reminder_clip.set_position(('center', height - 280)), sub_start), 5.0)
+        final_visual = set_dur(safe_composite_video([final_visual, sub_reminder_clip], duration=total_duration), total_duration)
 
         def make_chime(t):
             if isinstance(t, np.ndarray):
-                if t.ndim > 1:
-                    t_mono = np.mean(t, axis=1)
-                else:
-                    t_mono = t
+                t_flat = t[:, 0] if t.ndim > 1 else t
             else:
-                t_mono = t
+                t_flat = np.array([t]) if not hasattr(t, '__len__') else t
+            
             f1, f2 = 587.33, 880.00
-            val1 = 0.25 * np.sin(2 * np.pi * f1 * t_mono) * np.exp(-3 * t_mono)
-            val2 = np.where(t_mono >= 0.15, 0.35 * np.sin(2 * np.pi * f2 * (t_mono - 0.15)) * np.exp(-3 * (t_mono - 0.15)), 0.0)
+            t_flat = np.clip(t_flat, 0, 0.5)
+            val1 = 0.25 * np.sin(2 * np.pi * f1 * t_flat) * np.exp(-3 * t_flat)
+            val2 = np.where(t_flat >= 0.15, 0.35 * np.sin(2 * np.pi * f2 * (t_flat - 0.15)) * np.exp(-3 * (t_flat - 0.15)), 0.0)
             res = val1 + val2
-            if isinstance(t, np.ndarray) and t.ndim > 1:
-                res = np.column_stack([res, res])
-            return res
+            
+            if isinstance(t, np.ndarray):
+                return np.column_stack([res, res])
+            else:
+                return np.array([res, res])
         
-        chime_clip = set_dur(AudioClip(make_chime, duration=0.5).set_start(sub_start), 0.5)
+        chime_clip = set_dur(set_start(AudioClip(make_chime, duration=0.5), sub_start), 0.5)
         chime_clip = ensure_mono_audioclip(chime_clip)
         final_audio_voice = set_dur(safe_composite_audio([final_audio_voice, chime_clip], duration=total_duration), total_duration)
     except Exception as e:
