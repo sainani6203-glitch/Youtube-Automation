@@ -42,11 +42,11 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
     """
     script_lang_name = language.capitalize()
     if script_lang_name.lower() == "hindi":
-        script_script_name = "Devanagari script (हिंदी लिपि) mixed with English words"
-        example_title = "Egypt Pyramids में छुपा हुआ hidden mystery रहस्य"
+        script_script_name = "pure Devanagari script (हिंदी लिपि) ONLY, with NO mixed English words"
+        example_title = "इजिप्त के पिरामिडों का रहस्य"
     elif script_lang_name.lower() == "telugu":
-        script_script_name = "Telugu script (తెలుగు లిపి) mixed with English words"
-        example_title = "Egypt Pyramids లో ఉన్న hidden secret రహస్యం"
+        script_script_name = "pure Telugu script (తెలుగు లిపి) ONLY, with NO mixed English words"
+        example_title = "ఈజిప్ట్ పిరమిడ్ల రహస్యం"
     else:
         script_script_name = "English script"
         example_title = "Amazing Cosmic Mystery Revealed"
@@ -67,7 +67,7 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         else:
             angle_instruction = "Focus on ONE fascinating scientific paradox or mind-bending perspective."
 
-        language_instruction = f"The script narration text MUST be written in natural conversational mixed-language style ({script_script_name}), combining regional script and English words smoothly just like modern viral YouTube shorts." if script_lang_name.lower() in ["telugu", "hindi"] else f"The script narration text MUST be written entirely in {language}."
+        language_instruction = f"The script narration text MUST be written entirely in pure {script_lang_name} using authentic {script_script_name}. ABSOLUTELY NO mixed English words or romanized English words in the narration text or subtitles." if script_lang_name.lower() in ["telugu", "hindi"] else f"The script narration text MUST be written entirely in {language}."
 
         prompt = f"""
         Create a viral, high-retention YouTube Short script about the topic: "{topic}".
@@ -114,7 +114,7 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         prompt = f"""
         Create a rich, high-retention, and deeply engaging {duration_desc} focusing on ONE SINGLE specific topic/mystery: "{topic}".
         CRITICAL MANDATE FOR TITLE: DO NOT copy any example title. The title MUST be strictly DUAL-LANGUAGE in this exact format: "[Regional {language} Title] | [English Title]". First write the title in authentic {language} script, followed by a pipe (|), and then the English title. Maximum 90 characters total.
-        The description and script narration text MUST be written entirely in {language}.
+        The description and script narration text MUST be written entirely in pure {script_lang_name} using authentic {script_script_name}. ABSOLUTELY NO mixed English words or romanized English words.
         
         {structure_desc}
         
