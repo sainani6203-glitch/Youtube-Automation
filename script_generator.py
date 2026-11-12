@@ -105,7 +105,7 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         1. PART 1: HOOK & ENIGMA SETUP (Scenes 1-5) - Arresting hook, geographical location coordinates, and deep historical mystery introduction.
         2. PART 2: ANCIENT CONTEXT & BACKSTORY (Scenes 6-10) - Detailed exploration of historical records, local legends, and previous expeditions.
         3. PART 3: LIVE PROOFS, SATELLITE MAPS & EVIDENCE (Scenes 11-15) - Deep dive into concrete archaeological findings, satellite map analysis, scientific measurements, and expert proofs.
-        4. PART 4: UNRESOLVED ANOMALIES & CLIMAX CTA (Scenes 16-20) - Deep philosophical analysis, final unsolved questions, and powerful Call-to-Action.
+        4. PART 4: UNRESOLVED ANOMALIES & CLIMAX CTA (Scenes 16-20) - Deep philosophical analysis, final unsolved questions, and a powerful professional documentary-style curiosity loop Call-to-Action in Scene 20 instructing viewers to subscribe and turn on notification bell for more such mysteries.
         5. PACING: Exactly 20 scenes. Each scene in the "scenes" array MUST contain narration text of about 35-40 words to ensure fast-paced documentary visual variety.
         6. VISUAL KEYWORDS (STRICT PROOFS & MAPS): For each scene, explicitly include terms like "satellite map view with coordinates", "archaeological excavation artifact closeup", "real historical archive photography", "ancient manuscript map", or "historical expedition photo".
         """
