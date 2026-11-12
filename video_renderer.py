@@ -23,13 +23,9 @@ def ensure_mono_audioclip(clip):
             stereo_arr = np.column_stack([arr.flatten(), arr.flatten()])
 
         def make_frame(t):
-            if isinstance(t, np.ndarray):
-                t_flat = t[:, 0] if t.ndim > 1 else t
-                indices = np.clip((t_flat * fps).astype(int), 0, len(stereo_arr) - 1)
-                return stereo_arr[indices]
-            else:
-                idx = int(np.clip(t * fps, 0, len(stereo_arr) - 1))
-                return stereo_arr[idx]
+            t_arr = np.asarray(t).flatten()
+            indices = np.clip((t_arr * fps).astype(int), 0, len(stereo_arr) - 1)
+            return stereo_arr[indices]
 
         return AudioClip(make_frame, duration=duration, fps=fps)
     except Exception:
@@ -37,19 +33,23 @@ def ensure_mono_audioclip(clip):
 
 def make_silent_clip(duration):
     def make_frame(t):
-        if isinstance(t, np.ndarray):
-            t_flat = t[:, 0] if t.ndim > 1 else t
-            return np.zeros((len(t_flat), 2))
-        return np.array([0.0, 0.0])
+        t_arr = np.asarray(t).flatten()
+        return np.zeros((len(t_arr), 2))
     return AudioClip(make_frame, duration=duration, fps=44100)
 
 def set_dur(clip, d):
-    try: return clip.set_duration(d)
-    except: return clip.with_duration(d)
+    for method in ['set_duration', 'with_duration']:
+        if hasattr(clip, method):
+            try: return getattr(clip, method)(d)
+            except: pass
+    return clip
 
 def set_start(clip, t):
-    try: return clip.set_start(t)
-    except: return clip.with_start(t)
+    for method in ['set_start', 'with_start']:
+        if hasattr(clip, method):
+            try: return getattr(clip, method)(t)
+            except: pass
+    return clip
 
 def trim_clip(clip, start, end):
     try: return clip.subclip(start, end)
@@ -354,7 +354,8 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
                     size=(width - 150, None)
                 )
                 sub_clip = set_pos(sub_clip, ('center', height - 350 if video_type == "short" else height - 200))
-                sub_clip = set_dur(set_start(sub_clip, start_t), max(0.8, end_t - start_t))
+                sub_clip = set_dur(sub_clip, max(0.8, end_t - start_t))
+                sub_clip = set_start(sub_clip, start_t)
                 subtitle_clips.append(sub_clip)
             except Exception as sub_err:
                 print(f"[Note] Subtitle clip skipped for scene: {sub_err}")
@@ -369,17 +370,17 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
     audio_parts = []
     if video_type != "short":
         if intro_clip and intro_duration > 0:
-            audio_parts.append(AudioClip(lambda t: np.zeros_like(t) if isinstance(t, np.ndarray) else 0.0, duration=intro_duration))
+            audio_parts.append(make_silent_clip(intro_duration))
             
     audio_parts.append(audio)
     
     if video_type == "short":
         # Add 3.5s trailing buffer for Subscribe CTA so voiceover never cuts off
-        audio_parts.append(AudioClip(lambda t: np.zeros_like(t) if isinstance(t, np.ndarray) else 0.0, duration=3.5))
+        audio_parts.append(make_silent_clip(3.5))
     
     if video_type != "short":
         if outro_clip and outro_duration > 0:
-            audio_parts.append(AudioClip(lambda t: np.zeros_like(t) if isinstance(t, np.ndarray) else 0.0, duration=outro_duration))
+            audio_parts.append(make_silent_clip(outro_duration))
         
     final_audio_voice = concatenate_audioclips(audio_parts)
     total_duration = final_audio_voice.duration
@@ -412,25 +413,21 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
     try:
         sub_reminder_clip = safe_text_clip(text_content="🔔 SUBSCRIBE FOR MORE", font_size=40, color='yellow', stroke_color='black', stroke_width=2)
         sub_start = max(0, total_duration - 5.0)
-        sub_reminder_clip = set_dur(set_start(sub_reminder_clip.set_position(('center', height - 280)), sub_start), 5.0)
+        sub_reminder_clip = set_dur(sub_reminder_clip, 5.0)
+        sub_reminder_clip = set_start(sub_reminder_clip.set_position(('center', height - 280)), sub_start)
         final_visual = set_dur(safe_composite_video([final_visual, sub_reminder_clip], duration=total_duration), total_duration)
 
         def make_chime(t):
-            if isinstance(t, np.ndarray):
-                t_flat = t[:, 0] if t.ndim > 1 else t
-            else:
-                t_flat = np.array([t]) if not hasattr(t, '__len__') else t
-            
             f1, f2 = 587.33, 880.00
-            t_flat = np.clip(t_flat, 0, 0.5)
-            val1 = 0.25 * np.sin(2 * np.pi * f1 * t_flat) * np.exp(-3 * t_flat)
-            val2 = np.where(t_flat >= 0.15, 0.35 * np.sin(2 * np.pi * f2 * (t_flat - 0.15)) * np.exp(-3 * (t_flat - 0.15)), 0.0)
+            t_arr = np.asarray(t).flatten()
+            t_clip = np.clip(t_arr, 0, 0.5)
+            val1 = 0.25 * np.sin(2 * np.pi * f1 * t_clip) * np.exp(-3 * t_clip)
+            val2 = np.where(t_clip >= 0.15, 0.35 * np.sin(2 * np.pi * f2 * (t_clip - 0.15)) * np.exp(-3 * (t_clip - 0.15)), 0.0)
             res = val1 + val2
-            
-            if isinstance(t, np.ndarray):
-                return np.column_stack([res, res])
-            else:
-                return np.array([res, res])
+            stereo_res = np.column_stack([res, res])
+            if np.isscalar(t):
+                return stereo_res[0]
+            return stereo_res
         
         chime_clip = set_dur(set_start(AudioClip(make_chime, duration=0.5), sub_start), 0.5)
         chime_clip = ensure_mono_audioclip(chime_clip)
