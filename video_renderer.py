@@ -458,6 +458,8 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
     
     target_bitrate = "8000k" if video_type != "short" else "4000k"
     
+    scale_filter = f"yadif,scale={width}:{height}:force_original_aspect_ratio=decrease,pad={width}:{height}:(ow-iw)/2:(oh-ih)/2,format=yuv420p"
+
     final_composite.write_videofile(
         output_path,
         fps=24,
@@ -470,8 +472,7 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
         ffmpeg_params=[
             '-movflags', '+faststart',
             '-fps_mode', 'cfr',
-            '-vf', 'yadif,scale=trunc(iw/2)*2:trunc(ih/2)*2',
-            '-pix_fmt', 'yuv420p',
+            '-vf', scale_filter,
             '-ar', '44100',
             '-g', '48',
             '-keyint_min', '24',
