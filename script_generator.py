@@ -99,17 +99,17 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         }}
         """
     else:
-        duration_desc = "exact 5 to 6 minute master-class documentary-style long-form YouTube video script (~700-800 words across exactly 18 scenes for fast-paced professional documentary pacing)"
+        duration_desc = "exact 5 to 6 minute master-class documentary-style long-form YouTube video script (~800 words across exactly 20 scenes for fast-paced professional documentary pacing)"
         structure_desc = """
-        Requirements & Investigative Structure (Total Exact 5 to 6 Minutes / ~700-800 Words across exactly 18 scenes):
-        1. PART 1: HOOK & ENIGMA SETUP (Scenes 1-4) - Arresting hook, geographical location coordinates, and deep historical mystery introduction.
-        2. PART 2: ANCIENT CONTEXT & BACKSTORY (Scenes 5-9) - Detailed exploration of historical records, local legends, and previous expeditions.
-        3. PART 3: LIVE PROOFS, SATELLITE MAPS & EVIDENCE (Scenes 10-14) - Deep dive into concrete archaeological findings, satellite map analysis, scientific measurements, and expert proofs.
-        4. PART 4: UNRESOLVED ANOMALIES & CLIMAX CTA (Scenes 15-18) - Deep philosophical analysis, final unsolved questions, and powerful Call-to-Action.
-        5. PACING: Exactly 18 scenes. Each scene in the "scenes" array MUST contain narration text of about 35-45 words to ensure fast-paced documentary visual variety.
+        Requirements & Investigative Structure (Total Exact 5 to 6 Minutes / ~800 Words across exactly 20 scenes):
+        1. PART 1: HOOK & ENIGMA SETUP (Scenes 1-5) - Arresting hook, geographical location coordinates, and deep historical mystery introduction.
+        2. PART 2: ANCIENT CONTEXT & BACKSTORY (Scenes 6-10) - Detailed exploration of historical records, local legends, and previous expeditions.
+        3. PART 3: LIVE PROOFS, SATELLITE MAPS & EVIDENCE (Scenes 11-15) - Deep dive into concrete archaeological findings, satellite map analysis, scientific measurements, and expert proofs.
+        4. PART 4: UNRESOLVED ANOMALIES & CLIMAX CTA (Scenes 16-20) - Deep philosophical analysis, final unsolved questions, and powerful Call-to-Action.
+        5. PACING: Exactly 20 scenes. Each scene in the "scenes" array MUST contain narration text of about 35-40 words to ensure fast-paced documentary visual variety.
         6. VISUAL KEYWORDS (STRICT PROOFS & MAPS): For each scene, explicitly include terms like "satellite map view with coordinates", "archaeological excavation artifact closeup", "real historical archive photography", "ancient manuscript map", or "historical expedition photo".
         """
-        json_scenes_example = ",\n".join([f'                {{"text": "Paragraph {i} with 35-45 words...", "visual_keyword": "keyword{i}"}}' for i in range(1, 19)])
+        json_scenes_example = ",\n".join([f'                {{"text": "Paragraph {i} with 35-40 words...", "visual_keyword": "keyword{i}"}}' for i in range(1, 21)])
 
         prompt = f"""
         Create a rich, high-retention, and deeply engaging {duration_desc} focusing on ONE SINGLE specific topic/mystery: "{topic}".
