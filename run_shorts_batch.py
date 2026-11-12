@@ -57,7 +57,7 @@ def run_shorts_only_batch():
             except Exception as e:
                 print(f"[Error] Short {i}/3 failed for {language}: {e}")
                 continue
-            time.sleep(10)
+            time.sleep(30)
 
     print("==================================================")
     print("✅ Shorts-Only Multi-Language Daily Batch Completed!")
