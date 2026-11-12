@@ -158,8 +158,46 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
                     pass
             raise e
 
-    # Try Local Ollama first (100% free, local, unlimited)
-    if ollama_client:
+    # Try Groq models first with rotation and retry/backoff
+    if not text_result and groq_client:
+        groq_models = [
+            "llama-3.1-8b-instant",
+            "llama-3.1-70b-versatile",
+            "mixtral-8x7b-32768",
+            "gemma2-9b-it"
+        ]
+        import time
+        for g_model in groq_models:
+            success_groq = False
+            for attempt in range(2):
+                try:
+                    print(f"[Info] Generating script using Groq ({g_model}) [attempt {attempt+1}]...")
+                    completion = groq_client.chat.completions.create(
+                        model=g_model,
+                        messages=[
+                            {"role": "system", "content": "You are a professional YouTube scriptwriter and JSON generator. Return ONLY valid JSON."},
+                            {"role": "user", "content": prompt}
+                        ],
+                        temperature=0.7,
+                        max_tokens=max_tokens_val
+                    )
+                    text_result = completion.choices[0].message.content.strip()
+                    print(f"[Success] Generated script via Groq ({g_model}).")
+                    success_groq = True
+                    break
+                except Exception as e:
+                    print(f"[Note] Groq model '{g_model}' attempt {attempt+1} failed ({e})")
+                    time.sleep(3)
+            if success_groq:
+                try:
+                    return parse_json_safely(text_result)
+                except Exception as jde:
+                    print(f"[Warning] Groq JSON output was truncated/invalid ({jde}), trying next model...")
+                    text_result = None
+                    continue
+
+    # Try Local Ollama second
+    if not text_result and ollama_client:
         try:
             print("[Info] Generating script using Local Ollama (llama3)...")
             completion = ollama_client.chat.completions.create(
@@ -177,35 +215,10 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
             try:
                 return parse_json_safely(text_result)
             except Exception as jde:
-                print(f"[Warning] Local Ollama JSON output was truncated/invalid ({jde}), falling back to Groq...")
+                print(f"[Warning] Local Ollama JSON output was truncated/invalid ({jde}), falling back to OpenAI...")
                 text_result = None
         except Exception as e:
-            print(f"[Note] Local Ollama generation failed ({e}), falling back to Groq...")
-            text_result = None
-
-    # Try Groq second if available
-    if not text_result and groq_client:
-        try:
-            print("[Info] Generating script using Groq (llama-3.1-8b-instant)...")
-            completion = groq_client.chat.completions.create(
-                model="llama-3.1-8b-instant",
-                messages=[
-                    {"role": "system", "content": "You are a professional YouTube scriptwriter and JSON generator. Return ONLY valid JSON."},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.7,
-                max_tokens=max_tokens_val
-            )
-            text_result = completion.choices[0].message.content.strip()
-            print("[Success] Generated script via Groq.")
-
-            try:
-                return parse_json_safely(text_result)
-            except Exception as jde:
-                print(f"[Warning] Groq JSON output was truncated/invalid ({jde}), falling back to OpenAI...")
-                text_result = None
-        except Exception as e:
-            print(f"[Note] Groq generation failed ({e}), falling back to OpenAI...")
+            print(f"[Note] Local Ollama generation failed ({e}), falling back to OpenAI...")
             text_result = None
 
     # Fallback to OpenAI GPT-4o-mini if Groq/Ollama failed
@@ -247,30 +260,38 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
             "gemini-pro-latest"
         ]
         response = None
+        import time
         
         for m_name in model_names:
-            try:
-                model = genai.GenerativeModel(m_name, tools=['google_search'])
-                response = model.generate_content(
-                    prompt,
-                    generation_config=genai.types.GenerationConfig(max_output_tokens=max_tokens_val)
-                )
-                if response and response.text:
-                    print(f"[Success] Used Gemini model with Google Search grounding: {m_name}")
-                    break
-            except Exception as e:
-                print(f"[Note] Model '{m_name}' with search tools skipped ({e}), trying without tools...")
+            success_gemini = False
+            for attempt in range(2):
                 try:
-                    model = genai.GenerativeModel(m_name)
+                    model = genai.GenerativeModel(m_name, tools=['google_search'])
                     response = model.generate_content(
                         prompt,
                         generation_config=genai.types.GenerationConfig(max_output_tokens=max_tokens_val)
                     )
                     if response and response.text:
-                        print(f"[Success] Used Gemini model (fallback without search): {m_name}")
+                        print(f"[Success] Used Gemini model with Google Search grounding: {m_name}")
+                        success_gemini = True
                         break
-                except Exception as e2:
-                    print(f"[Note] Model '{m_name}' completely failed ({e2})")
+                except Exception as e:
+                    print(f"[Note] Model '{m_name}' with search tools failed ({e}), trying without tools (attempt {attempt+1})...")
+                    try:
+                        model = genai.GenerativeModel(m_name)
+                        response = model.generate_content(
+                            prompt,
+                            generation_config=genai.types.GenerationConfig(max_output_tokens=max_tokens_val)
+                        )
+                        if response and response.text:
+                            print(f"[Success] Used Gemini model (fallback without search): {m_name}")
+                            success_gemini = True
+                            break
+                    except Exception as e2:
+                        print(f"[Note] Model '{m_name}' attempt {attempt+1} completely failed ({e2})")
+                        time.sleep(5)
+            if success_gemini:
+                break
                 
         if not response or not response.text:
             raise RuntimeError("All Gemini and Groq models reached quota limits or failed.")
@@ -321,16 +342,25 @@ def generate_fresh_topic(category_prompt: str, language: str = "English") -> str
             pass
 
     if not topic_text and groq_client:
-        try:
-            completion = groq_client.chat.completions.create(
-                model="llama-3.1-8b-instant",
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.85,
-                max_tokens=100
-            )
-            topic_text = completion.choices[0].message.content.strip()
-        except Exception:
-            pass
+        groq_models = ["llama-3.1-8b-instant", "llama-3.1-70b-versatile", "mixtral-8x7b-32768"]
+        import time
+        for g_model in groq_models:
+            success = False
+            for attempt in range(2):
+                try:
+                    completion = groq_client.chat.completions.create(
+                        model=g_model,
+                        messages=[{"role": "user", "content": prompt}],
+                        temperature=0.85,
+                        max_tokens=100
+                    )
+                    topic_text = completion.choices[0].message.content.strip()
+                    success = True
+                    break
+                except Exception:
+                    time.sleep(2)
+            if success and topic_text:
+                break
 
     if not topic_text and GEMINI_API_KEY:
         model_names = [
