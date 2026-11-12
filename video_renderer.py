@@ -391,10 +391,20 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
         final_visual = set_dur(CompositeVideoClip([final_visual, sub_reminder_clip], duration=total_duration), total_duration)
 
         def make_chime(t):
+            if isinstance(t, np.ndarray):
+                if t.ndim > 1:
+                    t_mono = np.mean(t, axis=1)
+                else:
+                    t_mono = t
+            else:
+                t_mono = t
             f1, f2 = 587.33, 880.00
-            val1 = 0.25 * np.sin(2 * np.pi * f1 * t) * np.exp(-3 * t)
-            val2 = np.where(t >= 0.15, 0.35 * np.sin(2 * np.pi * f2 * (t - 0.15)) * np.exp(-3 * (t - 0.15)), 0.0)
-            return val1 + val2
+            val1 = 0.25 * np.sin(2 * np.pi * f1 * t_mono) * np.exp(-3 * t_mono)
+            val2 = np.where(t_mono >= 0.15, 0.35 * np.sin(2 * np.pi * f2 * (t_mono - 0.15)) * np.exp(-3 * (t_mono - 0.15)), 0.0)
+            res = val1 + val2
+            if isinstance(t, np.ndarray) and t.ndim > 1:
+                res = np.column_stack([res, res])
+            return res
         
         chime_clip = set_dur(AudioClip(make_chime, duration=0.5).set_start(sub_start), 0.5)
         chime_clip = ensure_mono_audioclip(chime_clip)
