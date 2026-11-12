@@ -52,7 +52,7 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         example_title = "Amazing Cosmic Mystery Revealed"
 
     if video_type == "short":
-        cta_instruction = f"5. BRIDGE & CTA: The final scene MUST end with a compelling teaser and Call-to-Action telling viewers to check out the full detailed investigation video on the channel and SUBSCRIBE for more mysteries." if linked_long_video_url else "5. Conclude with a strong CTA to subscribe, like, and turn on the notification bell."
+        cta_instruction = f"5. BRIDGE & CTA (FINAL SCENE): The final scene MUST end with a powerful curiosity loop Call-to-Action in pure {script_lang_name} instructing viewers that to discover more such unbelievable secrets and hidden truths, they must subscribe to the channel right now." if linked_long_video_url else f"5. BRIDGE & CTA (FINAL SCENE): The final scene MUST end with a powerful curiosity loop Call-to-Action in pure {script_lang_name} instructing viewers that to discover more such unbelievable secrets and hidden truths, they must subscribe to the channel right now."
         mid_cta_instruction = "6. MID-VIDEO RETENTION HOOK: Around scene 5, drop an intense secondary teaser to keep viewers locked in until the very end."
         
         angle_instruction = ""
