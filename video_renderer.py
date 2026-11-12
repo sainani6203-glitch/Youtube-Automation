@@ -328,6 +328,45 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
         
     final_visual = concatenate_videoclips(sequence_visuals)
 
+    # 4.5. Burned-in subtitles (Top for shorts, Bottom for long videos)
+    if scenes and voiceover_duration > 0:
+        subtitle_clips = []
+        offset = intro_duration if video_type != "short" else 0
+        for idx, scene in enumerate(scenes):
+            txt = scene.get("text", "")
+            if not txt:
+                continue
+            scene_start = scene.get("start_time", 0.0)
+            scene_end = scene.get("end_time", scene_start + 3.0)
+            
+            start_t = offset + scene_start
+            if idx == 0:
+                start_t = max(0.3, start_t)
+            end_t = offset + scene_end
+            
+            try:
+                sub_clip = safe_text_clip(
+                    text_content=txt[:120] + ("..." if len(txt) > 120 else ""),
+                    font_size=38 if video_type == "short" else 42,
+                    color='white',
+                    stroke_color='black',
+                    stroke_width=3,
+                    size=(width - 120, None)
+                )
+                y_pos = 220 if video_type == "short" else height - 200
+                sub_clip = set_pos(sub_clip, ('center', y_pos))
+                sub_clip = set_dur(sub_clip, max(0.8, end_t - start_t))
+                sub_clip = set_start(sub_clip, start_t)
+                subtitle_clips.append(sub_clip)
+            except Exception as sub_err:
+                print(f"[Note] Subtitle clip skipped for scene: {sub_err}")
+        
+        if subtitle_clips:
+            try:
+                final_visual = safe_composite_video([final_visual] + subtitle_clips, duration=final_visual.duration)
+            except Exception as comp_err:
+                print(f"[Note] Subtitle composition skipped: {comp_err}")
+
     # 5. Assemble full audio sequence
     audio_parts = []
     if video_type != "short":
