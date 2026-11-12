@@ -397,26 +397,6 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
     except Exception as e:
         print(f"[Note] Subscribe reminder clip/audio skipped: {e}")
 
-    # 6c. Add category-matched Sound Effect (SFX) at the beginning hook
-    sfx_filename = "sfx_ancient_mysteries.mp3"
-    if "Dark Psychology" in category:
-        sfx_filename = "sfx_dark_psychology.mp3"
-    elif "Ancient" in category:
-        sfx_filename = "sfx_ancient_mysteries.mp3"
-    elif "Incredible Science" in category:
-        sfx_filename = "sfx_science_space.mp3"
-        
-    sfx_path = os.path.join(ASSETS_DIR, sfx_filename)
-    if os.path.exists(sfx_path):
-        try:
-            raw_sfx = AudioFileClip(sfx_path)
-            sfx_clip = ensure_mono_audioclip(raw_sfx)
-            sfx_start = intro_duration
-            sfx_clip = sfx_clip.set_start(sfx_start)
-            final_audio_voice = set_dur(safe_composite_audio([final_audio_voice, sfx_clip], duration=total_duration), total_duration)
-        except Exception as e:
-            print(f"[Note] SFX mixing skipped: {e}")
-
     # 7. Select category-matched background music (Long videos only, skip for shorts)
     bgm_path = None
     if video_type != "short":
