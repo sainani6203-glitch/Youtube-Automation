@@ -49,14 +49,9 @@ def get_authenticated_service(language: str = "Telugu"):
                     "Please regenerate token.pickle locally and update the YOUTUBE_TOKEN_B64 GitHub secret."
                 )
             flow = InstalledAppFlow.from_client_secrets_file(
-                credentials_file, SCOPES,
-                redirect_uri='urn:ietf:wg:oauth:2.0:oob'
+                credentials_file, SCOPES
             )
-            auth_url, _ = flow.authorization_url(prompt='consent')
-            print(f"\n🔗 Please open this link in your browser:\n{auth_url}\n")
-            code = input('👉 Enter the authorization code from browser: ').strip()
-            flow.fetch_token(code=code)
-            creds = flow.credentials
+            creds = flow.run_local_server(port=0, prompt='consent')
 
         with open(token_file, "wb") as token:
             pickle.dump(creds, token)

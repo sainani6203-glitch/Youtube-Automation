@@ -147,6 +147,16 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         cleaned = cleaned.strip()
         import re
         cleaned = re.sub(r'[\x00-\x1f\x7f-\x9f]', '', cleaned)
+        
+        # Try extracting JSON object via regex if there's surrounding text
+        match = re.search(r'(\{[\s\S]*\})', cleaned)
+        if match:
+            extracted = match.group(1)
+            try:
+                return json.loads(extracted, strict=False)
+            except Exception:
+                pass
+
         try:
             return json.loads(cleaned, strict=False)
         except Exception as e:
@@ -167,12 +177,12 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
     # 1. Try Gemini first as primary provider
     if not text_result and GEMINI_API_KEY:
         model_names = [
-            "gemini-3.5-flash",
-            "gemini-3.8-flash",
-            "gemini-3.7-flash",
-            "gemini-3.6-flash",
+            "gemini-2.5-flash",
+            "gemini-2.5-pro",
             "gemini-flash-latest",
-            "gemini-pro-latest"
+            "gemini-pro-latest",
+            "gemini-3.5-flash",
+            "gemini-3.8-flash"
         ]
         response = None
         import time
@@ -214,10 +224,9 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
     # 2. Try Groq models as first fallback
     if not text_result and groq_client:
         groq_models = [
-            "llama-3.3-70b-versatile",
-            "llama-3.1-8b-instant",
-            "llama-3.2-90b-vision-preview",
-            "llama3-70b-8192"
+            "qwen/qwen3.8-27b",
+            "openai/gpt-oss-120b",
+            "openai/gpt-oss-20b"
         ]
         import time
         for g_model in groq_models:
@@ -337,12 +346,12 @@ def generate_fresh_topic(category_prompt: str, language: str = "English") -> str
     # 1. Try Gemini first as primary provider
     if not topic_text and GEMINI_API_KEY:
         model_names = [
-            "gemini-3.5-flash",
-            "gemini-3.8-flash",
-            "gemini-3.7-flash",
-            "gemini-3.6-flash",
+            "gemini-2.5-flash",
+            "gemini-2.5-pro",
             "gemini-flash-latest",
-            "gemini-pro-latest"
+            "gemini-pro-latest",
+            "gemini-3.5-flash",
+            "gemini-3.8-flash"
         ]
         for m_name in model_names:
             try:
@@ -356,7 +365,7 @@ def generate_fresh_topic(category_prompt: str, language: str = "English") -> str
 
     # 2. Try Groq as first fallback
     if not topic_text and groq_client:
-        groq_models = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "llama-3.2-90b-vision-preview"]
+        groq_models = ["qwen/qwen3.8-27b", "openai/gpt-oss-120b", "openai/gpt-oss-20b"]
         import time
         for g_model in groq_models:
             success = False
