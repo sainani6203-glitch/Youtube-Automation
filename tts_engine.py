@@ -17,107 +17,41 @@ VOICE_MAP = {
 
 async def generate_voiceover_edge(text: str, output_audio_path: str, language: str = "en"):
     """
-    Generates speech audio using edge-tts neural voices.
+    Generates speech audio using edge-tts neural voices in one continuous stream.
     """
     voice = VOICE_MAP.get(language.lower(), "en-US-ChristopherNeural")
+    rate_str = "+6%" if language.lower() in ["hi", "hindi"] else "+3%"
     
-    # Split text into sentence chunks (. ? ! |)
-    chunks = [c.strip() for c in re.split(r'(?<=[.!?|])\s+', text) if c.strip()]
-    if not chunks:
-        chunks = [text]
-        
-    temp_files = []
-    try:
-        for idx, chunk in enumerate(chunks):
-            chunk_path = f"{output_audio_path}_chunk_{idx}.mp3"
-            temp_files.append(chunk_path)
-            
-            success = False
-            max_retries = 5
-            rate_str = "+6%" if language.lower() in ["hi", "hindi"] else "+3%"
-            for attempt in range(1, max_retries + 1):
-                try:
-                    communicate = edge_tts.Communicate(chunk, voice, rate=rate_str)
-                    await communicate.save(chunk_path)
-                    success = True
-                    break
-                except Exception as e:
-                    print(f"[Warning] edge-tts chunk {idx+1} attempt {attempt} failed ({e}). Retrying...")
-                    if attempt < max_retries:
-                        await asyncio.sleep(3 * attempt)
-            
-            if not success:
-                raise RuntimeError(f"All {max_retries} edge-tts attempts failed for chunk {idx+1}")
-            
-            if idx < len(chunks) - 1:
-                await asyncio.sleep(1.5)
-        
-        audio_clips = [AudioFileClip(fp) for fp in temp_files]
-        final_clip = concatenate_audioclips(audio_clips)
-        final_clip.write_audiofile(output_audio_path, logger=None)
-        
-        for clip in audio_clips:
-            clip.close()
-        final_clip.close()
-        return output_audio_path
-        
-    finally:
-        for fp in temp_files:
-            if os.path.exists(fp):
-                try:
-                    os.remove(fp)
-                except:
-                    pass
+    max_retries = 5
+    for attempt in range(1, max_retries + 1):
+        try:
+            communicate = edge_tts.Communicate(text, voice, rate=rate_str)
+            await communicate.save(output_audio_path)
+            return output_audio_path
+        except Exception as e:
+            print(f"[Warning] edge-tts attempt {attempt} failed ({e}). Retrying...")
+            if attempt < max_retries:
+                await asyncio.sleep(3 * attempt)
+    raise RuntimeError(f"All {max_retries} edge-tts attempts failed.")
 
 def generate_voiceover_gtts_fallback(text: str, output_audio_path: str, language: str = "en"):
     """
     Fallback TTS using gTTS when edge-tts encounters network or 403 errors.
-    Supports chunking for long scripts.
     """
     lang_code = language[:2].lower()
     if lang_code not in ["en", "te", "hi"]:
         lang_code = "en"
     print(f"[Info] Falling back to gTTS for language '{lang_code}'...")
     
-    chunks = [c.strip() for c in re.split(r'(?<=[.!?|])\s+', text) if c.strip()]
-    if not chunks:
-        chunks = [text]
-        
-    temp_files = []
-    try:
-        for idx, chunk in enumerate(chunks):
-            chunk_path = f"{output_audio_path}_gtts_chunk_{idx}.mp3"
-            temp_files.append(chunk_path)
-            
-            success = False
-            for attempt in range(1, 4):
-                try:
-                    tts = gTTS(text=chunk, lang=lang_code, slow=False)
-                    tts.save(chunk_path)
-                    success = True
-                    break
-                except Exception as e:
-                    print(f"[Warning] gTTS chunk {idx+1} attempt {attempt} failed ({e}). Retrying...")
-                    time.sleep(1)
-            
-            if not success:
-                raise RuntimeError(f"All gTTS attempts failed for chunk {idx+1}")
-                
-        audio_clips = [AudioFileClip(fp) for fp in temp_files]
-        final_clip = concatenate_audioclips(audio_clips)
-        final_clip.write_audiofile(output_audio_path, logger=None)
-        
-        for clip in audio_clips:
-            clip.close()
-        final_clip.close()
-        return output_audio_path
-    finally:
-        for fp in temp_files:
-            if os.path.exists(fp):
-                try:
-                    os.remove(fp)
-                except:
-                    pass
+    for attempt in range(1, 4):
+        try:
+            tts = gTTS(text=text, lang=lang_code, slow=False)
+            tts.save(output_audio_path)
+            return output_audio_path
+        except Exception as e:
+            print(f"[Warning] gTTS attempt {attempt} failed ({e}). Retrying...")
+            time.sleep(1)
+    raise RuntimeError("All gTTS attempts failed.")
 
 def generate_voiceover_pyttsx3(text: str, output_audio_path: str, language: str = "en"):
     """
@@ -212,60 +146,51 @@ def create_voiceover_sync(text: str, output_audio_path: str, language: str = "en
 
 async def generate_voiceover_scenes_edge(scenes: list, output_audio_path: str, language: str = "en"):
     voice = VOICE_MAP.get(language.lower(), "en-US-ChristopherNeural")
-    temp_files = []
-    current_time = 0.0
-    try:
-        for idx, scene in enumerate(scenes):
-            text = scene.get("text", "")
-            if not text:
-                continue
-            chunk_path = f"{output_audio_path}_scene_{idx}.mp3"
-            temp_files.append(chunk_path)
-            
-            success = False
-            max_retries = 3
-            rate_str = "+6%" if language.lower() in ["hi", "hindi"] else "+3%"
-            for attempt in range(1, max_retries + 1):
-                try:
-                    communicate = edge_tts.Communicate(text, voice, rate=rate_str)
-                    await communicate.save(chunk_path)
-                    success = True
-                    break
-                except Exception as e:
-                    print(f"[Warning] edge-tts scene {idx+1} attempt {attempt} failed ({e}). Retrying...")
-                    if attempt < max_retries:
-                        await asyncio.sleep(2 * attempt)
-            
-            if not success:
-                raise RuntimeError(f"All edge-tts attempts failed for scene {idx+1}")
-            
-            clip = AudioFileClip(chunk_path)
-            dur = clip.duration
-            clip.close()
-            
-            scene["start_time"] = current_time
-            scene["end_time"] = current_time + dur
-            scene["duration"] = dur
-            current_time = scene["end_time"]
-            
-            if idx < len(scenes) - 1:
-                await asyncio.sleep(0.5)
-                
-        audio_clips = [AudioFileClip(fp) for fp in temp_files]
-        final_clip = concatenate_audioclips(audio_clips)
-        final_clip.write_audiofile(output_audio_path, logger=None)
+    rate_str = "+6%" if language.lower() in ["hi", "hindi"] else "+3%"
+    
+    full_text = " ".join([scene.get("text", "").strip() for scene in scenes if scene.get("text", "").strip()])
+    if not full_text:
+        full_text = "Welcome to the video."
         
-        for clip in audio_clips:
-            clip.close()
-        final_clip.close()
-        return output_audio_path
-    finally:
-        for fp in temp_files:
-            if os.path.exists(fp):
-                try:
-                    os.remove(fp)
-                except:
-                    pass
+    max_retries = 3
+    success = False
+    for attempt in range(1, max_retries + 1):
+        try:
+            communicate = edge_tts.Communicate(full_text, voice, rate=rate_str)
+            await communicate.save(output_audio_path)
+            success = True
+            break
+        except Exception as e:
+            print(f"[Warning] edge-tts scenes attempt {attempt} failed ({e}). Retrying...")
+            if attempt < max_retries:
+                await asyncio.sleep(2 * attempt)
+                
+    if not success:
+        raise RuntimeError("All edge-tts attempts failed for scenes generation")
+        
+    total_chars = sum(len(scene.get("text", "")) for scene in scenes)
+    if total_chars == 0:
+        total_chars = 1
+        
+    audio = AudioFileClip(output_audio_path)
+    total_duration = audio.duration
+    audio.close()
+    
+    current_time = 0.0
+    for idx, scene in enumerate(scenes):
+        text = scene.get("text", "")
+        if idx == len(scenes) - 1:
+            dur = max(1.0, total_duration - current_time)
+        else:
+            fraction = len(text) / total_chars if total_chars > 0 else (1.0 / len(scenes))
+            dur = max(1.0, total_duration * fraction)
+            
+        scene["start_time"] = current_time
+        scene["end_time"] = current_time + dur
+        scene["duration"] = dur
+        current_time = scene["end_time"]
+        
+    return output_audio_path
 
 def generate_voiceover_scenes_openai(scenes: list, output_audio_path: str):
     """
@@ -278,47 +203,40 @@ def generate_voiceover_scenes_openai(scenes: list, output_audio_path: str):
     client = OpenAI(api_key=OPENAI_API_KEY)
     print("[Info] Falling back to OpenAI TTS (onyx deep male voice) for scenes...")
     
-    temp_files = []
-    current_time = 0.0
-    try:
-        for idx, scene in enumerate(scenes):
-            text = scene.get("text", "")
-            if not text:
-                continue
-            chunk_path = f"{output_audio_path}_openai_scene_{idx}.mp3"
-            temp_files.append(chunk_path)
-            
-            response = client.audio.speech.create(
-                model="tts-1",
-                voice="onyx",
-                input=text
-            )
-            response.stream_to_file(chunk_path)
-            
-            clip = AudioFileClip(chunk_path)
-            dur = clip.duration
-            clip.close()
-            
-            scene["start_time"] = current_time
-            scene["end_time"] = current_time + dur
-            scene["duration"] = dur
-            current_time = scene["end_time"]
-            
-        audio_clips = [AudioFileClip(fp) for fp in temp_files]
-        final_clip = concatenate_audioclips(audio_clips)
-        final_clip.write_audiofile(output_audio_path, logger=None)
+    full_text = " ".join([scene.get("text", "").strip() for scene in scenes if scene.get("text", "").strip()])
+    if not full_text:
+        full_text = "Welcome to the video."
         
-        for clip in audio_clips:
-            clip.close()
-        final_clip.close()
-        return output_audio_path
-    finally:
-        for fp in temp_files:
-            if os.path.exists(fp):
-                try:
-                    os.remove(fp)
-                except:
-                    pass
+    response = client.audio.speech.create(
+        model="tts-1",
+        voice="onyx",
+        input=full_text
+    )
+    response.stream_to_file(output_audio_path)
+    
+    total_chars = sum(len(scene.get("text", "")) for scene in scenes)
+    if total_chars == 0:
+        total_chars = 1
+        
+    audio = AudioFileClip(output_audio_path)
+    total_duration = audio.duration
+    audio.close()
+    
+    current_time = 0.0
+    for idx, scene in enumerate(scenes):
+        text = scene.get("text", "")
+        if idx == len(scenes) - 1:
+            dur = max(1.0, total_duration - current_time)
+        else:
+            fraction = len(text) / total_chars if total_chars > 0 else (1.0 / len(scenes))
+            dur = max(1.0, total_duration * fraction)
+            
+        scene["start_time"] = current_time
+        scene["end_time"] = current_time + dur
+        scene["duration"] = dur
+        current_time = scene["end_time"]
+        
+    return output_audio_path
 
 def generate_voiceover_scenes_pyttsx3(scenes: list, output_audio_path: str, language: str = "en"):
     print(f"[Info] Falling back to offline pyttsx3 TTS for scenes...")
@@ -343,97 +261,84 @@ def generate_voiceover_scenes_pyttsx3(scenes: list, output_audio_path: str, lang
     if chosen_voice:
         engine.setProperty('voice', chosen_voice)
         
-    temp_files = []
-    current_time = 0.0
-    try:
-        for idx, scene in enumerate(scenes):
-            text = scene.get("text", "")
-            if not text:
-                continue
-            chunk_path = f"{output_audio_path}_pyttsx3_scene_{idx}.mp3"
-            temp_files.append(chunk_path)
-            
-            engine.save_to_file(text, chunk_path)
-            engine.runAndWait()
-            
-            clip = AudioFileClip(chunk_path)
-            dur = clip.duration
-            clip.close()
-            
-            scene["start_time"] = current_time
-            scene["end_time"] = current_time + dur
-            scene["duration"] = dur
-            current_time = scene["end_time"]
-            
-        audio_clips = [AudioFileClip(fp) for fp in temp_files]
-        final_clip = concatenate_audioclips(audio_clips)
-        final_clip.write_audiofile(output_audio_path, logger=None)
+    full_text = " ".join([scene.get("text", "").strip() for scene in scenes if scene.get("text", "").strip()])
+    if not full_text:
+        full_text = "Welcome to the video."
         
-        for clip in audio_clips:
-            clip.close()
-        final_clip.close()
-        return output_audio_path
-    finally:
-        for fp in temp_files:
-            if os.path.exists(fp):
-                try:
-                    os.remove(fp)
-                except:
-                    pass
+    engine.save_to_file(full_text, output_audio_path)
+    engine.runAndWait()
+    
+    total_chars = sum(len(scene.get("text", "")) for scene in scenes)
+    if total_chars == 0:
+        total_chars = 1
+        
+    audio = AudioFileClip(output_audio_path)
+    total_duration = audio.duration
+    audio.close()
+    
+    current_time = 0.0
+    for idx, scene in enumerate(scenes):
+        text = scene.get("text", "")
+        if idx == len(scenes) - 1:
+            dur = max(1.0, total_duration - current_time)
+        else:
+            fraction = len(text) / total_chars if total_chars > 0 else (1.0 / len(scenes))
+            dur = max(1.0, total_duration * fraction)
+            
+        scene["start_time"] = current_time
+        scene["end_time"] = current_time + dur
+        scene["duration"] = dur
+        current_time = scene["end_time"]
+        
+    return output_audio_path
 
 def generate_voiceover_scenes_gtts(scenes: list, output_audio_path: str, language: str = "en"):
     lang_code = language[:2].lower()
     if lang_code not in ["en", "te", "hi"]:
         lang_code = "en"
     print(f"[Info] Falling back to gTTS for scenes in language '{lang_code}'...")
-    temp_files = []
-    current_time = 0.0
-    try:
-        for idx, scene in enumerate(scenes):
-            text = scene.get("text", "")
-            if not text:
-                continue
-            chunk_path = f"{output_audio_path}_gtts_scene_{idx}.mp3"
-            temp_files.append(chunk_path)
-            
-            success = False
-            for attempt in range(1, 3):
-                try:
-                    tts = gTTS(text=text, lang=lang_code, slow=False)
-                    tts.save(chunk_path)
-                    success = True
-                    break
-                except Exception as e:
-                    print(f"[Warning] gTTS scene {idx+1} attempt {attempt} failed ({e}). Retrying...")
-                    time.sleep(1)
-            
-            if not success:
-                raise RuntimeError(f"All gTTS attempts failed for scene {idx+1}")
-                
-            clip = AudioFileClip(chunk_path)
-            dur = clip.duration
-            clip.close()
-            
-            scene["start_time"] = current_time
-            scene["end_time"] = current_time + dur
-            scene["duration"] = dur
-            current_time = scene["end_time"]
-            
-        audio_clips = [AudioFileClip(fp) for fp in temp_files]
-        final_clip = concatenate_audioclips(audio_clips)
-        final_clip.write_audiofile(output_audio_path, logger=None)
+    
+    full_text = " ".join([scene.get("text", "").strip() for scene in scenes if scene.get("text", "").strip()])
+    if not full_text:
+        full_text = "Welcome to the video."
         
-        for clip in audio_clips:
-            clip.close()
-        final_clip.close()
-        return output_audio_path
-    finally:
-        for fp in temp_files:
-            if os.path.exists(fp):
-                try:
-                    os.remove(fp)
-                except:
-                    pass
+    success = False
+    for attempt in range(1, 4):
+        try:
+            tts = gTTS(text=full_text, lang=lang_code, slow=False)
+            tts.save(output_audio_path)
+            success = True
+            break
+        except Exception as e:
+            print(f"[Warning] gTTS scenes attempt {attempt} failed ({e}). Retrying...")
+            time.sleep(1)
+            
+    if not success:
+        raise RuntimeError("All gTTS attempts failed for scenes generation")
+        
+    total_chars = sum(len(scene.get("text", "")) for scene in scenes)
+    if total_chars == 0:
+        total_chars = 1
+        
+    audio = AudioFileClip(output_audio_path)
+    total_duration = audio.duration
+    audio.close()
+    
+    current_time = 0.0
+    for idx, scene in enumerate(scenes):
+        text = scene.get("text", "")
+        if idx == len(scenes) - 1:
+            dur = max(1.0, total_duration - current_time)
+        else:
+            fraction = len(text) / total_chars if total_chars > 0 else (1.0 / len(scenes))
+            dur = max(1.0, total_duration * fraction)
+            
+        scene["start_time"] = current_time
+        scene["end_time"] = current_time + dur
+        scene["duration"] = dur
+        current_time = scene["end_time"]
+        
+    return output_audio_path
 
 async def generate_voiceover_scenes(scenes: list, output_audio_path: str, language: str = "en"):
     try:
