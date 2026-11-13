@@ -92,7 +92,7 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         Return ONLY valid JSON in this exact format:
         {{
             "title": "Dual language title #shorts",
-            "description": "Optimized description with tags",
+            "description": "Optimized SEO description including geography, ancient history, and mystery hashtags (#geography #ancienthistory #mysteriousplaces #earthfacts #shorts)",
             "scenes": [
                 {{"text": "Hook sentence 1...", "visual_keyword": "keyword1"}},
                 {{"text": "Sentence 2...", "visual_keyword": "keyword2"}},
@@ -127,7 +127,7 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         Return ONLY valid JSON in this exact format:
         {{
             "title": "Dual language title",
-            "description": "Detailed SEO description with timestamps and reference proofs",
+            "description": "Detailed SEO description with timestamps, reference proofs, and relevant geography/mystery hashtags (#geography #ancienthistory #mysteriousplaces #earthfacts)",
             "scenes": [
 {json_scenes_example}
             ]

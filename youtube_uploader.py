@@ -84,11 +84,19 @@ def upload_video_to_youtube(video_path: str, title: str, description: str, tags:
         status_dict["privacyStatus"] = "private"
         status_dict["publishAt"] = publish_at
 
+    if not tags:
+        if language.lower() == "telugu":
+            tags = ["geography", "ancienthistory", "telugufacts", "mysteriousplaces", "earthfacts", "shorts", "education"]
+        elif language.lower() == "hindi":
+            tags = ["geography", "ancienthistory", "hindifacts", "mysteriousplaces", "earthfacts", "shorts", "education"]
+        else:
+            tags = ["geography", "ancienthistory", "mysteriousplaces", "earthfacts", "shorts", "education", "facts"]
+
     body = {
         "snippet": {
             "title": title,
             "description": description,
-            "tags": tags or ["shorts", "education", "facts", "tech"],
+            "tags": tags,
             "categoryId": category_id
         },
         "status": status_dict
