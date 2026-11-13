@@ -542,7 +542,7 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
     
     target_bitrate = "8000k" if video_type != "short" else "4000k"
     
-    scale_filter = f"scale={width}:{height}:force_original_aspect_ratio=decrease,pad={width}:{height}:(ow-iw)/2:(oh-ih)/2,format=yuv420p"
+    scale_filter = f"scale={width}:{height}:force_original_aspect_ratio=decrease,pad={width}:{height}:trunc((ow-iw)/2):trunc((oh-ih)/2):color=black,format=yuv420p"
 
     final_composite.write_videofile(
         output_path,
