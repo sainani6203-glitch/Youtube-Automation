@@ -6,15 +6,24 @@ from generate_default_bgm import create_default_bgm
 from script_generator import generate_fresh_topic
 from config import TOPIC_SCHEDULE, LANGUAGES
 from monitor_uploads import monitor_and_cleanup
+from comment_manager import check_and_reply_channel
 
 def run_daily_batch():
     print("==================================================")
     print(f"🌟 Starting OmniDaily 1-Long & 2-Shorts Daily Batch Across Languages: {LANGUAGES}")
     print("==================================================")
 
-    # Clean up any leftover processed videos from previous days first
+    # 1. Clean up any leftover processed videos from previous days first
     print("🧹 Checking for any previously pending videos to clean up...")
     monitor_and_cleanup()
+
+    # 2. Check and auto-reply to viewer comments across all channels
+    print("💬 Checking and auto-replying to viewer comments...")
+    for language in LANGUAGES:
+        try:
+            check_and_reply_channel(language=language)
+        except Exception as e:
+            print(f"[Warning] Comment check/reply failed for {language}: {e}")
 
     # Ensure default BGM exists
     create_default_bgm()
