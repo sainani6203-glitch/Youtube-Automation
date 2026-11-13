@@ -77,20 +77,93 @@ def safe_composite_video(clips, duration=None):
         return comp
 
 def safe_text_clip(text_content, font_size=40, color='white', stroke_color='black', stroke_width=2, size=None, **kwargs):
-    """Generates a text clip using PIL (Pillow) to completely bypass ImageMagick security policy restrictions on Linux."""
+    """Generates a text clip using Playwright (for Telugu/Hindi with Google Fonts) or PIL (for English)."""
+    has_indic = any('\u0C00' <= c <= '\u0C7F' or '\u0900' <= c <= '\u097F' for c in text_content)
+    
+    if has_indic:
+        try:
+            from playwright.sync_api import sync_playwright
+            import tempfile
+            import html
+            
+            html_content = f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+            <meta charset="UTF-8">
+            <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Telugu:wght@700;900&family=Noto+Sans+Devanagari:wght@700;900&display=swap" rel="stylesheet">
+            <style>
+              body {{
+                margin: 0;
+                background: transparent;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                padding: 10px;
+                font-family: 'Noto Sans Telugu', 'Noto Sans Devanagari', sans-serif;
+              }}
+              .subtitle-pill {{
+                background: rgba(0, 0, 0, 0.88);
+                border: 2px solid rgba(255, 255, 255, 0.35);
+                border-radius: 20px;
+                padding: 14px 28px;
+                max-width: 950px;
+                text-align: center;
+                color: #ffffff;
+                font-size: {max(font_size * 1.35, 38)}px;
+                font-weight: 900;
+                line-height: 1.3;
+                text-shadow: 2px 2px 4px #000, -2px -2px 4px #000, 2px -2px 4px #000, -2px 2px 4px #000, 0px 4px 15px rgba(0,0,0,0.9);
+                box-shadow: 0 10px 30px rgba(0,0,0,0.85);
+              }}
+            </style>
+            </head>
+            <body>
+              <div class="subtitle-pill">{html.escape(text_content)}</div>
+            </body>
+            </html>
+            """
+            
+            temp_fd, temp_path = tempfile.mkstemp(suffix=".png")
+            os.close(temp_fd)
+            
+            with sync_playwright() as p:
+                browser = p.chromium.launch()
+                page = browser.new_page(viewport={'width': 1000, 'height': 300})
+                page.set_content(html_content, wait_until="domcontentloaded")
+                page.wait_for_timeout(600)
+                element = page.locator(".subtitle-pill")
+                element.screenshot(path=temp_path, type='png', omit_background=True)
+                browser.close()
+                
+            from moviepy.editor import ImageClip
+            return ImageClip(temp_path)
+        except Exception as e:
+            print(f"[Warning] Playwright Indic subtitle rendering failed: {e}, falling back to PIL")
+
     try:
         from PIL import Image, ImageDraw, ImageFont
         import tempfile
         
         max_w = size[0] if size and size[0] else 1000
         
-        try:
-            font = ImageFont.truetype("DejaVuSans-Bold.ttf", font_size)
-        except:
+        candidates = [
+            "DejaVuSans-Bold.ttf",
+            "arial.ttf",
+            "C:/Windows/Fonts/arial.ttf",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+        ]
+        
+        font = None
+        for cp in candidates:
             try:
-                font = ImageFont.truetype("arial.ttf", font_size)
+                if os.path.exists(cp) or not cp.startswith("/"):
+                    font = ImageFont.truetype(cp, font_size)
+                    break
             except:
-                font = ImageFont.load_default()
+                continue
+        if not font:
+            font = ImageFont.load_default()
 
         words = text_content.split()
         lines = []
@@ -124,7 +197,6 @@ def safe_text_clip(text_content, font_size=40, color='white', stroke_color='blac
         img_w = max(max_line_w + 60, 100)
         img_h = max(total_h + 20, 50)
 
-        # Force even dimensions to prevent yuv420p horizontal/vertical line artifacts
         if img_w % 2 != 0:
             img_w += 1
         if img_h % 2 != 0:
@@ -133,7 +205,6 @@ def safe_text_clip(text_content, font_size=40, color='white', stroke_color='blac
         txt_img = Image.new("RGBA", (img_w, img_h), (0, 0, 0, 0))
         draw = ImageDraw.Draw(txt_img)
 
-        # Draw a sleek semi-transparent dark background pill for ultra-clean readability
         draw.rounded_rectangle(
             [10, 5, img_w - 10, img_h - 5],
             radius=18,
@@ -419,31 +490,16 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
 
     # (Title watermark overlay removed to keep video clean and professional)
 
-    # 6b. Add visual "SUBSCRIBE" reminder overlay & notification sound effect during the final seconds
+    # 6b. Add visual "SUBSCRIBE" reminder overlay during the final seconds (No chime audio)
     try:
-        sub_reminder_clip = safe_text_clip(text_content="🔔 SUBSCRIBE FOR MORE", font_size=40, color='yellow', stroke_color='black', stroke_width=2)
-        sub_start = max(0, total_duration - 5.0)
-        sub_reminder_clip = set_dur(sub_reminder_clip, 5.0)
-        sub_reminder_clip = set_start(sub_reminder_clip.set_position(('center', height - 280)), sub_start)
-        final_visual = set_dur(safe_composite_video([final_visual, sub_reminder_clip], duration=total_duration), total_duration)
-
-        def make_chime(t):
-            f1, f2 = 587.33, 880.00
-            t_arr = np.asarray(t).flatten()
-            t_clip = np.clip(t_arr, 0, 0.5)
-            val1 = 0.25 * np.sin(2 * np.pi * f1 * t_clip) * np.exp(-3 * t_clip)
-            val2 = np.where(t_clip >= 0.15, 0.35 * np.sin(2 * np.pi * f2 * (t_clip - 0.15)) * np.exp(-3 * (t_clip - 0.15)), 0.0)
-            res = val1 + val2
-            stereo_res = np.column_stack([res, res])
-            if np.isscalar(t):
-                return stereo_res[0]
-            return stereo_res
-        
-        chime_clip = set_dur(set_start(AudioClip(make_chime, duration=0.5), sub_start), 0.5)
-        chime_clip = ensure_mono_audioclip(chime_clip)
-        final_audio_voice = set_dur(safe_composite_audio([final_audio_voice, chime_clip], duration=total_duration), total_duration)
+        if total_duration > 6.0:
+            sub_start = max(3.0, total_duration - 5.0)
+            sub_reminder_clip = safe_text_clip(text_content="🔔 SUBSCRIBE FOR MORE", font_size=40, color='yellow', stroke_color='black', stroke_width=2)
+            sub_reminder_clip = set_dur(sub_reminder_clip, min(5.0, total_duration - sub_start))
+            sub_reminder_clip = set_start(sub_reminder_clip.set_position(('center', height - 280)), sub_start)
+            final_visual = set_dur(safe_composite_video([final_visual, sub_reminder_clip], duration=total_duration), total_duration)
     except Exception as e:
-        print(f"[Note] Subscribe reminder clip/audio skipped: {e}")
+        print(f"[Note] Subscribe reminder clip skipped: {e}")
 
     # 7. Select category-matched background music (Long videos only, skip for shorts)
     bgm_path = None
@@ -486,7 +542,7 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
     
     target_bitrate = "8000k" if video_type != "short" else "4000k"
     
-    scale_filter = f"yadif,scale={width}:{height}:force_original_aspect_ratio=decrease,pad={width}:{height}:(ow-iw)/2:(oh-ih)/2,format=yuv420p"
+    scale_filter = f"scale={width}:{height}:force_original_aspect_ratio=decrease,pad={width}:{height}:(ow-iw)/2:(oh-ih)/2,format=yuv420p"
 
     final_composite.write_videofile(
         output_path,

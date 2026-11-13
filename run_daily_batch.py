@@ -9,7 +9,7 @@ from monitor_uploads import monitor_and_cleanup
 
 def run_daily_batch():
     print("==================================================")
-    print(f"🌟 Starting OmniDaily 1-Long & 3-Shorts Daily Batch Across Languages: {LANGUAGES}")
+    print(f"🌟 Starting OmniDaily 1-Long & 2-Shorts Daily Batch Across Languages: {LANGUAGES}")
     print("==================================================")
 
     # Clean up any leftover processed videos from previous days first
@@ -58,19 +58,18 @@ def run_daily_batch():
         else:
             SHORT_SPACING_SECONDS = 600
 
-        # 3 Short Angles for balanced daily schedule
+        # 2 Short Angles for balanced daily schedule (2 per channel)
         short_angles = [
             "shocking_fact",
-            "hidden_truth",
-            "unsolved_mystery"
+            "hidden_truth"
         ]
 
-        # 2. Generate and upload 3 Shorts linked to the Long Video
+        # 2. Generate and upload 2 Shorts linked to the Long Video
         for i, angle in enumerate(short_angles, 1):
-            print(f"\nWaiting {SHORT_SPACING_SECONDS // 60} minutes before uploading Short {i}/3 ({language} - {angle})...\n")
+            print(f"\nWaiting {SHORT_SPACING_SECONDS // 60} minutes before uploading Short {i}/2 ({language} - {angle})...\n")
             time.sleep(SHORT_SPACING_SECONDS)
 
-            print(f"--- Generating Short {i}/3 [{angle}] ({language}): {today_topic} ---")
+            print(f"--- Generating Short {i}/2 [{angle}] ({language}): {today_topic} ---")
             try:
                 short_res = run_pipeline(
                     video_type="short",
@@ -82,9 +81,9 @@ def run_daily_batch():
                 if not short_res:
                     print(f"[Warning] Short {i} pipeline for {language} returned no result, but continuing batch...")
                 else:
-                    print(f"[Success] Short {i}/3 published successfully ({language}).")
+                    print(f"[Success] Short {i}/2 published successfully ({language}).")
             except Exception as e:
-                print(f"[Error] Short {i}/3 failed for {language}: {e}")
+                print(f"[Error] Short {i}/2 failed for {language}: {e}")
                 continue
 
     print("==================================================")

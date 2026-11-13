@@ -37,12 +37,11 @@ def run_shorts_only_batch():
 
         short_angles = [
             "shocking_fact",
-            "hidden_truth",
-            "unsolved_mystery"
+            "hidden_truth"
         ]
 
         for i, angle in enumerate(short_angles, 1):
-            print(f"\n--- Generating Short {i}/3 [{angle}] ({language}): {today_topic} ---\n")
+            print(f"\n--- Generating Short {i}/2 [{angle}] ({language}): {today_topic} ---\n")
             try:
                 short_res = run_pipeline(
                     video_type="short",
@@ -53,9 +52,9 @@ def run_shorts_only_batch():
                 if not short_res:
                     print(f"[Warning] Short {i} pipeline for {language} returned no result.")
                 else:
-                    print(f"[Success] Short {i}/3 published successfully ({language}).")
+                    print(f"[Success] Short {i}/2 published successfully ({language}).")
             except Exception as e:
-                print(f"[Error] Short {i}/3 failed for {language}: {e}")
+                print(f"[Error] Short {i}/2 failed for {language}: {e}")
                 continue
             time.sleep(30)
 

@@ -52,7 +52,14 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         example_title = "Amazing Cosmic Mystery Revealed"
 
     if video_type == "short":
-        cta_instruction = f"5. BRIDGE & CTA (FINAL SCENE): The final scene MUST end with a powerful curiosity loop Call-to-Action in pure {script_lang_name} instructing viewers that to discover more such unbelievable secrets and hidden truths, they must subscribe to the channel right now." if linked_long_video_url else f"5. BRIDGE & CTA (FINAL SCENE): The final scene MUST end with a powerful curiosity loop Call-to-Action in pure {script_lang_name} instructing viewers that to discover more such unbelievable secrets and hidden truths, they must subscribe to the channel right now."
+        if script_lang_name.lower() == "telugu":
+            cta_example = "ఇలాంటి మరిన్ని అద్భుతమైన రహస్యాలు తెలుసుకోవడానికి ఇప్పుడే మన ఛానెల్‌ని సబ్స్క్రైబ్ చేసుకోండి!"
+        elif script_lang_name.lower() == "hindi":
+            cta_example = "ऐसे ही अनसुने रहस्यों को जानने के लिए अभी हमारे चैनल को सब्सक्राइब करें!"
+        else:
+            cta_example = "Subscribe right now to discover more unbelievable secrets like this!"
+
+        cta_instruction = f"5. COMPLETE FACT CONCLUSION & CTA (FINAL SCENE): The final scene MUST first completely resolve and conclude the core fact with a striking punchline, followed immediately by this exact native curiosity-loop CTA: \"{cta_example}\""
         mid_cta_instruction = "6. MID-VIDEO RETENTION HOOK: Around scene 5, drop an intense secondary teaser to keep viewers locked in until the very end."
         
         angle_instruction = ""
@@ -99,17 +106,16 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         }}
         """
     else:
-        duration_desc = "exact 5 to 6 minute master-class documentary-style long-form YouTube video script (~800 words across exactly 20 scenes for fast-paced professional documentary pacing)"
+        duration_desc = "exact 2 to 3 minute high-retention documentary-style long-form YouTube video script (~350-400 words across exactly 14 scenes for punchy, fast-paced professional documentary pacing)"
         structure_desc = """
-        Requirements & Investigative Structure (Total Exact 5 to 6 Minutes / ~800 Words across exactly 20 scenes):
-        1. PART 1: HOOK & ENIGMA SETUP (Scenes 1-5) - Arresting hook, geographical location coordinates, and deep historical mystery introduction.
-        2. PART 2: ANCIENT CONTEXT & BACKSTORY (Scenes 6-10) - Detailed exploration of historical records, local legends, and previous expeditions.
-        3. PART 3: LIVE PROOFS, SATELLITE MAPS & EVIDENCE (Scenes 11-15) - Deep dive into concrete archaeological findings, satellite map analysis, scientific measurements, and expert proofs.
-        4. PART 4: UNRESOLVED ANOMALIES & CLIMAX CTA (Scenes 16-20) - Deep philosophical analysis, final unsolved questions, and a powerful professional documentary-style curiosity loop Call-to-Action in Scene 20 instructing viewers to subscribe and turn on notification bell for more such mysteries.
-        5. PACING: Exactly 20 scenes. Each scene in the "scenes" array MUST contain narration text of about 35-40 words to ensure fast-paced documentary visual variety.
-        6. VISUAL KEYWORDS (STRICT PROOFS & MAPS): For each scene, explicitly include terms like "satellite map view with coordinates", "archaeological excavation artifact closeup", "real historical archive photography", "ancient manuscript map", or "historical expedition photo".
+        Requirements & Investigative Structure (Total Exact 2 to 3 Minutes / ~350-400 Words across exactly 14 scenes):
+        1. PART 1: HOOK & ENIGMA SETUP (Scenes 1-4) - Arresting hook and deep mystery introduction.
+        2. PART 2: CORE EVIDENCE & BACKSTORY (Scenes 5-10) - Exploration of historical records, key facts, and startling discoveries.
+        3. PART 3: UNRESOLVED CLIMAX & CTA (Scenes 11-14) - Deep analytical conclusion, unsolved questions, and a powerful professional documentary-style Call-to-Action in Scene 14 instructing viewers to subscribe and turn on notification bell.
+        4. PACING: Exactly 14 scenes. Each scene in the "scenes" array MUST contain narration text of about 25-30 words to ensure fast-paced documentary visual variety (changing footage every 10-11 seconds).
+        5. VISUAL KEYWORDS (STRICT PROOFS & MAPS): For each scene, explicitly include terms like "satellite map view", "archaeological excavation artifact closeup", "historical archive photography", or "ancient manuscript map".
         """
-        json_scenes_example = ",\n".join([f'                {{"text": "Paragraph {i} with 35-40 words...", "visual_keyword": "keyword{i}"}}' for i in range(1, 21)])
+        json_scenes_example = ",\n".join([f'                {{"text": "Paragraph {i} with 25-30 words...", "visual_keyword": "keyword{i}"}}' for i in range(1, 15)])
 
         prompt = f"""
         Create a rich, high-retention, and deeply engaging {duration_desc} focusing on ONE SINGLE specific topic/mystery: "{topic}".
