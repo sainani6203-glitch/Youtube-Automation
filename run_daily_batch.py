@@ -1,10 +1,11 @@
 import time
 import datetime
 import os
+import json
 from main import run_pipeline
 from generate_default_bgm import create_default_bgm
 from script_generator import generate_fresh_topic
-from config import TOPIC_SCHEDULE, LANGUAGES
+from config import TOPIC_SCHEDULE, LANGUAGES, BASE_DIR
 from monitor_uploads import monitor_and_cleanup
 from comment_manager import check_and_reply_channel
 
@@ -13,6 +14,19 @@ def run_daily_batch():
     print(f"🌟 Starting OmniDaily 1-Long & 2-Shorts Daily Batch Across Languages: {LANGUAGES}")
     print("==================================================")
 
+    # Load daily progress to skip already completed languages for today
+    progress_file = os.path.join(BASE_DIR, "daily_progress.json")
+    today_str = datetime.date.today().isoformat()
+    completed_langs = []
+    if os.path.exists(progress_file):
+        try:
+            with open(progress_file, "r") as f:
+                p_data = json.load(f)
+                if p_data.get("date") == today_str:
+                    completed_langs = p_data.get("completed_languages", [])
+        except Exception:
+            pass
+
     # 1. Clean up any leftover processed videos from previous days first
     print("🧹 Checking for any previously pending videos to clean up...")
     monitor_and_cleanup()
@@ -20,6 +34,8 @@ def run_daily_batch():
     # 2. Check and auto-reply to viewer comments across all channels
     print("💬 Checking and auto-replying to viewer comments...")
     for language in LANGUAGES:
+        if language in completed_langs:
+            continue
         try:
             check_and_reply_channel(language=language)
         except Exception as e:
@@ -34,9 +50,9 @@ def run_daily_batch():
     print(f"📂 Today's Category: {category_theme}")
 
     for idx, language in enumerate(LANGUAGES):
-        if idx > 0:
-            print("\n⏳ Pausing 5 minutes before switching to next language batch to prevent TTS and API rate limits...")
-            time.sleep(300)
+        if language in completed_langs:
+            print(f"⏩ Language '{language}' already successfully completed for today ({today_str}). Skipping...")
+            continue
 
         print(f"\n==================================================")
         print(f"🌍 Processing Language Batch: {language}")
@@ -94,6 +110,15 @@ def run_daily_batch():
             except Exception as e:
                 print(f"[Error] Short {i}/2 failed for {language}: {e}")
                 continue
+
+        # Mark language as successfully completed for today
+        if language not in completed_langs:
+            completed_langs.append(language)
+        try:
+            with open(progress_file, "w") as f:
+                json.dump({"date": today_str, "completed_languages": completed_langs}, f)
+        except Exception as e:
+            print(f"[Warning] Could not update daily progress file: {e}")
 
     print("==================================================")
     print("✅ OmniDaily Multi-Language Daily Batch Completed!")
