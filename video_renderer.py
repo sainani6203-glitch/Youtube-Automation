@@ -554,7 +554,6 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
         audio_bitrate='128k',
         preset='veryfast',
         threads=2,
-        temp_files=True,
         ffmpeg_params=[
             '-movflags', '+faststart',
             '-fps_mode', 'cfr',
