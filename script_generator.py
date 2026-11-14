@@ -78,6 +78,7 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
 
         prompt = f"""
         Create a viral, high-retention YouTube Short script about the topic: "{topic}".
+        ANTI-DUPLICATION MANDATE: This Short is a companion to a long-form video covering the main overview of "{topic}". DO NOT repeat the general summary, standard history, or main points of the long video. Instead, pick a completely different, niche, bizarre micro-detail, side-mystery, or startling sub-fact related to "{topic}" that viewers won't hear in the main video!
         {angle_instruction}
         CRITICAL MANDATE FOR TITLE: DO NOT copy any example title. The title MUST be strictly DUAL-LANGUAGE in this exact format: "[Regional {language} Title] | [English Title]". First write the title in authentic {language} script, followed by a pipe (|), and then the English title. Include "#shorts" at the end. Maximum 90 characters total.
         {language_instruction}
