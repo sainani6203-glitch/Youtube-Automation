@@ -77,8 +77,8 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         language_instruction = f"The script narration text MUST be written entirely in pure {script_lang_name} using authentic {script_script_name}. ABSOLUTELY NO mixed English words or romanized English words in the narration text or subtitles." if script_lang_name.lower() in ["telugu", "hindi"] else f"The script narration text MUST be written entirely in {language}."
 
         prompt = f"""
-        Create a viral, high-retention YouTube Short script about the topic: "{topic}".
-        ANTI-DUPLICATION MANDATE: This Short is a companion to a long-form video covering the main overview of "{topic}". DO NOT repeat the general summary, standard history, or main points of the long video. Instead, pick a completely different, niche, bizarre micro-detail, side-mystery, or startling sub-fact related to "{topic}" that viewers won't hear in the main video!
+        Create a viral, high-retention YouTube Short script as a teaser for the main topic: "{topic}".
+        TEASER & CROSS-PROMOTION MANDATE: This Short is a teaser / companion piece for the long-form video about "{topic}". It MUST focus on ONE specific, highly intriguing sub-point or startling teaser fact directly from "{topic}" that hooks viewers and naturally drives them to watch the full long video for the complete story. Do NOT make it a random unrelated topic, but ensure it does not repeat the exact same sentences or full script of the long video.
         {angle_instruction}
         CRITICAL MANDATE FOR TITLE: DO NOT copy any example title. The title MUST be strictly DUAL-LANGUAGE in this exact format: "[Regional {language} Title] | [English Title]". First write the title in authentic {language} script, followed by a pipe (|), and then the English title. Include "#shorts" at the end. Maximum 90 characters total.
         {language_instruction}
