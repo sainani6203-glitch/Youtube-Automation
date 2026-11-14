@@ -282,6 +282,21 @@ def crop_clip(clip, **kwargs):
                 except: pass
     return c
 
+def fit_clip_to_target(c, target_w, target_h):
+    try:
+        w, h = c.w, c.h
+        scale = max(target_w / w, target_h / h)
+        new_w = int(w * scale)
+        new_h = int(h * scale)
+        c = resize_clip(c, newsize=(new_w, new_h))
+        x1 = max(0, (c.w - target_w) / 2)
+        y1 = max(0, (c.h - target_h) / 2)
+        c = crop_clip(c, x1=x1, y1=y1, width=target_w, height=target_h)
+    except Exception:
+        pass
+    ew, eh = (target_w // 2) * 2, (target_h // 2) * 2
+    return resize_clip(c, newsize=(ew, eh))
+
 def render_video(audio_path: str, video_clips_paths: list, output_path: str, video_type: str = "short", title_text: str = "", category: str = "", scenes: list = None, language: str = "Telugu"):
     """
     Renders the final video by combining audio voiceover, stock video clips, captions, intro, and outro.
@@ -311,11 +326,7 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
         try:
             intro_clip = VideoFileClip(intro_path)
             intro_duration = intro_clip.duration
-            # Robust Resize & Crop to fill 100% of the target resolution
-            intro_clip = resize_clip(intro_clip, height=height)
-            if intro_clip.w < width:
-                intro_clip = resize_clip(intro_clip, width=width)
-            intro_clip = crop_clip(intro_clip, x_center=intro_clip.w/2, y_center=intro_clip.h/2, width=width, height=height)
+            intro_clip = fit_clip_to_target(intro_clip, width, height)
         except Exception as e:
             print(f"[Warning] Could not load intro.mp4: {e}")
             intro_clip = None
@@ -329,11 +340,7 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
         try:
             outro_clip = VideoFileClip(outro_path)
             outro_duration = outro_clip.duration
-            # Robust Resize & Crop to fill 100% of the target resolution
-            outro_clip = resize_clip(outro_clip, height=height)
-            if outro_clip.w < width:
-                outro_clip = resize_clip(outro_clip, width=width)
-            outro_clip = crop_clip(outro_clip, x_center=outro_clip.w/2, y_center=outro_clip.h/2, width=width, height=height)
+            outro_clip = fit_clip_to_target(outro_clip, width, height)
         except Exception as e:
             print(f"[Warning] Could not load outro.mp4: {e}")
             outro_clip = None
@@ -354,13 +361,7 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
                 else:
                     c = trim_clip(c, 0, clip_duration)
                 
-                # Strictly resize to fill target dimensions (fill the smaller dimension first)
-                c = resize_clip(c, height=height)
-                if c.w < width:
-                    c = resize_clip(c, width=width)
-                
-                # Perform a centered crop to match exact target dimensions
-                c = crop_clip(c, x_center=c.w/2, y_center=c.h/2, width=width, height=height)
+                c = fit_clip_to_target(c, width, height)
                 sub_clips.append(c)
             except Exception as e:
                 print(f"[Warning] Error loading clip {path}: {e}")
@@ -377,7 +378,7 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
             import requests, urllib.parse
             ai_prompt = f"epic cinematic mystery background {category} 8k resolution, photorealistic"
             encoded_prompt = urllib.parse.quote(ai_prompt)
-            url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=1080&height=1920&nologo=true&seed={random.randint(1000, 99999)}"
+            url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width={width}&height={height}&nologo=true&seed={random.randint(1000, 99999)}"
             r = requests.get(url, timeout=15)
             if r.status_code == 200:
                 temp_img = os.path.join(ASSETS_DIR, f"fallback_{random.randint(1000,9999)}.jpg")
@@ -385,7 +386,7 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
                     f.write(r.content)
                 from moviepy.editor import ImageClip
                 img_c = ImageClip(temp_img)
-                img_c = img_c.resize(height=height)
+                img_c = fit_clip_to_target(img_c, width, height)
                 main_visual = set_dur(img_c, voiceover_duration)
                 if os.path.exists(temp_img):
                     os.remove(temp_img)
