@@ -122,7 +122,20 @@ def image_to_video_clip(img_bytes: bytes, output_path: str, orientation: str = "
         except Exception:
             pass
                 
-        img_clip.write_videofile(output_path, fps=24, codec="libx264", audio=False, logger=None)
+        scale_filter = f"scale={target_w}:{target_h}:force_original_aspect_ratio=decrease,pad={target_w}:{target_h}:trunc((ow-iw)/2):trunc((oh-ih)/2):color=black,format=yuv420p"
+        img_clip.write_videofile(
+            output_path,
+            fps=24,
+            codec="libx264",
+            audio=False,
+            logger=None,
+            ffmpeg_params=[
+                '-fps_mode', 'cfr',
+                '-vf', scale_filter,
+                '-profile:v', 'main',
+                '-level', '4.0'
+            ]
+        )
         img_clip.close()
         return output_path
     except Exception as e:
@@ -203,7 +216,27 @@ def fetch_stock_video(query: str, orientation: str = "portrait", output_filename
                             with open(output_path, "wb") as f:
                                 for chunk in vid_response.iter_content(chunk_size=8192):
                                     f.write(chunk)
-                            print(f"   -> [Pexels Success] Downloaded ambient stock video.")
+                            print(f"   -> [Pexels Success] Downloaded ambient stock video. Normalizing...")
+                            try:
+                                import subprocess, imageio_ffmpeg
+                                ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
+                                target_w = 1080 if orientation == "portrait" else 1920
+                                target_h = 1920 if orientation == "portrait" else 1080
+                                temp_norm_path = output_path.replace(".mp4", "_norm.mp4")
+                                scale_filter = f"scale={target_w}:{target_h}:force_original_aspect_ratio=decrease,pad={target_w}:{target_h}:trunc((ow-iw)/2):trunc((oh-ih)/2):color=black,format=yuv420p"
+                                cmd = [
+                                    ffmpeg_exe, "-y", "-i", output_path,
+                                    "-vf", scale_filter,
+                                    "-c:v", "libx264", "-preset", "veryfast", "-crf", "22",
+                                    "-c:a", "aac", "-b:a", "128k",
+                                    "-fps_mode", "cfr", "-r", "24",
+                                    temp_norm_path
+                                ]
+                                subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+                                if os.path.exists(temp_norm_path):
+                                    os.replace(temp_norm_path, output_path)
+                            except Exception as norm_err:
+                                print(f"[Note] Pexels normalization fallback skipped: {norm_err}")
                             return output_path
         except Exception as e:
             print(f"[Warning] Pexels fallback failed: {e}")

@@ -297,6 +297,27 @@ def fit_clip_to_target(c, target_w, target_h):
     ew, eh = (target_w // 2) * 2, (target_h // 2) * 2
     return resize_clip(c, newsize=(ew, eh))
 
+def normalize_video_file(input_path, target_w, target_h):
+    try:
+        import subprocess, imageio_ffmpeg
+        ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
+        temp_out = input_path.replace(".mp4", "_norm_final.mp4")
+        scale_filter = f"scale={target_w}:{target_h}:force_original_aspect_ratio=decrease,pad={target_w}:{target_h}:trunc((ow-iw)/2):trunc((oh-ih)/2):color=black,format=yuv420p"
+        cmd = [
+            ffmpeg_exe, "-y", "-i", input_path,
+            "-vf", scale_filter,
+            "-c:v", "libx264", "-preset", "veryfast", "-crf", "20",
+            "-c:a", "aac", "-b:a", "128k",
+            "-fps_mode", "cfr", "-r", "24",
+            temp_out
+        ]
+        subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+        if os.path.exists(temp_out):
+            os.replace(temp_out, input_path)
+    except Exception as e:
+        print(f"[Note] Video file normalization fallback: {e}")
+    return input_path
+
 def render_video(audio_path: str, video_clips_paths: list, output_path: str, video_type: str = "short", title_text: str = "", category: str = "", scenes: list = None, language: str = "Telugu"):
     """
     Renders the final video by combining audio voiceover, stock video clips, captions, intro, and outro.
@@ -324,6 +345,7 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
     intro_duration = 0
     if os.path.exists(intro_path):
         try:
+            normalize_video_file(intro_path, width, height)
             intro_clip = VideoFileClip(intro_path)
             intro_duration = intro_clip.duration
             intro_clip = fit_clip_to_target(intro_clip, width, height)
@@ -338,6 +360,7 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
     outro_duration = 0
     if os.path.exists(outro_path):
         try:
+            normalize_video_file(outro_path, width, height)
             outro_clip = VideoFileClip(outro_path)
             outro_duration = outro_clip.duration
             outro_clip = fit_clip_to_target(outro_clip, width, height)
@@ -354,6 +377,7 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
         clip_duration = voiceover_duration / len(valid_clips)
         for path in valid_clips:
             try:
+                normalize_video_file(path, width, height)
                 c = VideoFileClip(path)
                 if c.duration < clip_duration:
                     repeats = int(clip_duration // c.duration) + 1

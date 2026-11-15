@@ -25,13 +25,20 @@ def create_default_outro():
     except Exception:
         clip = bg
 
+    scale_filter = f"scale={width}:{height}:force_original_aspect_ratio=decrease,pad={width}:{height}:trunc((ow-iw)/2):trunc((oh-ih)/2):color=black,format=yuv420p"
     clip.write_videofile(
         outro_path,
         fps=24,
         codec='libx264',
         audio_codec='aac',
         preset='medium',
-        logger=None
+        logger=None,
+        ffmpeg_params=[
+            '-fps_mode', 'cfr',
+            '-vf', scale_filter,
+            '-profile:v', 'main',
+            '-level', '4.0'
+        ]
     )
     clip.close()
     print(f"[Success] Default Outro video generated at: {outro_path}")
