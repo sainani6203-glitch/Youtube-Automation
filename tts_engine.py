@@ -9,10 +9,10 @@ from gtts import gTTS
 VOICE_MAP = {
     "en": "en-US-ChristopherNeural",     # Authoritative male voice for English
     "te": "te-IN-MohanNeural",           # Authoritative male voice for Telugu
-    "hi": "hi-IN-MadhurNeural",          # Authoritative male voice for Hindi
+    "hi": "hi-IN-SwaraNeural",           # Expressive female voice for Hindi
     "english": "en-US-ChristopherNeural",
     "telugu": "te-IN-MohanNeural",
-    "hindi": "hi-IN-MadhurNeural"
+    "hindi": "hi-IN-SwaraNeural"
 }
 
 async def generate_voiceover_edge(text: str, output_audio_path: str, language: str = "en"):
