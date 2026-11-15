@@ -163,14 +163,17 @@ def fetch_stock_video(query: str, orientation: str = "portrait", output_filename
 
     # 1. Tier 2: Real Archives (NASA for space, Wikimedia for history/geography)
     img_bytes = None
-    if is_space:
-        print(f"   -> [NASA Archive] Fetching authentic space visual for: '{query}'...")
-        img_bytes = fetch_nasa_image(query)
-    elif is_history or len(query) > 10:
-        print(f"   -> [Wikimedia Archive] Fetching authentic historical visual for: '{query}'...")
-        img_bytes = fetch_wikimedia_image(query)
-        if not img_bytes and is_space:
+    try:
+        if is_space:
+            print(f"   -> [NASA Archive] Fetching authentic space visual for: '{query}'...")
             img_bytes = fetch_nasa_image(query)
+        elif is_history or len(query) > 10:
+            print(f"   -> [Wikimedia Archive] Fetching authentic historical visual for: '{query}'...")
+            img_bytes = fetch_wikimedia_image(query)
+            if not img_bytes and is_space:
+                img_bytes = fetch_nasa_image(query)
+    except Exception as archive_err:
+        print(f"[Note] Archive fetch skipped due to error/timeout: {archive_err}")
 
     if img_bytes:
         res_path = image_to_video_clip(img_bytes, output_path, orientation)
@@ -226,6 +229,7 @@ def fetch_stock_video(query: str, orientation: str = "portrait", output_filename
                                 scale_filter = f"scale={target_w}:{target_h}:force_original_aspect_ratio=decrease,pad={target_w}:{target_h}:trunc((ow-iw)/2):trunc((oh-ih)/2):color=black,format=yuv420p"
                                 cmd = [
                                     ffmpeg_exe, "-y", "-i", output_path,
+                                    "-sws_flags", "lanczos+accurate_rnd",
                                     "-vf", scale_filter,
                                     "-c:v", "libx264", "-preset", "veryfast", "-crf", "22",
                                     "-c:a", "aac", "-b:a", "128k",

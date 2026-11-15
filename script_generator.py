@@ -178,12 +178,13 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
     # 1. Try Gemini first as primary provider
     if not text_result and GEMINI_API_KEY:
         model_names = [
-            "gemini-2.5-flash",
-            "gemini-2.5-pro",
+            "gemini-3.8-flash",
+            "gemini-3.1-pro-preview",
+            "gemini-2.0-flash",
+            "gemini-1.5-flash",
+            "gemini-1.5-pro",
             "gemini-flash-latest",
-            "gemini-pro-latest",
-            "gemini-3.5-flash",
-            "gemini-3.8-flash"
+            "gemini-pro-latest"
         ]
         response = None
         import time

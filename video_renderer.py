@@ -305,6 +305,7 @@ def normalize_video_file(input_path, target_w, target_h):
         scale_filter = f"scale={target_w}:{target_h}:force_original_aspect_ratio=decrease,pad={target_w}:{target_h}:trunc((ow-iw)/2):trunc((oh-ih)/2):color=black,format=yuv420p"
         cmd = [
             ffmpeg_exe, "-y", "-i", input_path,
+            "-sws_flags", "lanczos+accurate_rnd",
             "-vf", scale_filter,
             "-c:v", "libx264", "-preset", "veryfast", "-crf", "20",
             "-c:a", "aac", "-b:a", "128k",
@@ -566,8 +567,6 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
     final_composite = set_dur(trim_clip(set_aud(final_visual, final_audio), 0, total_duration), total_duration)
     
     target_bitrate = "8000k" if video_type != "short" else "4000k"
-    
-    scale_filter = f"scale={width}:{height}:force_original_aspect_ratio=decrease,pad={width}:{height}:trunc((ow-iw)/2):trunc((oh-ih)/2):color=black,format=yuv420p"
 
     final_composite.write_videofile(
         output_path,
@@ -581,7 +580,7 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
         ffmpeg_params=[
             '-movflags', '+faststart',
             '-fps_mode', 'cfr',
-            '-vf', scale_filter,
+            '-vf', 'format=yuv420p',
             '-ar', '44100',
             '-g', '48',
             '-keyint_min', '24',
