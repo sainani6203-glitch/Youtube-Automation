@@ -520,7 +520,13 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
     try:
         if total_duration > 6.0:
             sub_start = max(3.0, total_duration - 5.0)
-            sub_reminder_clip = safe_text_clip(text_content="🔔 SUBSCRIBE FOR MORE", font_size=40, color='yellow', stroke_color='black', stroke_width=2)
+            cta_text = "🔔 SUBSCRIBE FOR MORE"
+            if language.lower() == "telugu":
+                cta_text = "🔔 ఇప్పుడే సబ్స్క్రైబ్ చేసుకోండి!"
+            elif language.lower() == "hindi":
+                cta_text = "🔔 अभी चैनल को सब्सक्राइब करें!"
+
+            sub_reminder_clip = safe_text_clip(text_content=cta_text, font_size=42, color='yellow', stroke_color='black', stroke_width=2)
             sub_reminder_clip = set_dur(sub_reminder_clip, min(5.0, total_duration - sub_start))
             sub_reminder_clip = set_start(sub_reminder_clip.set_position(('center', height - 280)), sub_start)
             final_visual = set_dur(safe_composite_video([final_visual, sub_reminder_clip], duration=total_duration), total_duration)
