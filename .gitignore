@@ -18,3 +18,9 @@ venv/
 assets/
 output/
 ready_to_review/
+
+# Runtime State JSON Files
+daily_progress.json
+pending_uploads.json
+topic_history.json
+replied_comments.json
