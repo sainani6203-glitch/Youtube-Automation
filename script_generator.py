@@ -78,7 +78,8 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
 
         prompt = f"""
         Create a viral, high-retention YouTube Short script as a teaser for the main topic: "{topic}".
-        TEASER & CROSS-PROMOTION MANDATE: This Short is a teaser / companion piece for the long-form video about "{topic}". It MUST focus on ONE specific, highly intriguing sub-point or startling teaser fact directly from "{topic}" that hooks viewers and naturally drives them to watch the full long video for the complete story. Do NOT make it a random unrelated topic, but ensure it does not repeat the exact same sentences or full script of the long video.
+        ANTI-REPETITION MANDATE: Do NOT repeat the general summary or points covered in the long video. Pick a completely distinct, hyper-specific microscopic detail, secret anomaly, or bizarre sub-fact from the topic that stands alone as an intriguing teaser and does not duplicate long video sentences.
+        TEASER & CROSS-PROMOTION MANDATE: This Short is a teaser / companion piece for the long-form video about "{topic}". It MUST focus on ONE specific, highly intriguing sub-point or startling teaser fact directly from "{topic}" that hooks viewers and naturally drives them to watch the full long video for the complete story.
         {angle_instruction}
         CRITICAL MANDATE FOR TITLE: DO NOT copy any example title. The title MUST be strictly DUAL-LANGUAGE in this exact format: "[Regional {language} Title] | [English Title]". First write the title in authentic {language} script, followed by a pipe (|), and then the English title. Include "#shorts" at the end. Maximum 90 characters total.
         {language_instruction}
