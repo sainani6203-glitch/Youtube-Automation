@@ -276,15 +276,14 @@ def fit_clip_to_target(c, target_w, target_h):
         c = crop_clip(c, x1=x1, y1=y1, width=target_w, height=target_h)
     except Exception:
         pass
-    ew, eh = (target_w // 2) * 2, (target_h // 2) * 2
-    return resize_clip(c, newsize=(ew, eh))
+    return c
 
 def normalize_video_file(input_path, target_w, target_h):
     try:
         import subprocess, imageio_ffmpeg
         ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
         temp_out = input_path.replace(".mp4", "_norm_final.mp4")
-        scale_filter = f"scale={target_w}:{target_h}:force_original_aspect_ratio=decrease,pad={target_w}:{target_h}:trunc((ow-iw)/2):trunc((oh-ih)/2):color=black,format=yuv420p"
+        scale_filter = f"scale={target_w}:{target_h}:force_original_aspect_ratio=increase,crop={target_w}:{target_h},format=yuv420p"
         cmd = [
             ffmpeg_exe, "-y", "-i", input_path,
             "-sws_flags", "lanczos+accurate_rnd",
