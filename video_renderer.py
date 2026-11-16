@@ -254,33 +254,15 @@ def safe_composite_audio(clips, duration=None):
 
 def resize_clip(clip, **kwargs):
     try: 
-        c = clip.resize(**kwargs)
+        return clip.resize(**kwargs)
     except: 
-        c = clip.resized(**kwargs)
-    if hasattr(c, 'w') and hasattr(c, 'h') and c.w and c.h:
-        w, h = int(c.w), int(c.h)
-        ew, eh = (w // 2) * 2, (h // 2) * 2
-        if w != ew or h != eh:
-            try: c = c.resize(width=ew, height=eh)
-            except:
-                try: c = c.resized(width=ew, height=eh)
-                except: pass
-    return c
+        return clip.resized(**kwargs)
 
 def crop_clip(clip, **kwargs):
     try: 
-        c = clip.crop(**kwargs)
+        return clip.crop(**kwargs)
     except: 
-        c = clip.cropped(**kwargs)
-    if hasattr(c, 'w') and hasattr(c, 'h') and c.w and c.h:
-        w, h = int(c.w), int(c.h)
-        ew, eh = (w // 2) * 2, (h // 2) * 2
-        if w != ew or h != eh:
-            try: c = c.resize(width=ew, height=eh)
-            except:
-                try: c = c.resized(width=ew, height=eh)
-                except: pass
-    return c
+        return clip.cropped(**kwargs)
 
 def fit_clip_to_target(c, target_w, target_h):
     try:
