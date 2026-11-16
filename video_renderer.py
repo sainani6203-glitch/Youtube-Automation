@@ -270,9 +270,13 @@ def fit_clip_to_target(c, target_w, target_h):
         scale = max(target_w / w, target_h / h)
         new_w = int(w * scale)
         new_h = int(h * scale)
+        new_w = (new_w // 2) * 2
+        new_h = (new_h // 2) * 2
         c = resize_clip(c, newsize=(new_w, new_h))
-        x1 = max(0, (c.w - target_w) / 2)
-        y1 = max(0, (c.h - target_h) / 2)
+        x1 = int(max(0, (c.w - target_w) / 2))
+        y1 = int(max(0, (c.h - target_h) / 2))
+        x1 = (x1 // 2) * 2
+        y1 = (y1 // 2) * 2
         c = crop_clip(c, x1=x1, y1=y1, width=target_w, height=target_h)
     except Exception:
         pass
@@ -283,7 +287,7 @@ def normalize_video_file(input_path, target_w, target_h):
         import subprocess, imageio_ffmpeg
         ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
         temp_out = input_path.replace(".mp4", "_norm_final.mp4")
-        scale_filter = f"scale={target_w}:{target_h}:force_original_aspect_ratio=increase,crop={target_w}:{target_h},format=yuv420p"
+        scale_filter = f"scale={target_w}:{target_h}:force_original_aspect_ratio=increase,crop={target_w}:{target_h}:(iw-{target_w})/2:(ih-{target_h})/2,format=yuv420p"
         cmd = [
             ffmpeg_exe, "-y", "-i", input_path,
             "-sws_flags", "lanczos+accurate_rnd",

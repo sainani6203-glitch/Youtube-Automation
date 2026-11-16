@@ -101,9 +101,14 @@ def image_to_video_clip(img_bytes: bytes, output_path: str, orientation: str = "
                     new_w = target_w
                     new_h = int(orig_h * (target_w / orig_w))
                     
+                new_w = (new_w // 2) * 2
+                new_h = (new_h // 2) * 2
+                    
                 img_resized = img.resize((new_w, new_h), Image.Resampling.LANCZOS)
-                left = (new_w - target_w) / 2
-                top = (new_h - target_h) / 2
+                left = int(max(0, (new_w - target_w) / 2))
+                top = int(max(0, (new_h - target_h) / 2))
+                left = (left // 2) * 2
+                top = (top // 2) * 2
                 right = left + target_w
                 bottom = top + target_h
                 
