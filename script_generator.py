@@ -179,13 +179,8 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
     # 1. Try Gemini first as primary provider
     if not text_result and GEMINI_API_KEY:
         model_names = [
-            "gemini-3.8-flash",
-            "gemini-3.1-pro-preview",
-            "gemini-2.0-flash",
             "gemini-1.5-flash",
-            "gemini-1.5-pro",
-            "gemini-flash-latest",
-            "gemini-pro-latest"
+            "gemini-1.5-pro"
         ]
         response = None
         import time
@@ -194,30 +189,18 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
             success_gemini = False
             for attempt in range(2):
                 try:
-                    model = genai.GenerativeModel(m_name, tools=['google_search'])
+                    model = genai.GenerativeModel(m_name)
                     response = model.generate_content(
                         prompt,
                         generation_config=genai.types.GenerationConfig(max_output_tokens=max_tokens_val)
                     )
                     if response and response.text:
-                        print(f"[Success] Used Gemini model with Google Search grounding: {m_name}")
+                        print(f"[Success] Used Gemini model: {m_name}")
                         success_gemini = True
                         break
                 except Exception as e:
-                    print(f"[Note] Model '{m_name}' with search tools failed ({e}), trying without tools (attempt {attempt+1})...")
-                    try:
-                        model = genai.GenerativeModel(m_name)
-                        response = model.generate_content(
-                            prompt,
-                            generation_config=genai.types.GenerationConfig(max_output_tokens=max_tokens_val)
-                        )
-                        if response and response.text:
-                            print(f"[Success] Used Gemini model (fallback without search): {m_name}")
-                            success_gemini = True
-                            break
-                    except Exception as e2:
-                        print(f"[Note] Model '{m_name}' attempt {attempt+1} completely failed ({e2})")
-                        time.sleep(3)
+                    print(f"[Note] Model '{m_name}' attempt {attempt+1} failed ({e})")
+                    time.sleep(3)
             if success_gemini:
                 break
                 
