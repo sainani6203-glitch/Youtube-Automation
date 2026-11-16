@@ -413,9 +413,8 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
             
     sequence_visuals.append(main_visual)
     
-    if video_type != "short":
-        if outro_clip:
-            sequence_visuals.append(outro_clip)
+    if outro_clip:
+        sequence_visuals.append(outro_clip)
         
     final_visual = concatenate_videoclips(sequence_visuals)
 
@@ -466,13 +465,11 @@ def render_video(audio_path: str, video_clips_paths: list, output_path: str, vid
             
     audio_parts.append(audio)
     
-    if video_type == "short":
-        # Add 3.5s trailing buffer for Subscribe CTA so voiceover never cuts off
+    if outro_clip and outro_duration > 0:
+        audio_parts.append(make_silent_clip(outro_duration))
+    elif video_type == "short":
+        # Add 3.5s trailing buffer for Subscribe CTA if no outro clip
         audio_parts.append(make_silent_clip(3.5))
-    
-    if video_type != "short":
-        if outro_clip and outro_duration > 0:
-            audio_parts.append(make_silent_clip(outro_duration))
         
     final_audio_voice = concatenate_audioclips(audio_parts)
     total_duration = final_audio_voice.duration
