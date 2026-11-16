@@ -122,7 +122,7 @@ def image_to_video_clip(img_bytes: bytes, output_path: str, orientation: str = "
         except Exception:
             pass
                 
-        scale_filter = f"scale={target_w}:{target_h}:force_original_aspect_ratio=decrease,pad={target_w}:{target_h}:trunc((ow-iw)/2):trunc((oh-ih)/2):color=black,format=yuv420p"
+        scale_filter = f"scale={target_w}:{target_h}:force_original_aspect_ratio=increase,crop={target_w}:{target_h},format=yuv420p"
         img_clip.write_videofile(
             output_path,
             fps=24,
@@ -226,7 +226,7 @@ def fetch_stock_video(query: str, orientation: str = "portrait", output_filename
                                 target_w = 1080 if orientation == "portrait" else 1920
                                 target_h = 1920 if orientation == "portrait" else 1080
                                 temp_norm_path = output_path.replace(".mp4", "_norm.mp4")
-                                scale_filter = f"scale={target_w}:{target_h}:force_original_aspect_ratio=decrease,pad={target_w}:{target_h}:trunc((ow-iw)/2):trunc((oh-ih)/2):color=black,format=yuv420p"
+                                scale_filter = f"scale={target_w}:{target_h}:force_original_aspect_ratio=increase,crop={target_w}:{target_h},format=yuv420p"
                                 cmd = [
                                     ffmpeg_exe, "-y", "-i", output_path,
                                     "-sws_flags", "lanczos+accurate_rnd",

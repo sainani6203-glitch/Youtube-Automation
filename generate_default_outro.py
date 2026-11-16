@@ -25,7 +25,7 @@ def create_default_outro():
     except Exception:
         clip = bg
 
-    scale_filter = f"scale={width}:{height}:force_original_aspect_ratio=decrease,pad={width}:{height}:trunc((ow-iw)/2):trunc((oh-ih)/2):color=black,format=yuv420p"
+    scale_filter = f"scale={width}:{height}:force_original_aspect_ratio=increase,crop={width}:{height},format=yuv420p"
     clip.write_videofile(
         outro_path,
         fps=24,
