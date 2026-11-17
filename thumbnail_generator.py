@@ -7,7 +7,7 @@ import urllib.parse
 from playwright.sync_api import sync_playwright
 from config import READY_TO_REVIEW_DIR, PEXELS_API_KEY
 
-def format_title_into_lines(text: str, max_words_per_line: int = 3) -> list:
+def format_title_into_lines(text: str, max_words_per_line: int = 5) -> list:
     """Splits a long thumbnail title into punchy multi-line chunks for high CTR."""
     words = text.split()
     lines = []
@@ -19,21 +19,21 @@ def format_title_into_lines(text: str, max_words_per_line: int = 3) -> list:
             current_line = []
     if current_line:
         lines.append(" ".join(current_line))
-    return lines[:3] # Max 3 lines
+    return lines[:4] # Allow up to 4 lines for rich meaningful text
 
 def get_context_aware_emoji(category: str, title: str) -> str:
-    """Selects a context-aware high-CTR emoji based on category or title content."""
+    """Selects a context-aware high-CTR emoji based on category or title content (supports English, Telugu, and Hindi keywords)."""
     cat_lower = category.lower()
     title_lower = title.lower()
 
-    if "space" in cat_lower or "science" in cat_lower or any(w in title_lower for w in ["space", "mars", "black hole", "planet", "universe", "nasa", "earth"]):
+    if "space" in cat_lower or "science" in cat_lower or any(w in title_lower for w in ["space", "mars", "black hole", "planet", "universe", "nasa", "earth", "ब्रह्मांड", "अंतरिक्ष", "ग्रह"]):
         return random.choice(["🌌", "🚀", "🪐", "🔭", "✨"])
-    elif "ancient" in cat_lower or "mystery" in cat_lower or "mysteries" in cat_lower or any(w in title_lower for w in ["temple", "alayam", "secret", "rahasyam", "ancient", "pyramid", "history"]):
-        return random.choice(["🏛️", "🗿", "🗝️", "🔍", "⚡"])
-    elif "psychology" in cat_lower or "mind" in cat_lower or any(w in title_lower for w in ["mind", "brain", "psychology", "behavior", "people", "secret"]):
+    elif "ancient" in cat_lower or "mystery" in cat_lower or "mysteries" in cat_lower or any(w in title_lower for w in ["temple", "alayam", "secret", "rahasyam", "ancient", "pyramid", "history", "रहस्य", "सच", "पिरामिड", "मंदिर", "भयानक", "धोखा", "నిజం", "రహస్యం", "పిరమిడ్"]):
+        return random.choice(["🏛️", "🗿", "🗝️", "🔍", "⚡", "😱"])
+    elif "psychology" in cat_lower or "mind" in cat_lower or any(w in title_lower for w in ["mind", "brain", "psychology", "behavior", "people", "secret", "मन", "दिमाग", "मनोविज्ञान", "మెదడు"]):
         return random.choice(["🧠", "👁️", "🎭", "⚠️", "🤫"])
     else:
-        return random.choice(["😱", "🤯", "🚨", "🔥", "💥"])
+        return random.choice(["😱", "🤯", "🚨", "🔥", "💥", "🤫"])
 
 def generate_thumbnail(title: str, category: str = "", output_path: str = None, vertical: bool = False, language: str = "Telugu") -> str:
     """
@@ -81,18 +81,18 @@ def generate_thumbnail(title: str, category: str = "", output_path: str = None, 
         except Exception as e:
             print(f"[Warning] Could not fetch video title from YouTube: {e}")
 
-    # Determine full meaningful title for the thumbnail & exact English topic subject
+    # Determine full meaningful regional title for the thumbnail & exact English topic subject for search
     clean_title = title.replace("#shorts", "").replace("#Shorts", "").strip()
+    thumbnail_text = clean_title
     english_subject = ""
     if "|" in clean_title:
         parts = clean_title.split("|")
-        regional_part = parts[0].strip()
-        english_part = parts[1].strip()
-        thumbnail_text = f"{regional_part} - {english_part}"
-        english_subject = english_part
+        thumbnail_text = parts[0].strip()  # Strictly regional language text
+        english_subject = parts[1].strip() # English part for Pexels background search
     else:
         thumbnail_text = clean_title
-        english_subject = clean_title
+        english_words = [word for word in clean_title.split() if all(ord(c) < 128 for c in word)]
+        english_subject = " ".join(english_words)
 
     if thumbnail_text.endswith("..."):
         thumbnail_text = thumbnail_text[:-3].strip()
@@ -103,7 +103,7 @@ def generate_thumbnail(title: str, category: str = "", output_path: str = None, 
         context_emoji = get_context_aware_emoji(category, clean_title)
         thumbnail_text = f"{thumbnail_text} {context_emoji}"
 
-    # Format into punchy multi-lines with more meaningful words per line
+    # Format into punchy multi-lines (strictly regional language text)
     title_lines = format_title_into_lines(thumbnail_text, max_words_per_line=4)
 
     ai_subject = english_subject if english_subject.strip() else (category if category else "mysterious cinematic subject")
