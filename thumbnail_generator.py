@@ -83,15 +83,16 @@ def generate_thumbnail(title: str, category: str = "", output_path: str = None, 
 
     # Determine full meaningful title for the thumbnail & exact English topic subject
     clean_title = title.replace("#shorts", "").replace("#Shorts", "").strip()
-    thumbnail_text = clean_title
     english_subject = ""
     if "|" in clean_title:
         parts = clean_title.split("|")
-        thumbnail_text = parts[0].strip()
-        english_subject = parts[1].strip()
+        regional_part = parts[0].strip()
+        english_part = parts[1].strip()
+        thumbnail_text = f"{regional_part} - {english_part}"
+        english_subject = english_part
     else:
-        english_words = [word for word in clean_title.split() if all(ord(c) < 128 for c in word)]
-        english_subject = " ".join(english_words)
+        thumbnail_text = clean_title
+        english_subject = clean_title
 
     if thumbnail_text.endswith("..."):
         thumbnail_text = thumbnail_text[:-3].strip()
@@ -102,8 +103,8 @@ def generate_thumbnail(title: str, category: str = "", output_path: str = None, 
         context_emoji = get_context_aware_emoji(category, clean_title)
         thumbnail_text = f"{thumbnail_text} {context_emoji}"
 
-    # Format into punchy multi-lines
-    title_lines = format_title_into_lines(thumbnail_text, max_words_per_line=3)
+    # Format into punchy multi-lines with more meaningful words per line
+    title_lines = format_title_into_lines(thumbnail_text, max_words_per_line=4)
 
     ai_subject = english_subject if english_subject.strip() else (category if category else "mysterious cinematic subject")
 
