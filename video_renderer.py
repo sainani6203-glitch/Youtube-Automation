@@ -136,6 +136,17 @@ def safe_text_clip(text_content, font_size=40, color='white', stroke_color='blac
                 element.screenshot(path=temp_path, type='png', omit_background=True)
                 browser.close()
                 
+            from PIL import Image
+            with Image.open(temp_path) as im:
+                im = im.convert("RGBA")
+                w, h = im.size
+                new_w = w if w % 2 == 0 else w + 1
+                new_h = h if h % 2 == 0 else h + 1
+                if new_w != w or new_h != h:
+                    new_im = Image.new("RGBA", (new_w, new_h), (0, 0, 0, 0))
+                    new_im.paste(im, (0, 0))
+                    new_im.save(temp_path, "PNG")
+
             from moviepy.editor import ImageClip
             return ImageClip(temp_path)
         except Exception as e:
@@ -265,9 +276,45 @@ def crop_clip(clip, **kwargs):
         return clip.cropped(**kwargs)
 
 def fit_clip_to_target(c, target_w, target_h):
+    try:
+        w, h = getattr(c, 'w', target_w), getattr(c, 'h', target_h)
+        scale = max(target_w / w, target_h / h)
+        new_w = int(w * scale)
+        new_h = int(h * scale)
+        new_w = (new_w // 2) * 2
+        new_h = (new_h // 2) * 2
+        c = resize_clip(c, newsize=(new_w, new_h))
+        x1 = int(max(0, (c.w - target_w) / 2))
+        y1 = int(max(0, (c.h - target_h) / 2))
+        x1 = (x1 // 2) * 2
+        y1 = (y1 // 2) * 2
+        c = crop_clip(c, x1=x1, y1=y1, width=target_w, height=target_h)
+    except Exception as e:
+        print(f"[Note] fit_clip_to_target fallback: {e}")
     return c
 
 def normalize_video_file(input_path, target_w, target_h):
+    try:
+        import subprocess, imageio_ffmpeg
+        ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
+        temp_out = input_path.replace(".mp4", "_norm_final.mp4")
+        scale_filter = f"scale={target_w}:{target_h}:force_original_aspect_ratio=increase,crop={target_w}:{target_h}:(iw-{target_w})/2:(ih-{target_h})/2,format=yuv420p"
+        cmd = [
+            ffmpeg_exe, "-y", "-i", input_path,
+            "-sws_themes", "lanczos" if False else "",
+            "-vf", scale_filter,
+            "-c:v", "libx264", "-preset", "veryfast", "-crf", "20",
+            "-c:a", "aac", "-b:a", "128k",
+            "-fps_mode", "cfr", "-r", "24",
+            temp_out
+        ]
+        # Clean up empty args
+        cmd = [arg for arg in cmd if arg != ""]
+        subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+        if os.path.exists(temp_out):
+            os.replace(temp_out, input_path)
+    except Exception as e:
+        print(f"[Note] Video file normalization fallback: {e}")
     return input_path
 
 def render_video(audio_path: str, video_clips_paths: list, output_path: str, video_type: str = "short", title_text: str = "", category: str = "", scenes: list = None, language: str = "Telugu"):

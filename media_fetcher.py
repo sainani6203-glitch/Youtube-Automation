@@ -120,12 +120,6 @@ def image_to_video_clip(img_bytes: bytes, output_path: str, orientation: str = "
         from moviepy.editor import ImageClip
         clip_duration = 4.0
         img_clip = ImageClip(temp_img_path).set_duration(clip_duration)
-            
-        # Apply smooth cinematic zoom-in (Ken Burns effect)
-        try:
-            img_clip = img_clip.resize(lambda t: 1.0 + 0.05 * t)
-        except Exception:
-            pass
                 
         scale_filter = f"scale={target_w}:{target_h}:force_original_aspect_ratio=increase,crop={target_w}:{target_h},format=yuv420p"
         img_clip.write_videofile(
