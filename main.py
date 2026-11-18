@@ -140,7 +140,8 @@ def run_pipeline(video_type: str = "short", custom_topic: str = None, language: 
                 if is_scheduled:
                     print("🚀 Fully-automated batch mode: Uploading with scheduled publishing...")
                     now_utc = datetime.datetime.utcnow()
-                    publish_dt = now_utc.replace(hour=2, minute=30, second=0, microsecond=0)
+                    # 6:00 PM IST = 12:30 UTC
+                    publish_dt = now_utc.replace(hour=12, minute=30, second=0, microsecond=0)
                     if now_utc >= publish_dt:
                         publish_dt += datetime.timedelta(days=1)
                     publish_at_str = publish_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
