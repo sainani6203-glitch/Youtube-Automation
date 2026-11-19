@@ -51,7 +51,15 @@ def get_authenticated_service(language: str = "Telugu"):
             flow = InstalledAppFlow.from_client_secrets_file(
                 credentials_file, SCOPES
             )
-            creds = flow.run_local_server(port=0, prompt='consent')
+            if not os.environ.get("DISPLAY") and os.name != 'nt':
+                print("[Info] Headless environment detected (no DISPLAY). Using console authorization...")
+                creds = flow.run_console(prompt='consent')
+            else:
+                try:
+                    creds = flow.run_local_server(port=0, prompt='consent')
+                except Exception as ex:
+                    print(f"[Info] Local webserver failed ({ex}); falling back to console authorization...")
+                    creds = flow.run_console(prompt='consent')
 
         with open(token_file, "wb") as token:
             pickle.dump(creds, token)
