@@ -52,14 +52,53 @@ def get_authenticated_service(language: str = "Telugu"):
                 credentials_file, SCOPES
             )
             if not os.environ.get("DISPLAY") and os.name != 'nt':
-                print("[Info] Headless environment detected (no DISPLAY). Using console authorization...")
-                creds = flow.run_console(prompt='consent')
+                print("[Info] Headless environment detected (no DISPLAY). Using manual console authorization...")
+                flow.redirect_uri = 'http://localhost/'
+                auth_url, _ = flow.authorization_url(prompt='consent', access_type='offline', include_granted_scopes='true')
+                print("\n" + "="*80)
+                print("🔑 GOOGLE OAUTH HEADLESS AUTHORIZATION:")
+                print("1. Open this URL in your browser on any device (phone/laptop):")
+                print(auth_url)
+                print("\n2. Grant access to your YouTube account.")
+                print("3. You will be redirected to localhost (which will show 'site can't be reached').")
+                print("4. Copy the FULL URL from your browser address bar (starts with http://localhost/?code=...)")
+                print("   and paste it below.")
+                print("="*80 + "\n")
+                
+                code_or_url = input("Paste the full redirect URL or auth code here: ").strip()
+                if "code=" in code_or_url:
+                    from urllib.parse import urlparse, parse_qs
+                    parsed_url = urlparse(code_or_url)
+                    query_params = parse_qs(parsed_url.query)
+                    code = query_params.get("code", [code_or_url])[0]
+                else:
+                    code = code_or_url
+                
+                flow.fetch_token(code=code)
+                creds = flow.credentials
             else:
                 try:
                     creds = flow.run_local_server(port=0, prompt='consent')
                 except Exception as ex:
-                    print(f"[Info] Local webserver failed ({ex}); falling back to console authorization...")
-                    creds = flow.run_console(prompt='consent')
+                    print(f"[Info] Local webserver failed ({ex}); falling back to manual console authorization...")
+                    flow.redirect_uri = 'http://localhost/'
+                    auth_url, _ = flow.authorization_url(prompt='consent', access_type='offline', include_granted_scopes='true')
+                    print("\n" + "="*80)
+                    print("🔑 GOOGLE OAUTH HEADLESS AUTHORIZATION:")
+                    print("1. Open this URL in your browser on any device:")
+                    print(auth_url)
+                    print("2. Copy the full redirect URL from address bar after authorizing and paste below.")
+                    print("="*80 + "\n")
+                    code_or_url = input("Paste the full redirect URL or auth code here: ").strip()
+                    if "code=" in code_or_url:
+                        from urllib.parse import urlparse, parse_qs
+                        parsed_url = urlparse(code_or_url)
+                        query_params = parse_qs(parsed_url.query)
+                        code = query_params.get("code", [code_or_url])[0]
+                    else:
+                        code = code_or_url
+                    flow.fetch_token(code=code)
+                    creds = flow.credentials
 
         with open(token_file, "wb") as token:
             pickle.dump(creds, token)
