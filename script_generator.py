@@ -77,6 +77,9 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         language_instruction = f"The script narration text MUST be written entirely in pure {script_lang_name} using authentic {script_script_name}. ABSOLUTELY NO mixed English words or romanized English words in the narration text or subtitles." if script_lang_name.lower() in ["telugu", "hindi"] else f"The script narration text MUST be written entirely in {language}."
 
         prompt = f"""
+        STORYTELLING & PACING MANDATE (THRILLER DOCUMENTARY STYLE): DO NOT write like a boring textbook or formal encyclopedia. Write like a master mystery documentary narrator (Netflix/NatGeo style) telling a gripping, dark, and mind-bending story directly to the viewer. Use conversational direct address, rhetorical questions (e.g. "Asalu idhi nijamena?", "Meru epudaina alochinchaara?"), and intense narrative tension.
+        PUNCTUATION & VOICE PACE MANDATE: Use short, punchy sentences. Use ellipses (...) and exclamation marks (!) strategically to create natural dramatic pauses for the neural voiceover to sound extremely suspenseful, expressive, and alive.
+        
         Create a viral, high-retention YouTube Short script as a teaser for the main topic: "{topic}".
         ANTI-REPETITION MANDATE: Do NOT repeat the general summary or points covered in the long video. Pick a completely distinct, hyper-specific microscopic detail, secret anomaly, or bizarre sub-fact from the topic that stands alone as an intriguing teaser and does not duplicate long video sentences.
         TEASER & CROSS-PROMOTION MANDATE: This Short is a teaser / companion piece for the long-form video about "{topic}". It MUST focus on ONE specific, highly intriguing sub-point or startling teaser fact directly from "{topic}" that hooks viewers and naturally drives them to watch the full long video for the complete story.
@@ -120,6 +123,9 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         json_scenes_example = ",\n".join([f'                {{"text": "Paragraph {i} with 25-30 words...", "visual_keyword": "keyword{i}"}}' for i in range(1, 15)])
 
         prompt = f"""
+        STORYTELLING & PACING MANDATE (THRILLER DOCUMENTARY STYLE): DO NOT write like a boring textbook or formal encyclopedia. Write like a master mystery documentary narrator (Netflix/NatGeo style) telling a gripping, dark, and mind-bending story directly to the viewer. Use conversational direct address, rhetorical questions (e.g. "Asalu idhi nijamena?", "Meru epudaina alochinchaara?"), and intense narrative tension.
+        PUNCTUATION & VOICE PACE MANDATE: Use short, punchy sentences. Use ellipses (...) and exclamation marks (!) strategically to create natural dramatic pauses for the neural voiceover to sound extremely suspenseful, expressive, and alive.
+        
         Create a rich, high-retention, and deeply engaging {duration_desc} focusing on ONE SINGLE specific topic/mystery: "{topic}".
         CRITICAL MANDATE FOR TITLE: DO NOT copy any example title. The title MUST be strictly DUAL-LANGUAGE in this exact format: "[Regional {language} Title] | [English Title]". First write the title in authentic {language} script, followed by a pipe (|), and then the English title. Maximum 90 characters total.
         The description and script narration text MUST be written entirely in pure {script_lang_name} using authentic {script_script_name}. ABSOLUTELY NO mixed English words or romanized English words.
