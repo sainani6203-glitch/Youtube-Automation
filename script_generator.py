@@ -64,13 +64,13 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         
         angle_instruction = ""
         if short_angle == "shocking_fact":
-            angle_instruction = "Focus strictly on ONE single, hard-hitting, mind-blowing core fact or piece of evidence (No generic summaries or multiple points; dive deep into one startling reality)."
+            angle_instruction = "ANGLE MANDATE (Impossible Physics / Visual Mystery): Focus strictly on ONE single, mind-bending physical anomaly or engineering impossibility (e.g., how massive stones were moved, gravity-defying structures, or unexplained visual phenomena). Do NOT mention historical secrets or government cover-ups here."
         elif short_angle == "hidden_truth":
-            angle_instruction = "Focus strictly on ONE unique hidden truth or mysterious origin story related to this topic."
+            angle_instruction = "ANGLE MANDATE (Hidden Cover-up / Bizarre Historical Secret): Focus strictly on ONE dark historical secret, eerie local legend, or what mainstream historians/governments are hiding about this topic. Do NOT mention engineering or physics mysteries here."
         elif short_angle == "unsolved_mystery":
-            angle_instruction = "Focus strictly on ONE baffling unanswered question or missing piece of evidence."
+            angle_instruction = "ANGLE MANDATE (Baffling Unanswered Question): Focus strictly on ONE specific, haunting piece of missing evidence that keeps investigators awake at night."
         elif short_angle == "bizarre_experiment":
-            angle_instruction = "Focus strictly on ONE strange historical anomaly or bizarre event."
+            angle_instruction = "ANGLE MANDATE (Bizarre Anomaly): Focus strictly on ONE strange historical outlier or bizarre event that defies all logic."
         else:
             angle_instruction = "Focus on ONE fascinating scientific paradox or mind-bending perspective."
 
@@ -81,9 +81,11 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         PUNCTUATION & VOICE PACE MANDATE: Use short, punchy sentences. Use ellipses (...) and exclamation marks (!) strategically to create natural dramatic pauses for the neural voiceover to sound extremely suspenseful, expressive, and alive.
         
         Create a viral, high-retention YouTube Short script as a teaser for the main topic: "{topic}".
-        ANTI-REPETITION MANDATE: Do NOT repeat the general summary or points covered in the long video. Pick a completely distinct, hyper-specific microscopic detail, secret anomaly, or bizarre sub-fact from the topic that stands alone as an intriguing teaser and does not duplicate long video sentences.
+        ZERO TEXTBOOK FACTS MANDATE: Do NOT include generic educational info. Only include bizarre anomalies, dark historical secrets, or science-defying mysteries that sound unbelievable.
+        BRAIN-BREAKING HOOK MANDATE: Start with a 2-second "Open Loop" hook that creates an immediate contradiction or shocking realization (e.g., "Scientists say this is impossible... yet it exists right here.").
+        STRICT ANGLE SEPARATION & ANTI-REPETITION: This is part of a series. {angle_instruction} Ensure this script is 100% distinct from any other angle. No overlapping facts or sentences.
         TEASER & CROSS-PROMOTION MANDATE: This Short is a teaser / companion piece for the long-form video about "{topic}". It MUST focus on ONE specific, highly intriguing sub-point or startling teaser fact directly from "{topic}" that hooks viewers and naturally drives them to watch the full long video for the complete story.
-        {angle_instruction}
+        
         CRITICAL MANDATE FOR TITLE: DO NOT copy any example title. The title MUST be strictly DUAL-LANGUAGE in this exact format: "[Regional {language} Title] | [English Title]". First write the title in authentic {language} script, followed by a pipe (|), and then the English title. Include "#shorts" at the end. Maximum 90 characters total.
         {language_instruction}
         Requirements (5 Viral Execution Steps):
