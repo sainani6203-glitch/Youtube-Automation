@@ -1,6 +1,7 @@
 # Environment & Secrets
 .env
 client_secret.json
+client_secret_hindi.json
 token.pickle
 token*.pickle
 
