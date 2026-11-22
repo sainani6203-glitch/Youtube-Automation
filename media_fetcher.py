@@ -153,37 +153,69 @@ def image_to_video_clip(img_bytes: bytes, output_path: str, orientation: str = "
             except:
                 pass
 
+def fetch_pexels_photo(query: str, orientation: str = "portrait") -> bytes:
+    """Fetches real professional stock photographs from Pexels Photos API."""
+    if not PEXELS_API_KEY or PEXELS_API_KEY == "your_pexels_api_key_here":
+        return None
+    try:
+        headers = {"Authorization": PEXELS_API_KEY}
+        orient_param = "portrait" if orientation == "portrait" else "landscape"
+        url = f"https://api.pexels.com/v1/search?query={urllib.parse.quote(query)}&per_page=15&orientation={orient_param}"
+        resp = requests.get(url, headers=headers, timeout=10)
+        if resp.status_code == 200:
+            data = resp.json()
+            photos = data.get("photos", [])
+            if photos:
+                photo = random.choice(photos[:min(5, len(photos))])
+                src = photo.get("src", {})
+                img_url = src.get("large2x") or src.get("large") or src.get("original")
+                if img_url:
+                    img_resp = requests.get(img_url, timeout=15)
+                    if img_resp.status_code == 200:
+                        print(f"   -> [Pexels Photo Success] Fetched real professional photograph for '{query}'")
+                        return img_resp.content
+    except Exception as e:
+        print(f"[Note] Pexels photo fetch failed for '{query}': {e}")
+    return None
+
 def fetch_stock_video(query: str, orientation: str = "portrait", output_filename: str = "stock.mp4") -> str:
     """
-    3-Tier Hybrid Media Pipeline:
-    Tier 1: Smart AI Cinematic B-Roll (Pollinations.ai) with Ken Burns zoom-in effect.
-    Tier 2: Real Historical/Space Archives (Wikimedia Commons & NASA APIs) for authentic topics.
-    Tier 3: Ambient Cinematic Motion Backgrounds (Pexels) as fallback.
+    100% Real Photo Hybrid Media Pipeline:
+    Tier 1: Real Professional Photographs (Pexels Photos API)
+    Tier 2: Real Historical/Geographic Archives (Wikimedia Commons / Wikipedia)
+    Tier 3: Real Space Archives (NASA API)
+    Tier 4: Smart AI Cinematic B-Roll (Pollinations.ai) - Final Fallback only.
     """
     output_path = os.path.join(ASSETS_DIR, output_filename)
     
     q_lower = query.lower()
     is_space = any(k in q_lower for k in ["space", "planet", "galaxy", "nasa", "star", "telescope", "mars", "black hole", "universe"])
-    is_history = any(k in q_lower for k in ["ancient", "temple", "egypt", "pyramid", "history", "rome", "artifact", "ruins", "civilization"])
 
-    # 1. Tier 2: Real Archives (NASA for space, Wikimedia for history/geography)
     img_bytes = None
     try:
-        if is_space:
-            print(f"   -> [NASA Archive] Fetching authentic space visual for: '{query}'...")
-            img_bytes = fetch_nasa_image(query)
-        elif is_history or len(query) > 10:
-            print(f"   -> [Wikimedia Archive] Fetching authentic historical visual for: '{query}'...")
-            img_bytes = fetch_wikimedia_image(query)
-            if not img_bytes and is_space:
+        # 1. Try Pexels Photos API first (Real professional photographs)
+        print(f"   -> [Pexels Photos] Searching real professional photograph for: '{query}'...")
+        img_bytes = fetch_pexels_photo(query, orientation)
+
+        # 2. If not found, try Wikimedia Commons / Wikipedia (Real historical/geographic photos)
+        if not img_bytes:
+            if is_space:
+                print(f"   -> [NASA Archive] Fetching authentic space visual for: '{query}'...")
                 img_bytes = fetch_nasa_image(query)
+                if not img_bytes:
+                    img_bytes = fetch_wikimedia_image(query)
+            else:
+                print(f"   -> [Wikimedia Archive] Fetching real photograph for: '{query}'...")
+                img_bytes = fetch_wikimedia_image(query)
+                if not img_bytes:
+                    img_bytes = fetch_nasa_image(query)
     except Exception as archive_err:
-        print(f"[Note] Archive fetch skipped due to error/timeout: {archive_err}")
+        print(f"[Note] Real archive/photo fetch skipped due to error/timeout: {archive_err}")
 
     if img_bytes:
         res_path = image_to_video_clip(img_bytes, output_path, orientation)
         if res_path:
-            print(f"   -> [Archive Success] Converted authentic archive image to cinematic video clip.")
+            print(f"   -> [Real Photo Success] Converted authentic real photograph to cinematic video clip.")
             return res_path
 
     # 2. Tier 1: Smart AI Cinematic B-Roll (Pollinations.ai)
