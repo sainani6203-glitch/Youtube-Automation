@@ -147,8 +147,14 @@ def generate_thumbnail(title: str, category: str = "", output_path: str = None, 
             print(f"📥 Downloading AI background image for thumbnail from Pollinations...")
             img_resp = requests.get(bg_image_url, timeout=15)
             if img_resp.status_code == 200:
-                with open(bg_local_path, "wb") as f:
-                    f.write(img_resp.content)
+                # Crop bottom 30 pixels to completely remove any rare watermark
+                from PIL import Image
+                import io
+                img = Image.open(io.BytesIO(img_resp.content)).convert("RGB")
+                w, h = img.size
+                if h > 50:
+                    img = img.crop((0, 0, w, h - 30))
+                img.save(bg_local_path, "JPEG", quality=95)
                 downloaded_bg = True
         except Exception as e:
             print(f"[Warning] Pollinations fallback failed: {e}")

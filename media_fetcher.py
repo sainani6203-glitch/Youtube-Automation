@@ -90,6 +90,12 @@ def image_to_video_clip(img_bytes: bytes, output_path: str, orientation: str = "
             from PIL import Image
             with Image.open(temp_img_path) as img:
                 img = img.convert("RGB")
+                
+                # Crop a tiny strip from the bottom (e.g. 35 pixels) to completely remove any rare watermark
+                w_orig, h_orig = img.size
+                if h_orig > 100:
+                    img = img.crop((0, 0, w_orig, h_orig - 35))
+                
                 orig_w, orig_h = img.size
                 target_ratio = target_w / target_h
                 orig_ratio = orig_w / orig_h
