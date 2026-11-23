@@ -77,7 +77,7 @@ def fetch_nasa_image(query: str) -> str:
     return None
 
 def image_to_video_clip(img_bytes: bytes, output_path: str, orientation: str = "portrait") -> str:
-    """Converts image bytes into a 4-second dynamic video clip with precise crop and Ken Burns zoom effect."""
+    """Converts image bytes into a 4-second dynamic video clip with smooth Ken Burns zoom and pan animation."""
     temp_img_path = output_path.replace(".mp4", "_temp.jpg")
     try:
         with open(temp_img_path, "wb") as f:
@@ -90,62 +90,40 @@ def image_to_video_clip(img_bytes: bytes, output_path: str, orientation: str = "
             from PIL import Image
             with Image.open(temp_img_path) as img:
                 img = img.convert("RGB")
-                
-                # Crop a tiny strip from the bottom (e.g. 35 pixels) to completely remove any rare watermark
                 w_orig, h_orig = img.size
                 if h_orig > 100:
                     img = img.crop((0, 0, w_orig, h_orig - 35))
-                
-                orig_w, orig_h = img.size
-                target_ratio = target_w / target_h
-                orig_ratio = orig_w / orig_h
-                
-                if orig_ratio > target_ratio:
-                    new_h = target_h
-                    new_w = int(orig_w * (target_h / orig_h))
-                else:
-                    new_w = target_w
-                    new_h = int(orig_h * (target_w / orig_w))
-                    
-                new_w = (new_w // 2) * 2
-                new_h = (new_h // 2) * 2
-                    
-                img_resized = img.resize((new_w, new_h), Image.Resampling.LANCZOS)
-                left = int(max(0, (new_w - target_w) / 2))
-                top = int(max(0, (new_h - target_h) / 2))
-                left = (left // 2) * 2
-                top = (top // 2) * 2
-                right = left + target_w
-                bottom = top + target_h
-                
-                img_cropped = img_resized.crop((left, top, right, bottom))
-                img_cropped.save(temp_img_path, quality=95)
+                img.save(temp_img_path, quality=95)
         except Exception as pil_err:
-            print(f"[Note] PIL resize/crop fallback skipped: {pil_err}")
+            print(f"[Note] PIL crop skipped: {pil_err}")
 
-        from moviepy.editor import ImageClip
-        clip_duration = 4.0
-        img_clip = ImageClip(temp_img_path).set_duration(clip_duration)
-                
-        scale_filter = f"scale={target_w}:{target_h}:force_original_aspect_ratio=increase,crop={target_w}:{target_h},format=yuv420p"
-        img_clip.write_videofile(
-            output_path,
-            fps=24,
-            codec="libx264",
-            audio=False,
-            logger=None,
-            ffmpeg_params=[
-                '-fps_mode', 'cfr',
-                '-vf', scale_filter,
-                '-profile:v', 'main',
-                '-level', '4.0'
-            ]
-        )
-        img_clip.close()
+        import subprocess, imageio_ffmpeg
+        ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
+        
+        # Ken Burns zoompan filter for smooth cinematic motion (4 seconds at 24fps = 96 frames)
+        vf_string = f"scale={target_w}*2:{target_h}*2:force_original_aspect_ratio=increase,crop={target_w}*2:{target_h}*2,zoompan=z='min(zoom+0.0015,1.2)':d=96:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)',scale={target_w}:{target_h},format=yuv420p"
+        
+        cmd = [
+            ffmpeg_exe, "-y", "-loop", "1", "-i", temp_img_path,
+            "-t", "4.0",
+            "-vf", vf_string,
+            "-c:v", "libx264", "-preset", "medium", "-crf", "20",
+            "-fps_mode", "cfr", "-r", "24",
+            output_path
+        ]
+        subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
         return output_path
     except Exception as e:
-        print(f"[Error] Failed to convert image to video clip: {e}")
-        return None
+        print(f"[Error] Failed to convert image to video clip with Ken Burns: {e}")
+        try:
+            from moviepy.editor import ImageClip
+            img_clip = ImageClip(temp_img_path).set_duration(4.0)
+            img_clip.write_videofile(output_path, fps=24, codec="libx264", audio=False, logger=None)
+            img_clip.close()
+            return output_path
+        except Exception as ex2:
+            print(f"[Error] MoviePy fallback failed: {ex2}")
+            return None
     finally:
         if os.path.exists(temp_img_path):
             try:
@@ -180,65 +158,18 @@ def fetch_pexels_photo(query: str, orientation: str = "portrait") -> bytes:
 
 def fetch_stock_video(query: str, orientation: str = "portrait", output_filename: str = "stock.mp4") -> str:
     """
-    100% Real Photo Hybrid Media Pipeline:
-    Tier 1: Real Professional Photographs (Pexels Photos API)
-    Tier 2: Real Historical/Geographic Archives (Wikimedia Commons / Wikipedia)
-    Tier 3: Real Space Archives (NASA API)
-    Tier 4: Smart AI Cinematic B-Roll (Pollinations.ai) - Final Fallback only.
+    Enhanced Hybrid Media Pipeline:
+    Tier 1: Real Stock Video Footage (Pexels Videos API search with exact query)
+    Tier 2: Real Professional Photographs & Archives (Pexels Photos, Wikimedia, NASA) -> Converted with Ken Burns Zoom/Pan effect
+    Tier 3: AI Cinematic B-Roll (Pollinations.ai) -> Converted with Ken Burns Zoom/Pan effect
     """
     output_path = os.path.join(ASSETS_DIR, output_filename)
     
-    q_lower = query.lower()
-    is_space = any(k in q_lower for k in ["space", "planet", "galaxy", "nasa", "star", "telescope", "mars", "black hole", "universe"])
-
-    img_bytes = None
-    try:
-        # 1. Try Pexels Photos API first (Real professional photographs)
-        print(f"   -> [Pexels Photos] Searching real professional photograph for: '{query}'...")
-        img_bytes = fetch_pexels_photo(query, orientation)
-
-        # 2. If not found, try Wikimedia Commons / Wikipedia (Real historical/geographic photos)
-        if not img_bytes:
-            if is_space:
-                print(f"   -> [NASA Archive] Fetching authentic space visual for: '{query}'...")
-                img_bytes = fetch_nasa_image(query)
-                if not img_bytes:
-                    img_bytes = fetch_wikimedia_image(query)
-            else:
-                print(f"   -> [Wikimedia Archive] Fetching real photograph for: '{query}'...")
-                img_bytes = fetch_wikimedia_image(query)
-                if not img_bytes:
-                    img_bytes = fetch_nasa_image(query)
-    except Exception as archive_err:
-        print(f"[Note] Real archive/photo fetch skipped due to error/timeout: {archive_err}")
-
-    if img_bytes:
-        res_path = image_to_video_clip(img_bytes, output_path, orientation)
-        if res_path:
-            print(f"   -> [Real Photo Success] Converted authentic real photograph to cinematic video clip.")
-            return res_path
-
-    # 2. Tier 1: Smart AI Cinematic B-Roll (Pollinations.ai)
-    print(f"   -> [AI Cinematic B-Roll] Generating 8K vibrant cinematic visual for: '{query}' via Pollinations.ai...")
-    try:
-        ai_prompt = f"{query}, masterpiece, ultra detailed, hyperrealistic 8k resolution, Unreal Engine 5 render, extremely vibrant rich colors, cinematic HDR lighting, golden hour glow, highly saturated, visually stunning photorealistic cinematic film still"
-        encoded_prompt = urllib.parse.quote(ai_prompt)
-        ai_image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=1280&height=720&nologo=true&seed={random.randint(1000, 99999)}"
-        
-        img_resp = requests.get(ai_image_url, timeout=20)
-        if img_resp.status_code == 200:
-            res_path = image_to_video_clip(img_resp.content, output_path, orientation)
-            if res_path:
-                print(f"   -> [AI Cinematic Success] Generated 100% topic-matched video clip.")
-                return res_path
-    except Exception as ai_err:
-        print(f"[Warning] AI Cinematic B-Roll failed: {ai_err}")
-
-    # 3. Tier 3: Ambient Motion Backgrounds (Pexels API fallback)
+    # 1. Tier 1: Try Pexels Video API first for actual moving video footage
     if PEXELS_API_KEY and PEXELS_API_KEY != "your_pexels_api_key_here":
-        print(f"   -> [Pexels Fallback] Searching ambient stock video for: '{query}'...")
+        print(f"   -> [Pexels Video] Searching real stock video for: '{query}'...")
         headers = {"Authorization": PEXELS_API_KEY}
-        url = f"https://api.pexels.com/videos/search?query={urllib.parse.quote('cinematic ambient background ' + query)}&per_page=10&orientation={orientation}"
+        url = f"https://api.pexels.com/videos/search?query={urllib.parse.quote(query)}&per_page=12&orientation={orientation}"
         try:
             response = requests.get(url, headers=headers, timeout=10)
             if response.status_code == 200:
@@ -256,7 +187,7 @@ def fetch_stock_video(query: str, orientation: str = "portrait", output_filename
                             with open(output_path, "wb") as f:
                                 for chunk in vid_response.iter_content(chunk_size=8192):
                                     f.write(chunk)
-                            print(f"   -> [Pexels Success] Downloaded ambient stock video. Normalizing...")
+                            print(f"   -> [Pexels Video Success] Downloaded real stock video. Normalizing...")
                             try:
                                 import subprocess, imageio_ffmpeg
                                 ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
@@ -280,9 +211,54 @@ def fetch_stock_video(query: str, orientation: str = "portrait", output_filename
                                 print(f"[Note] Pexels normalization fallback skipped: {norm_err}")
                             return output_path
         except Exception as e:
-            print(f"[Warning] Pexels fallback failed: {e}")
+            print(f"[Warning] Pexels video search failed: {e}")
 
-    # 4. Tier 4: Guaranteed Cinematic AI Visual Fallback
+    # 2. Tier 2: Real Photos & Archives (Pexels Photos, Wikimedia, NASA)
+    q_lower = query.lower()
+    is_space = any(k in q_lower for k in ["space", "planet", "galaxy", "nasa", "star", "telescope", "mars", "black hole", "universe"])
+
+    img_bytes = None
+    try:
+        print(f"   -> [Pexels Photos] Searching real professional photograph for: '{query}'...")
+        img_bytes = fetch_pexels_photo(query, orientation)
+
+        if not img_bytes:
+            if is_space:
+                print(f"   -> [NASA Archive] Fetching authentic space visual for: '{query}'...")
+                img_bytes = fetch_nasa_image(query)
+                if not img_bytes:
+                    img_bytes = fetch_wikimedia_image(query)
+            else:
+                print(f"   -> [Wikimedia Archive] Fetching real photograph for: '{query}'...")
+                img_bytes = fetch_wikimedia_image(query)
+                if not img_bytes:
+                    img_bytes = fetch_nasa_image(query)
+    except Exception as archive_err:
+        print(f"[Note] Real archive/photo fetch skipped due to error/timeout: {archive_err}")
+
+    if img_bytes:
+        res_path = image_to_video_clip(img_bytes, output_path, orientation)
+        if res_path:
+            print(f"   -> [Real Photo Success] Converted authentic real photograph to dynamic video clip with Ken Burns.")
+            return res_path
+
+    # 3. Tier 3: Smart AI Cinematic B-Roll (Pollinations.ai)
+    print(f"   -> [AI Cinematic B-Roll] Generating 8K vibrant cinematic visual for: '{query}' via Pollinations.ai...")
+    try:
+        ai_prompt = f"{query}, masterpiece, ultra detailed, hyperrealistic 8k resolution, Unreal Engine 5 render, extremely vibrant rich colors, cinematic HDR lighting, golden hour glow, highly saturated, visually stunning photorealistic cinematic film still"
+        encoded_prompt = urllib.parse.quote(ai_prompt)
+        ai_image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=1280&height=720&nologo=true&seed={random.randint(1000, 99999)}"
+        
+        img_resp = requests.get(ai_image_url, timeout=20)
+        if img_resp.status_code == 200:
+            res_path = image_to_video_clip(img_resp.content, output_path, orientation)
+            if res_path:
+                print(f"   -> [AI Cinematic Success] Generated 100% topic-matched dynamic video clip.")
+                return res_path
+    except Exception as ai_err:
+        print(f"[Warning] AI Cinematic B-Roll failed: {ai_err}")
+
+    # 4. Final Fallback: Cinematic AI Visual
     print(f"   -> [Cinematic AI Fallback] Generating stunning 8K vibrant cinematic background visual for: '{query}'...")
     try:
         fallback_prompt = f"epic cinematic mystery and wonder background, {query}, highly detailed 8k resolution, extremely vibrant rich colors, cinematic HDR lighting, golden hour glow, highly saturated, photorealistic documentary style"
@@ -293,7 +269,7 @@ def fetch_stock_video(query: str, orientation: str = "portrait", output_filename
         if img_resp.status_code == 200:
             res_path = image_to_video_clip(img_resp.content, output_path, orientation)
             if res_path:
-                print(f"   -> [Cinematic Fallback Success] Created rich visual clip.")
+                print(f"   -> [Cinematic Fallback Success] Created rich dynamic visual clip.")
                 return res_path
     except Exception as fallback_err:
         print(f"[Warning] Cinematic Fallback failed: {fallback_err}")
