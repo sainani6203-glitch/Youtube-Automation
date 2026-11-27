@@ -86,7 +86,7 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         STRICT ANGLE SEPARATION & ANTI-REPETITION: This is part of a series. {angle_instruction} Ensure this script is 100% distinct from any other angle. No overlapping facts or sentences.
         TEASER & CROSS-PROMOTION MANDATE: This Short is a teaser / companion piece for the long-form video about "{topic}". It MUST focus on ONE specific, highly intriguing sub-point or startling teaser fact directly from "{topic}" that hooks viewers and naturally drives them to watch the full long video for the complete story.
         
-        CRITICAL MANDATE FOR TITLE: DO NOT copy any example title. The title MUST be strictly DUAL-LANGUAGE in this exact format: "[Regional {language} Title] | [English Title]". First write the title in authentic {language} script, followed by a pipe (|), and then the English title. Include "#shorts" at the end. Maximum 90 characters total.
+        CRITICAL MANDATE FOR MEANINGFUL TITLE: DO NOT copy any example title. Avoid vague clickbait. The title MUST be 100% meaningful, descriptive, and clearly state the exact core mystery or subject of the video. It MUST be strictly DUAL-LANGUAGE in this exact format: "[Regional {language} Title] | [English Title]". First write the title in authentic {language} script, followed by a pipe (|), and then the English title. Include "#shorts" at the end. Maximum 100 characters total.
         {language_instruction}
         Requirements (5 Viral Execution Steps):
         1. ZERO-SECOND HOOK: Start directly with an arresting, hard-hitting statement or shocking reality about the topic. NO slow intros, NO "hey guys", NO command words like "agu/apu". Jump straight into the mystery.
@@ -129,7 +129,7 @@ def generate_video_script(topic: str, video_type: str = "short", language: str =
         PUNCTUATION & VOICE PACE MANDATE: Use short, punchy sentences. Use ellipses (...) and exclamation marks (!) strategically to create natural dramatic pauses for the neural voiceover to sound extremely suspenseful, expressive, and alive.
         
         Create a rich, high-retention, and deeply engaging {duration_desc} focusing on ONE SINGLE specific topic/mystery: "{topic}".
-        CRITICAL MANDATE FOR TITLE: DO NOT copy any example title. The title MUST be strictly DUAL-LANGUAGE in this exact format: "[Regional {language} Title] | [English Title]". First write the title in authentic {language} script, followed by a pipe (|), and then the English title. Maximum 90 characters total.
+        CRITICAL MANDATE FOR MEANINGFUL TITLE: DO NOT copy any example title. Avoid vague clickbait. The title MUST be 100% meaningful, descriptive, and clearly state the exact core mystery or subject of the video. It MUST be strictly DUAL-LANGUAGE in this exact format: "[Regional {language} Title] | [English Title]". First write the title in authentic {language} script, followed by a pipe (|), and then the English title. Maximum 100 characters total.
         The description and script narration text MUST be written entirely in pure {script_lang_name} using authentic {script_script_name}. ABSOLUTELY NO mixed English words or romanized English words.
         
         {structure_desc}
